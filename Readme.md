@@ -1,3 +1,4 @@
+
 马工新玩具，服务器端功能描述：
 
 总功能描述：
@@ -26,4 +27,50 @@ WEB功能描述：
 7. 可以修改自己的密码
 8. 可以修改设备的安全KEY
 9. 可以查看设备状态，电压，温度等
+10. 
     
+
+centos 8 下安装方法：
+
+解压压缩包到 / 目录下 
+
+    tar -zxf udphub.tgz 
+
+关闭防火墙
+
+    systemctl disable firewalld.service
+    systemctl stop firewalld.service
+
+
+安装数据库
+    rpm -Uvh https://repo.huaweicloud.com/postgresql/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    dnf -qy module disable postgresql
+    dnf install -y postgresql13-server
+    dnf install postgresql13-contrib.x86_64
+    /usr/pgsql-13/bin/postgresql-13-setup initdb 
+
+    修改 /var/lib/pgsql/13/data/pg_hba.conf 文件，信任127.0.0.1 
+
+    # "local" is for Unix domain socket connections only
+    local   all             all                                     trust
+    # IPv4 local connections:
+    host    all             all             127.0.0.1/32            trust
+
+重启数据库，并开机启动
+  systemctl enable postgresql-13
+  systemctl start postgresql-13
+
+
+创建数据库
+   psql -U postgres 
+      create database udphub
+    
+创建相关表
+    psql -U postgres udphub < udphub.sql
+
+启动程序
+    cd /udphub
+    nohup ./udphub &
+
+
+
