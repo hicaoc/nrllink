@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
@@ -34,9 +35,15 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	for _, vv := range devCPUIDMap {
 
+		t := time.Now()
+		if t.Sub(vv.LastPacketTime) > 5*time.Second {
+			vv.ISOnline = false
+		}
+
 		dev := *vv
 
 		dev.CPUID = ""
+		dev.DeviceParm = nil
 
 		devicelist[id] = dev
 		id++
@@ -106,28 +113,31 @@ func (j *jsonapi) httpBindDevice(w http.ResponseWriter, req *http.Request) {
 	stb := &deviceInfo{}
 	err := jsonextra.Unmarshal(result, &stb)
 
-	if stb.CallSign != u.CallSign {
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定或解除绑定操作错误，必须本人操作"}}`))
-		return
-	}
-
-	if stb.OwerID == 0 {
-		stb.OwerID = u.ID
-
-		bindDevice(stb, u.ID)
-
-	} else {
-		stb.OwerID = 0
-		unbindDevice(stb)
-	}
-
 	if err != nil {
 		log.Println("device bind err :", err)
 		w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
 		return
 	}
 
-	w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
+	if stb.CallSign != u.CallSign {
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定或解除绑定操作错误，必须本人操作"}}`))
+		return
+	}
+
+	if stb.OwerID == 0 {
+
+		err = bindDevice(stb, u.ID)
+
+		if err != nil {
+			log.Println("device bind err :", err)
+			w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
+			return
+		}
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
+		return
+
+	}
+	w.Write([]byte(`{"code":20000,"data":{"message":"设备已经绑定，无需重复绑定"}}`))
 
 }
 
@@ -188,6 +198,42 @@ func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
 		len(u.DevList), rescode)
+
+	w.Write([]byte(respone))
+
+}
+
+func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	result, _ := ioutil.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &deviceInfo{}
+	err := jsonextra.Unmarshal(result, &stb)
+
+	if stb.CallSign != u.CallSign {
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误，必须本人操作"}}`))
+		return
+	}
+
+	dev := queryDeviceParm(stb.CPUID)
+
+	if dev == nil {
+		log.Println("device parm query  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误"}}`))
+		return
+	}
+
+	rescode, _ := jsonextra.Marshal(dev)
+	respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`,
+		rescode)
 
 	w.Write([]byte(respone))
 

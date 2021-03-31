@@ -65,7 +65,7 @@ func initPublicGroup() {
 
 }
 
-func addDevToGroup(dev *deviceInfo, groupid int) (err error) {
+func addDevToGroup(dev *deviceInfo, publicgroupid int) (err error) {
 
 	//从之前的组删除
 
@@ -75,10 +75,10 @@ func addDevToGroup(dev *deviceInfo, groupid int) (err error) {
 
 	//加入新的组
 
-	if g, ok := publicGroupMap[groupid]; ok {
-		dev.GroupID = groupid
+	if g, ok := publicGroupMap[publicgroupid]; ok {
+		dev.PublicGroupID = publicgroupid
 		g.DevMap[dev.ID] = dev
-		dev.GroupID = g.ID
+
 	}
 
 	return

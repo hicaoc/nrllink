@@ -1,6 +1,20 @@
 
 马工新玩具，服务器端功能描述：
 
+
+服务器列表：
+
+管理端口
+
+http://bi4qzw.allazy.com
+http://bg6fcs.allazy.com:9998
+http://bh4aiu.allazy.com:9998
+
+板子连接端口
+udp端口 60050
+
+
+
 总功能描述：
 
 1. 系统基本组成，用户账号，设备，内置群组，公共群组
@@ -74,3 +88,32 @@ centos 8 下安装方法：
 
 
 
+
+
+创建开机启动 服务器
+
+vi /usr/lib/systemd/system/udphub.service
+
+[Unit]
+Description=udphub
+Documentation=https://Bi4Qzw.Com
+ 
+[Service]
+WorkingDirectory=/udphub/
+ExecStart=/udphub/udphub
+Restart=on-abnormal
+RestartSec=10s
+KillMode=mixed
+ 
+[Install]
+WantedBy=multi-user.target
+
+2 设置开机自启动 相关命令如下: 
+
+# 更新配置
+systemctl daemon-reload
+# 启动服务
+systemctl start udphub.service
+# 设置开机启动
+systemctl enable udphub.service
+ 

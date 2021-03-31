@@ -1,0 +1,127 @@
+
+
+						 
+void DEMO_SETUP()	//通电检查EEROM，如有错误，恢复默认参数
+{
+		unsigned char code  FREQ_1W[35]={"1,430.0000,430.0000,0,3,0"};			//默认  27 字节长度
+		//	unsigned char code  FREQ_U1[35]={"1,405.0000,405.0000,0,3,0,0\r\n"};			//默认  29 字节长度
+		unsigned char code  D_IP[20]={"202.141.176.002"};			//目标IP或域名
+
+		unsigned char code  FREQ_2W[40]={"430.00000,430.00000,000.0,000.0,0,0"};			//默认  35 字节长度
+		
+		unsigned char code  FUN_2W[10]={"3,1,0,0,0"};	//默认2W FUN参数  9 字节长度
+		unsigned char code  CALL[10]={"NOCALL"};			//默认呼号 6字节长度
+		
+ 		//******************************************************	
+
+		EEPROM_SectorErase(0x0000);	   // 擦除扇区1（0-512字节）
+		//擦除  写  重启
+		//******************************************************	
+		
+		EEPROM_write_one(0x0000, 1);			// DCD 0=PTT DISABLE   1=MANUAL  2=SQL_LO  3=SQL_HI    4=VOX  
+		EEPROM_write_one(0x0001, 1);			// 0=PTT DISABLE   1=PTT ENABLE
+
+		EEPROM_write_one(0x0002, 0);		  //PTT电平反转     NRL2100 待机=0  发射=1   NRL2300 PTT 待机=1 发射=0 
+
+		//******************************************************	
+		EEPROM_write_one(0x0003, 20/256);		//默认加尾音20   步进5ms,最小大于20*5=100ms
+		EEPROM_write_one(0x0004, 20%256);		// 
+		//******************************************************
+		EEPROM_write_one(0x0005, 50/256);		//默认消尾音,步进5MS  50*5=250ms
+		EEPROM_write_one(0x0006, 50%256);		// 
+		//******************************************************
+		EEPROM_write_one(0x0007, 0);		  //PTT 电阻  0=0FF 1=EN  
+		EEPROM_write_one(0x0008, 0);		  //MONITOR 监听输出  0=0FF 1=EN  
+
+		EEPROM_write_one(0x0009, 1);		  //自定义KEY  0=Relay 1=MANUAL PTT  
+		//******************************************************
+		EEPROM_write_one(0x000A, 0);		  //Relay继电器掉电状态 0=断开  1=吸合  
+		EEPROM_write_one(0x000B, 0);		  //是否允许继电器控制
+		EEPROM_write_one(0x000C, 'H');		//H=原码率  M=码率/2  
+		
+		
+		//******************************************************		  
+		EEPROM_write_one(0x0010, CPU_ID_HEX[3]);		//本机设备序列号，不可修改
+		EEPROM_write_one(0x0011, CPU_ID_HEX[4]);    //
+		EEPROM_write_one(0x0012, CPU_ID_HEX[5]);		// 
+		EEPROM_write_one(0x0013, CPU_ID_HEX[6]);	  //
+		EEPROM_write_one(0x0014, 0X88);		// 本地接入密码，0-9 A-F 可修改
+		EEPROM_write_one(0x0015, 0X88);		// 
+		EEPROM_write_one(0x0016, 0X88);		// 
+
+
+		//*****************************************************
+		EEPROM_write_one(0x0017, CPU_ID_HEX[3]);		//远程目标设备序列号,初始同本机序列号,可修改
+		EEPROM_write_one(0x0018, CPU_ID_HEX[4]);		//
+		EEPROM_write_one(0x0019, CPU_ID_HEX[5]);		// 
+		EEPROM_write_one(0x001A, CPU_ID_HEX[6]);	  //
+		EEPROM_write_one(0x001B, 0X88);			// 远程目标接入密码，0-9 A-F 可修改
+		EEPROM_write_one(0x001C, 0X88);			// 
+		EEPROM_write_one(0x001D, 0X88);			// 
+		//*****************************************************
+		//	EEPROM_write_one(0x001E, 0);		// 
+		//*****************************************************
+
+
+		//*****************************************************
+		//*****************************************************
+
+		EEPROM_write_one(0x0020, 192);		//本机IP
+		EEPROM_write_one(0x0021, 168);		//本机IP
+		EEPROM_write_one(0x0022, 1);		//本机IP
+		EEPROM_write_one(0x0023, 190);		//本机IP
+
+		EEPROM_write_one(0x0024, 192);		//网关IP
+		EEPROM_write_one(0x0025, 168);		//网关IP
+		EEPROM_write_one(0x0026, 1);		//网关IP
+		EEPROM_write_one(0x0027, 1);		//网关IP
+
+		EEPROM_write_one(0x0028, 255);		//掩码
+		EEPROM_write_one(0x0029, 255);		//掩码
+		EEPROM_write_one(0x002A, 255);		//掩码
+		EEPROM_write_one(0x002B, 0);		//掩码				
+		
+		EEPROM_write_one(0x002C, 114);		//DNS服务器,默认114.114.114.114
+		EEPROM_write_one(0x002D, 114);		//
+		EEPROM_write_one(0x002E, 114);		//
+		EEPROM_write_one(0x002F, 114);		//
+		
+		//***************************************************** 
+
+		//***************************************************** 
+
+		EEPROM_write_one(0x0030, 60050/256);		//UDP AUDIO OUT目标端口号
+		EEPROM_write_one(0x0031, 60050%256);
+
+		EEPROM_write_one(0x0032, 60050/256);		//UDP AUDIO IN本机端口号
+		EEPROM_write_one(0x0033, 60050%256);		//UDP 
+		
+	//*****************************************************
+
+	//*****************************************************
+	EEPROM_write_one(0x0040, 0);		//SSID
+
+ 	EEPROM_write_String(0x0041,CALL);//呼号 最成6位 0X00结束符号
+
+	EEPROM_write_String(0x0050,D_IP);	//目标IP或域名，IP=XXX.XXX.XXX.XXX    域名=XXX.XXX.XXX   50-7F 最长48字节 0X00结束符号
+	//*****************************************************
+ 	EEPROM_write_String(0x0080,FREQ_1W);//UV1     对讲机模块频率    按格式填写  27/29字节   0X00结束符号
+	//*****************************************************
+	EEPROM_write_one(0x00A0, '8' ); 	// UV1模块音量1-9级
+	EEPROM_write_one(0x00A1, '1' ); 	// MIC灵敏度1-8  
+	EEPROM_write_one(0x00A2, '0' ); 	// MIC语音加密 0 1-8
+	EEPROM_write_one(0x00A3, 0 ); 	// PD
+	//*****************************************************
+	//2W参数
+
+	EEPROM_write_String(0x00C0,FREQ_2W);//UV2     对讲机模块频率     	 35字节
+
+	EEPROM_write_one(0xEE, '8' ); 	//2W音量
+	EEPROM_write_one(0xEF, '1' ); 	//2W SAVE  0=开启省电  1=关闭省电
+
+	EEPROM_write_String(0x00F0,FUN_2W);//SQL，MICLVL, TOT，SCRAMLVL ,COMP  0X00结束符号
+	//*****************************************************
+	EEPROM_write_one(0x001F, 0x07);		//初始化标记
+	//*****************************************************
+
+}
