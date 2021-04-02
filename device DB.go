@@ -89,14 +89,42 @@ func queryDeviceParm(cpuid string) (dev *deviceInfo) {
 	if d, ok := devCPUIDMap[cpuid]; ok {
 
 		t := time.Now()
+		//fmt.Println(t.Sub(d.LastPacketTime))
+		if t.Sub(d.LastPacketTime) > 5*time.Second {
+			d.ISOnline = false
+			return d
+
+		} else {
+			globelconn.WriteToUDP(encodeDeviceParm(d, 0x01), d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
+			return d
+		}
+
+	}
+
+	return nil
+
+	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+
+	//fmt.Println(id, query)
+
+}
+
+func changeDeviceRealyParm(cpuid string, val byte) (dev *deviceInfo) {
+
+	if d, ok := devCPUIDMap[cpuid]; ok {
+
+		t := time.Now()
 		fmt.Println(t.Sub(d.LastPacketTime))
 		if t.Sub(d.LastPacketTime) > 5*time.Second {
 			d.ISOnline = false
 			return d
 
 		} else {
-			globelconn.WriteToUDP(encodeDeviceParm(d), d.udpAddr)
-			time.Sleep(1 * time.Second)
+			d.DeviceParm.data[10] = val
+			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+			globelconn.WriteToUDP(newpacket, d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
 			return d
 		}
 

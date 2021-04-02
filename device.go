@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -242,5 +243,89 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 		rescode)
 
 	w.Write([]byte(respone))
+
+}
+
+func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	req.ParseForm()
+
+	fmt.Println("REQ:", len(req.Form))
+
+	cpuid := req.Form["CPUID"][0]
+
+	if cpuid == "" {
+
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+		return
+
+	}
+
+	for k, v := range req.Form {
+
+		fmt.Println(k, v)
+
+		switch k {
+		case "realy_status":
+
+			val, _ := strconv.Atoi(v[0])
+			fmt.Println(k)
+
+			dev := changeDeviceRealyParm(cpuid, byte(val))
+
+			rescode, _ := jsonextra.Marshal(dev)
+			respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`,
+				rescode)
+
+			w.Write([]byte(respone))
+
+		}
+
+	}
+
+	// 第一种方式
+	// username := request.Form["username"][0]
+	// password := request.Form["password"][0]
+
+	// result, _ := ioutil.ReadAll(req.Body)
+
+	// req.Body.Close()
+
+	// stb := &deviceInfo{}
+	// err := jsonextra.Unmarshal(result, &stb)
+
+	// 	if checkrole(u, "admin") == false {
+	// 		w.Write([]byte("{\"code\":20000,\"data\":{\"message\":\"当前用户没有权限设置此参数\"}}"))
+	// 		return
+
+	// 	}
+
+	//|| checkrole(u, []string{"admin"})
+
+	// if stb.CallSign != u.CallSign {
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误，必须本人操作"}}`))
+	// 	return
+	// }
+
+	// dev := queryDeviceParm(stb.CPUID)
+
+	// if dev == nil {
+	// 	log.Println("device parm query  err :", err)
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误"}}`))
+	// 	return
+	// }
+
+	// rescode, _ := jsonextra.Marshal(dev)
+	// respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`,
+	// 	rescode)
+
+	// w.Write([]byte(respone))
 
 }

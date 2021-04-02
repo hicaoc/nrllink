@@ -171,7 +171,7 @@ func decodeControlPacket(data []byte) *control {
 
 }
 
-func encodeDeviceParm(dev *deviceInfo) (packet []byte) {
+func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 
 	packet = append(packet, []byte{'N', 'R', 'L', '2'}...) //0-3
 	packet = append(packet, []byte{0, 49}...)              //长度   4-5
@@ -191,18 +191,18 @@ func encodeDeviceParm(dev *deviceInfo) (packet []byte) {
 	packet = append(packet, []byte{0x21, 0x03, 0x14}...) //version  31-33
 	packet = append(packet, make([]byte, 12)...)         //Reserved  34-45
 	packet = append(packet, []byte{0x00, 0x00}...)       //crc   46-47
-	packet = append(packet, 0x01)                        // 查询
+	packet = append(packet, subtype)                     // 查询
 
 	fmt.Println(len(packet), fmt.Sprintf("%02X ", packet))
 
-	fmt.Println(string(packet))
+	//fmt.Println(string(packet))
 
 	return packet
 
 }
 
-func sendParmQuery(CPUID string) {
+// func sendParmQuery(CPUID string) {
 
-}
+// }
 
-func sendParmChange(CPUID string) {}
+// func sendParmChange(CPUID string) {}
