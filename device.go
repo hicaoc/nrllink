@@ -272,11 +272,18 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		fmt.Println(k, v)
 
 		switch k {
+		case "dcd_select":
+			res, err := changeDeviceByteParm(cpuid, 0, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备DCD选择失败"}}`))
+				return
+			}
+			w.Write(res)
 
 		case "ptt_enable":
 			res, err := changeDeviceByteParm(cpuid, 1, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改使能PTT失败"}}`))
 				return
 			}
 			w.Write(res)
@@ -333,7 +340,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		case "voice_bitrate":
 			res, err := changeDeviceByteParm(cpuid, 12, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改语音码率失败"}}`))
 				return
 			}
 			w.Write(res)
@@ -341,7 +348,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		case "ssid":
 			res, err := changeDeviceByteParm(cpuid, 64, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备SSID失败"}}`))
 				return
 			}
 			w.Write(res)
@@ -349,7 +356,23 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		case "one_uv_power":
 			res, err := changeDeviceByteParm(cpuid, 163, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20000,"data":{"message":"UV电源开关失败"}}`))
+				return
+			}
+			w.Write(res)
+
+		case "add_tail_voice":
+			res, err := changeDeviceUint16Parm(cpuid, 3, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"加尾音失败"}}`))
+				return
+			}
+			w.Write(res)
+
+		case "remove_tail_voice":
+			res, err := changeDeviceUint16Parm(cpuid, 5, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"消尾音失败"}}`))
 				return
 			}
 			w.Write(res)

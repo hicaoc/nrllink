@@ -18,8 +18,8 @@ type control struct {
 	DCDSelect         byte   `json:"dcd_select"`          //0x00  DCD 0=PTT DISABLE   1=MANUAL  2=SQL_LO  3=SQL_HI    4=VOX
 	PTTEnable         byte   `json:"ptt_enable"`          //0x01  0=PTT DISABLE   1=PTT ENABLE
 	PTTLevelReversed  byte   `json:"ptt_level_reversed"`  //0x02  PTT电平反转     NRL2100 待机=0  发射=1   NRL2300 PTT 待机=1 发射=0
-	AddTailVoice      string `json:"add_tail_voice"`      //0x03-0x04  默认加尾音20   步进5ms,最小大于20*5=100ms
-	RemoveTailVoice   string `json:"remove_tail_voice"`   //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
+	AddTailVoice      uint16 `json:"add_tail_voice"`      //0x03-0x04  默认加尾音20   步进5ms,最小大于20*5=100ms
+	RemoveTailVoice   uint16 `json:"remove_tail_voice"`   //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
 	PTTresistive      byte   `json:"ptt_resistive"`       //0x07  PTT 电阻  0=0FF 1=EN
 	MonitorOut        byte   `json:"monitor_out"`         //0x08  MONITOR 监听输出  0=0FF 1=EN
 	KeyFunc           byte   `json:"key_func"`            //0x09  自定义KEY  0=Relay 1=MANUAL PTT
@@ -85,8 +85,8 @@ func decodeControlPacket(data []byte) *control {
 		c.DCDSelect = c.data[0]
 		c.PTTEnable = c.data[1]
 		c.PTTLevelReversed = c.data[2]
-		c.AddTailVoice = fmt.Sprintf("%02X", c.data[3:5])
-		c.RemoveTailVoice = fmt.Sprintf("%02X", c.data[5:7]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
+		c.AddTailVoice = uint16(c.data[3])<<8 | uint16(c.data[4])
+		c.RemoveTailVoice = uint16(c.data[5])<<8 | uint16(c.data[6]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
 		//c.AddTailVoice = uint16(c.data[3])<<8 | uint16(c.data[4])
 		//c.RemoveTailVoice = uint16(c.data[5])<<8 | uint16(c.data[6]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
 		c.PTTresistive = c.data[7]                        //0x07  PTT 电阻  0=0FF 1=EN

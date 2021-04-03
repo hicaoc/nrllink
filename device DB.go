@@ -145,6 +145,41 @@ func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err
 
 }
 
+func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, err error) {
+
+	val, _ := strconv.Atoi(str)
+
+	if d, ok := devCPUIDMap[cpuid]; ok {
+
+		t := time.Now()
+		// fmt.Println(t.Sub(d.LastPacketTime))
+		if t.Sub(d.LastPacketTime) > 5*time.Second {
+			d.ISOnline = false
+			return nil, errors.New("device be offline")
+
+		} else {
+			d.DeviceParm.data[offset+1] = byte(val & 0xFF)
+			d.DeviceParm.data[offset] = byte(val >> 8)
+
+			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+			globelconn.WriteToUDP(newpacket, d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
+
+			rescode, _ := jsonextra.Marshal(d)
+			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+
+		}
+
+	}
+
+	return nil, errors.New("device is not found")
+
+	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+
+	//fmt.Println(id, query)
+
+}
+
 func bindDevice(dev *deviceInfo, userid int) error {
 
 	//	fmt.Println("user:", e)
