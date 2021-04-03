@@ -37,7 +37,7 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.Length = binary.BigEndian.Uint16(d[4:6])
 	n.Type = d[20]
 	n.Status = d[21]
-	n.CPUID = fmt.Sprintf("%02X ", d[6:13])
+	n.CPUID = fmt.Sprintf("%02X", d[6:13])
 	//n.Gird = ""
 	n.CallSign = string(d[24:30])
 	n.SSID = d[30]

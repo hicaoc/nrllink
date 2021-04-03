@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -110,27 +112,32 @@ func queryDeviceParm(cpuid string) (dev *deviceInfo) {
 
 }
 
-func changeDeviceRealyParm(cpuid string, val byte) (dev *deviceInfo) {
+func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err error) {
+
+	val, _ := strconv.Atoi(str)
 
 	if d, ok := devCPUIDMap[cpuid]; ok {
 
 		t := time.Now()
-		fmt.Println(t.Sub(d.LastPacketTime))
+		// fmt.Println(t.Sub(d.LastPacketTime))
 		if t.Sub(d.LastPacketTime) > 5*time.Second {
 			d.ISOnline = false
-			return d
+			return nil, errors.New("device be offline")
 
 		} else {
-			d.DeviceParm.data[10] = val
+			d.DeviceParm.data[offset] = byte(val)
 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
 			globelconn.WriteToUDP(newpacket, d.udpAddr)
 			time.Sleep(200 * time.Millisecond)
-			return d
+
+			rescode, _ := jsonextra.Marshal(d)
+			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+
 		}
 
 	}
 
-	return nil
+	return nil, errors.New("device is not found")
 
 	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
 

@@ -15,7 +15,7 @@ import (
 //	类型=03 子类04 主机重启  48+1字节
 
 type control struct {
-	DCDSelect         byte   `json:"dcd"`                 //0x00  DCD 0=PTT DISABLE   1=MANUAL  2=SQL_LO  3=SQL_HI    4=VOX
+	DCDSelect         byte   `json:"dcd_select"`          //0x00  DCD 0=PTT DISABLE   1=MANUAL  2=SQL_LO  3=SQL_HI    4=VOX
 	PTTEnable         byte   `json:"ptt_enable"`          //0x01  0=PTT DISABLE   1=PTT ENABLE
 	PTTLevelReversed  byte   `json:"ptt_level_reversed"`  //0x02  PTT电平反转     NRL2100 待机=0  发射=1   NRL2300 PTT 待机=1 发射=0
 	AddTailVoice      string `json:"add_tail_voice"`      //0x03-0x04  默认加尾音20   步进5ms,最小大于20*5=100ms
@@ -85,20 +85,20 @@ func decodeControlPacket(data []byte) *control {
 		c.DCDSelect = c.data[0]
 		c.PTTEnable = c.data[1]
 		c.PTTLevelReversed = c.data[2]
-		c.AddTailVoice = fmt.Sprintf("%02X ", c.data[3:5])
-		c.RemoveTailVoice = fmt.Sprintf("%02X ", c.data[5:7]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
+		c.AddTailVoice = fmt.Sprintf("%02X", c.data[3:5])
+		c.RemoveTailVoice = fmt.Sprintf("%02X", c.data[5:7]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
 		//c.AddTailVoice = uint16(c.data[3])<<8 | uint16(c.data[4])
 		//c.RemoveTailVoice = uint16(c.data[5])<<8 | uint16(c.data[6]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
-		c.PTTresistive = c.data[7]                         //0x07  PTT 电阻  0=0FF 1=EN
-		c.MonitorOut = c.data[8]                           //0x08  MONITOR 监听输出  0=0FF 1=EN
-		c.KeyFunc = c.data[9]                              //0x09  自定义KEY  0=Relay 1=MANUAL PTT
-		c.RealyStatus = c.data[10]                         //0x0A  Relay继电器掉电状态 0=断开  1=吸合
-		c.AllowRealyControl = c.data[11]                   //0x0B  是否允许继电器控制
-		c.VoiceBitrate = c.data[12]                        //0x0C  H=原码率  M=码率/2
-		c.LocalCPUID = fmt.Sprintf("%02X ", c.data[16:20]) //0x10-0x16  本机设备序列号，不可修改
-		c.LocalPassword = fmt.Sprintf("%02X ", c.data[20:23])
-		c.PeerCPUID = fmt.Sprintf("%02X ", c.data[23:27])                                          //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
-		c.PeerPassword = fmt.Sprintf("%02X ", c.data[27:30])                                       //远程目标接入密码，0-9 A-F 可修改
+		c.PTTresistive = c.data[7]                        //0x07  PTT 电阻  0=0FF 1=EN
+		c.MonitorOut = c.data[8]                          //0x08  MONITOR 监听输出  0=0FF 1=EN
+		c.KeyFunc = c.data[9]                             //0x09  自定义KEY  0=Relay 1=MANUAL PTT
+		c.RealyStatus = c.data[10]                        //0x0A  Relay继电器掉电状态 0=断开  1=吸合
+		c.AllowRealyControl = c.data[11]                  //0x0B  是否允许继电器控制
+		c.VoiceBitrate = c.data[12]                       //0x0C  H=原码率  M=码率/2
+		c.LocalCPUID = fmt.Sprintf("%02X", c.data[16:20]) //0x10-0x16  本机设备序列号，不可修改
+		c.LocalPassword = fmt.Sprintf("%02X", c.data[20:23])
+		c.PeerCPUID = fmt.Sprintf("%02X", c.data[23:27])                                           //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
+		c.PeerPassword = fmt.Sprintf("%02X", c.data[27:30])                                        //远程目标接入密码，0-9 A-F 可修改
 		c.InitSign = c.data[31]                                                                    //0x1F  //初始化标记
 		c.LocalIPaddr = fmt.Sprintf("%v.%v.%v.%v", c.data[32], c.data[33], c.data[34], c.data[35]) //0x20-0x23  192.168.1.190
 		c.Gateway = fmt.Sprintf("%v.%v.%v.%v", c.data[36], c.data[37], c.data[38], c.data[39])     //0x24-0x27  192.168.1.1
@@ -193,7 +193,7 @@ func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 	packet = append(packet, []byte{0x00, 0x00}...)       //crc   46-47
 	packet = append(packet, subtype)                     // 查询
 
-	fmt.Println(len(packet), fmt.Sprintf("%02X ", packet))
+	fmt.Println(len(packet), fmt.Sprintf("%02X", packet))
 
 	//fmt.Println(string(packet))
 

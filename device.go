@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -273,18 +272,87 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		fmt.Println(k, v)
 
 		switch k {
+
+		case "ptt_enable":
+			res, err := changeDeviceByteParm(cpuid, 1, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
+
+		case "ptt_level_reversed":
+			res, err := changeDeviceByteParm(cpuid, 2, v[0])
+
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
+
+		case "ptt_resistive":
+			res, err := changeDeviceByteParm(cpuid, 7, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
+
+		case "monitor_out":
+			res, err := changeDeviceByteParm(cpuid, 8, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
+
+		case "key_func":
+			res, err := changeDeviceByteParm(cpuid, 9, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
+
 		case "realy_status":
+			res, err := changeDeviceByteParm(cpuid, 10, v[0])
 
-			val, _ := strconv.Atoi(v[0])
-			fmt.Println(k)
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
+		case "allow_relay_control":
+			res, err := changeDeviceByteParm(cpuid, 11, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
 
-			dev := changeDeviceRealyParm(cpuid, byte(val))
+		case "voice_bitrate":
+			res, err := changeDeviceByteParm(cpuid, 12, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
 
-			rescode, _ := jsonextra.Marshal(dev)
-			respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`,
-				rescode)
+		case "ssid":
+			res, err := changeDeviceByteParm(cpuid, 64, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
 
-			w.Write([]byte(respone))
+		case "one_uv_power":
+			res, err := changeDeviceByteParm(cpuid, 163, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				return
+			}
+			w.Write(res)
 
 		}
 
