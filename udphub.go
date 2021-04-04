@@ -28,6 +28,7 @@ type connPool struct {
 type currentConnPool struct {
 	UDPAddr       *net.UDPAddr
 	lastVoiceTime time.Time
+	allowCPUID    string
 	//lastVoiceTime time.Time
 	devConnList map[string]*connPool //key cpuid
 }
@@ -97,6 +98,7 @@ func udpProcess(conn *net.UDPConn) {
 			} else {
 				//否则使用公共群组连接池
 				if p, ok := publicGroupMap[dev.PublicGroupID]; ok {
+
 					NRL21parser(nrl, data[:n], dev, conn, p.connPool)
 				}
 			}
@@ -170,6 +172,12 @@ func NRL21parser(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.U
 	case 1:
 		//语音消息，需要转发给群组内其它设备,
 		//fmt.Println("recived G.711 voice ")
+		// fmt.Println(connpool.allowDEV, n.CPUID, n.CallSign)
+
+		if connpool.allowCPUID != "" && n.CPUID != connpool.allowCPUID {
+			return
+		}
+
 		if _, ok := connpool.devConnList[n.UDPAddrStr]; !ok {
 			connpool.devConnList[n.UDPAddrStr] = &connPool{n.UDPAddr, n.timeStamp, n.timeStamp}
 		}
@@ -217,6 +225,7 @@ func forwardVoice(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.
 		connpool.lastVoiceTime = n.timeStamp
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
+
 		for kk, vv := range connpool.devConnList {
 			//删除超时的会话
 

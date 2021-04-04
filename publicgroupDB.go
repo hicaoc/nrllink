@@ -14,6 +14,7 @@ type publicgroup struct {
 	ID           int           `json:"id" db:"id"`
 	Name         string        `json:"name" db:"name"`
 	Type         int           `json:"type" db:"type"`
+	AllowCPUID   string        `json:"allow_cpuid" db:"allow_cpuid"`
 	DevList      pq.Int64Array `json:"devlist" db:"devlist"`
 	Status       int           `json:"status" db:"status"`
 	OwerID       int           `json:"ower_id" db:"ower_id"`
@@ -52,11 +53,18 @@ func initPublicGroup() {
 	}
 
 	for rows.Next() {
-		pg := &publicgroup{connPool: &currentConnPool{devConnList: make(map[string]*connPool)},
-			DevMap: make(map[int]*deviceInfo, 10)}
+		pg := &publicgroup{}
 		err := rows.StructScan(pg)
 		if err != nil {
 			log.Println("query  all public group rows err:", err)
+		}
+
+		pg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
+		pg.DevMap = make(map[int]*deviceInfo, 10)
+
+		// 类型为3的公共组，只能一个设备转发，用于中继收听
+		if pg.Type == 3 {
+			pg.connPool.allowCPUID = pg.AllowCPUID
 		}
 
 		publicGroupMap[pg.ID] = pg
@@ -119,11 +127,11 @@ func (u *userinfo) addDevToRoom(dev *deviceInfo, roomid int) (err error) {
 func addPublicGroup(pg *publicgroup) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO public_groups (name,type,callsign,ower_id,devlist,status,note,create_time,update_time	) 
+	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,devlist,status,note,create_time,update_time	) 
 	VALUES ($1,$2,$3,$4,$5,$6,$7,now(),now()) RETURNING id`
 
 	resault, err := db.Exec(query,
-		pg.Name, pg.Type, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.Status, pg.Note)
+		pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.Status, pg.Note)
 
 	if err != nil {
 		log.Println("bing dev failed, ", err, '\n', query)
@@ -140,14 +148,31 @@ func addPublicGroup(pg *publicgroup) error {
 
 func updatePublicGroup(pg *publicgroup) error {
 
-	_, err := db.Exec(`update public_groups set name=$1, type=$2,   status=$3, note=$4 ,update_time=now()  where id=$5`,
-		pg.Name, pg.Type, pg.Status, pg.Note, pg.ID)
+	_, err := db.Exec(`update public_groups set name=$1,  type=$2,  allow_cpuid=$3,  status=$4, note=$5 ,update_time=now()  where id=$6`,
+		pg.Name, pg.Type, pg.AllowCPUID, pg.Status, pg.Note, pg.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err
 	}
 
-	initPublicGroup()
+	if p, ok := publicGroupMap[pg.ID]; ok {
+
+		p.Name = pg.Name
+		p.Type = pg.Type
+		p.Status = pg.Status
+		p.Note = pg.Note
+		p.UpdateTime = time.Now()
+		p.AllowCPUID = pg.AllowCPUID
+		p.connPool.allowCPUID = pg.AllowCPUID
+
+		if pg.Type == 3 {
+			p.connPool.allowCPUID = pg.AllowCPUID
+		} else {
+
+			p.connPool.allowCPUID = ""
+		}
+
+	}
 
 	return nil
 
@@ -155,12 +180,12 @@ func updatePublicGroup(pg *publicgroup) error {
 
 func deletePublicGroup(pg *publicgroup) error {
 
-	_, err := db.Exec(`delete from public_groups  where id=$5`,
-		pg.Name, pg.Type, pg.Status, pg.Note, pg.ID)
+	_, err := db.Exec(`delete from public_groups  where id=$1`, pg.ID)
 	if err != nil {
 		log.Println("delete public group failed, ", err)
 		return err
 	}
+	delete(publicGroupMap, pg.ID)
 
 	return nil
 

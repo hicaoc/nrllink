@@ -11,7 +11,7 @@ import (
 func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
+	u, ok := checktoken(w, req)
 	if !ok {
 		return
 	}
@@ -31,6 +31,8 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	devicelist := make(map[int]deviceInfo, 10)
 
+	isadmin := checkrole(u, []string{"admin"})
+
 	var id int
 
 	for _, vv := range devCPUIDMap {
@@ -42,8 +44,10 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 		dev := *vv
 
-		dev.CPUID = ""
-		dev.DeviceParm = nil
+		if !isadmin {
+			dev.CPUID = ""
+			dev.DeviceParm = nil
+		}
 
 		devicelist[id] = dev
 		id++
@@ -224,9 +228,11 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 	stb := &deviceInfo{}
 	err := jsonextra.Unmarshal(result, &stb)
 
-	if stb.CallSign != u.CallSign {
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误，必须本人操作"}}`))
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 		return
+
 	}
 
 	dev := queryDeviceParm(stb.CPUID)
@@ -248,7 +254,7 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
+	u, ok := checktoken(w, req)
 	if !ok {
 		return
 	}
@@ -258,6 +264,14 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 	fmt.Println("REQ:", len(req.Form))
 
 	cpuid := req.Form["CPUID"][0]
+	callsign := req.Form["callsign"][0]
+
+	if !checkrole(u, []string{"admin"}) && u.CallSign != callsign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+		return
+
+	}
 
 	if cpuid == "" {
 
