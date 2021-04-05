@@ -62,7 +62,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin", "superadmin"}) {
+	if !checkrole(u, []string{"admin", "ham"}) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -76,7 +76,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("user list err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询所有员工列表参数错误"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询所有用户列表错误"}}`))
 		return
 	}
 
@@ -340,7 +340,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin", "master"}) {
+	if !checkrole(u, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
 		return
 

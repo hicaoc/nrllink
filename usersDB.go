@@ -188,7 +188,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
+	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,to_char(birthday,'YYYY-MM-DD') as birthday,
 	sex,nickname,openid,avatar,status,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
 	login_err_times,alarm_msg,roles,create_time,update_time FROM users  %v   ORDER by id asc %v  `, w, p)
 
@@ -252,7 +252,7 @@ func getuser(username string) *userinfo {
 
 	r := &userinfo{}
 
-	query := `SELECT  id,pid,name,phone,callsign,gird,
+	query := `SELECT  id,pid,name,phone,callsign,gird,to_char(birthday,'YYYY-MM-DD') as birthday,
 	sex,	nickname,openid,avatar,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
 	login_err_times,alarm_msg,roles,create_time,update_time FROM users where phone=$1  `
 
@@ -296,7 +296,7 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
+	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,to_char(birthday,'YYYY-MM-DD') as birthday,
 	sex,nickname,openid,avatar,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
 	login_err_times,alarm_msg,roles,create_time,update_time FROM users
 	 where  roles @> '{%v}'  ORDER BY id ASC`, role)
@@ -481,7 +481,7 @@ func addUser(e *userinfo) error {
 
 func deleteUser(e *userinfo) {
 
-	_, err := db.Exec("delete from user where id=$1", e.ID)
+	_, err := db.Exec("delete from users where id=$1", e.ID)
 	if err != nil {
 		log.Println("delete user failed, ", err)
 		return
