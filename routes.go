@@ -23,7 +23,7 @@ type routes struct {
 func getRoutes() *routes {
 	r := &routes{}
 
-	query := fmt.Sprintf("SELECT * from routes ")
+	query := "SELECT * from routes "
 
 	err := db.Get(r, query)
 	if err != nil {
@@ -75,7 +75,7 @@ func (j *jsonapi) httpSetRoutes(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(u, []string{"admin"}) == false {
+	if !checkrole(u, []string{"admin"}) {
 		w.Write([]byte("{\"code\":20000,\"data\":{\"message\":\"当前用户没有权限设置此参数\"}}"))
 		return
 

@@ -166,10 +166,17 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if stb.CallSign != u.CallSign {
-		w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 		return
+
 	}
+
+	// if stb.CallSign != u.CallSign {
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
+	// 	return
+	// }
 
 	err = updateDevice(stb)
 

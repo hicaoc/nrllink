@@ -16,11 +16,11 @@ import (
 
 //var tokenidmap = make(map[string]operater, 0)
 
-type token struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-	Scope       string `json:"scope"`
-}
+// type token struct {
+// 	AccessToken string `json:"access_token"`
+// 	ExpiresIn   int    `json:"expires_in"`
+// 	Scope       string `json:"scope"`
+// }
 
 type loginreq struct {
 	Username string `json:"username"`
@@ -41,7 +41,8 @@ type tokenpayload struct {
 	Name  string   `json:"name"`
 	Roles []string `json:"roles"`
 }
-type tokensignature struct{}
+
+// type tokensignature struct{}
 
 type tokenrescode struct {
 	Code    int     `json:"code"`
@@ -310,7 +311,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(stb, []string{"admin"}) == true {
+	if checkrole(stb, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"内置账号无法删除"}}`))
 		return
 
@@ -330,7 +331,7 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(u, []string{"superadmin", "master", "admin", "view", "xiaozhang"}) == false {
+	if !checkrole(u, []string{"superadmin", "master", "admin", "view", "xiaozhang"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -338,7 +339,7 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 
 	query := " where name_key != 'admin' "
 
-	if checkrole(u, []string{"admin"}) == true {
+	if checkrole(u, []string{"admin"}) {
 		query = ""
 	}
 
@@ -362,7 +363,7 @@ func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(u, []string{"admin"}) == false {
+	if !checkrole(u, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -586,7 +587,7 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, bool) {
 	h.Write([]byte(p[1]))
 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
-	if strings.EqualFold(sign, p[2]) == false {
+	if !strings.EqualFold(sign, p[2]) {
 		log.Println("token err key not equal")
 		w.Write([]byte(`{"code":50008,"data":{"isok":1,"message":"token sign err"}}`))
 		return nil, false

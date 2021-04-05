@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"strconv"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
@@ -114,23 +112,6 @@ func sethttphead(w http.ResponseWriter) {
 
 }
 
-func upper(ws *websocket.Conn) {
-	var err error
-	for {
-		var reply string
-
-		if err = websocket.Message.Receive(ws, &reply); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		if err = websocket.Message.Send(ws, strings.ToUpper(reply)); err != nil {
-			fmt.Println(err)
-			continue
-		}
-	}
-}
-
 func (j *jsonapi) msghttp() {
 
 	// fs := http.FileServer(http.Dir(conf.topnpath))
@@ -191,7 +172,7 @@ func (j *jsonapi) msghttp() {
 	//http.HandleFunc("/login", j.httplogin)
 	//http.HandleFunc("/reg", j.httpreg)
 
-	//http.Handle("/ws", websocket.Handler(upper))
+	http.Handle("/ws", websocket.Handler(upper))
 
 	http.Handle("/", http.FileServer(http.Dir(conf.wwwpath)))
 
@@ -530,13 +511,13 @@ type total struct {
 	Total int `json:"total" db:"total"`
 }
 
-func array2strings(status []int) (s string) {
-	s = "("
+// func array2strings(status []int) (s string) {
+// 	s = "("
 
-	for _, v := range status {
-		s = s + strconv.Itoa(v) + ","
-	}
-	s = strings.TrimSuffix(s, ",") + ")"
+// 	for _, v := range status {
+// 		s = s + strconv.Itoa(v) + ","
+// 	}
+// 	s = strings.TrimSuffix(s, ",") + ")"
 
-	return s
-}
+// 	return s
+// }

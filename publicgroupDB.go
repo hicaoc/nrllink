@@ -128,13 +128,13 @@ func addPublicGroup(pg *publicgroup) error {
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,devlist,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,now(),now()) RETURNING id`
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),now()) RETURNING id`
 
 	resault, err := db.Exec(query,
 		pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.Status, pg.Note)
 
 	if err != nil {
-		log.Println("bing dev failed, ", err, '\n', query)
+		log.Println("add public group failed, ", err, '\n', query)
 		return err
 	} else {
 		fmt.Println("resault:", resault)
@@ -151,7 +151,7 @@ func updatePublicGroup(pg *publicgroup) error {
 	_, err := db.Exec(`update public_groups set name=$1,  type=$2,  allow_cpuid=$3,  status=$4, note=$5 ,update_time=now()  where id=$6`,
 		pg.Name, pg.Type, pg.AllowCPUID, pg.Status, pg.Note, pg.ID)
 	if err != nil {
-		log.Println("update device failed, ", err)
+		log.Println("update public group failed, ", err)
 		return err
 	}
 
