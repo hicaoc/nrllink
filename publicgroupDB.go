@@ -142,33 +142,20 @@ func addPublicGroup(pg *publicgroup) error {
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,devlist,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),now()) RETURNING id`
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),now()) `
 
-	resault, err := db.Exec(query,
+	_, err := db.Exec(query,
 		pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.Status, pg.Note)
 
 	if err != nil {
 		log.Println("add public group failed, ", err, '\n', query)
 		return err
-	} else {
-		id, err := resault.LastInsertId()
-		if err != nil {
-			fmt.Println("resault err:", err)
-
-		} else {
-			fmt.Println("add group resault ID is :", id)
-			// if _, ok := publicGroupMap[int(id)]; !ok {
-			// 	// 	publicGroupMap[int(id)] = pg
-
-			// }
-
-		}
-
-		gp := getGroup(pg.Name)
-		if _, ok := publicGroupMap[gp.ID]; !ok {
-			publicGroupMap[gp.ID] = pg
-		}
-
+	}
+	newpg := getGroup(pg.Name)
+	if _, ok := publicGroupMap[newpg.ID]; !ok {
+		newpg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
+		newpg.DevMap = make(map[int]*deviceInfo, 10)
+		publicGroupMap[newpg.ID] = newpg
 	}
 
 	//initPublicGroup()
