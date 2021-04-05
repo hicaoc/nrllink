@@ -73,6 +73,20 @@ func initPublicGroup() {
 
 }
 
+func getGroup(name string) (gp *publicgroup) {
+	gp = &publicgroup{}
+
+	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+
+	//fmt.Println(id, query)
+	err := db.Get(gp, `select * FROM public_groups  where name=$1`, name)
+	if err != nil {
+		log.Println("get group by name err:", err, name)
+	}
+	return gp
+
+}
+
 func addDevToGroup(dev *deviceInfo, publicgroupid int) (err error) {
 
 	//从之前的组删除
@@ -137,10 +151,27 @@ func addPublicGroup(pg *publicgroup) error {
 		log.Println("add public group failed, ", err, '\n', query)
 		return err
 	} else {
-		fmt.Println("resault:", resault)
+		id, err := resault.LastInsertId()
+		if err != nil {
+			fmt.Println("resault err:", err)
+
+		} else {
+			fmt.Println("add group resault ID is :", id)
+			// if _, ok := publicGroupMap[int(id)]; !ok {
+			// 	// 	publicGroupMap[int(id)] = pg
+
+			// }
+
+		}
+
+		gp := getGroup(pg.Name)
+		if _, ok := publicGroupMap[gp.ID]; !ok {
+			publicGroupMap[gp.ID] = pg
+		}
+
 	}
 
-	initPublicGroup()
+	//initPublicGroup()
 
 	return nil
 
