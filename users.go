@@ -244,6 +244,54 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	result, _ := ioutil.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &userinfo{}
+	err := jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("update user  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		return
+	}
+
+	if u.ID != stb.ID {
+		log.Println("update user  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"无权限更新密码"}}`))
+		return
+
+	}
+
+	// if checkrole(stb, []string{"admin"}) {
+	// 	w.Write([]byte("{"code":20000,"data":{"message":"内置账号，无法修改"}}"))
+	// 	return
+	// }
+
+	//stb.Area = u.Area
+	err = updateUserPassword(stb.ID, stb.Password)
+
+	if err != nil {
+		log.Println("update user password err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"密码修改失败"}}`))
+		return
+	}
+
+	addOperatorLog(stb.String(), "修改密码成功", u)
+
+	w.Write([]byte(`{"code":20000,"data":{"message":"密码更新成功"}}`))
+
+}
+
 func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -534,5 +535,20 @@ func updateUser(e *userinfo) {
 		}
 
 	}
+
+}
+
+func updateUserPassword(id int, password string) error {
+
+	if password != "" {
+		//	fmt.Println("password:", e.Password, len(e.Password))
+		_, err := db.Exec("update users set password= crypt($1, gen_salt('md5'))  where id=$2", password, id)
+		if err != nil {
+			log.Println("update user password failed, ", err)
+			return errors.New("passord update err")
+		}
+
+	}
+	return nil
 
 }
