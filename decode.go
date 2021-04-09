@@ -17,6 +17,7 @@ type NRL21packet struct {
 	Type       byte         //上层数据类型 一个字节 0:心跳，1：控制指令 2：G.711语音 3：上线认证，4：设备状态，入电压，温度等，CPU使用率等 5:msg
 	Status     byte         //设备状态位
 	CPUID      string       //设备唯一标识 长度7字节
+	Password   string       //密码
 	//	Gird     string       //网格号 10字节
 	CallSign string //所有者呼号 6字节
 	SSID     byte   //所有者呼号 1字节
@@ -37,7 +38,8 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.Length = binary.BigEndian.Uint16(d[4:6])
 	n.Type = d[20]
 	n.Status = d[21]
-	n.CPUID = fmt.Sprintf("%02X", d[6:13])
+	n.CPUID = fmt.Sprintf("%02X", d[6:10])
+	n.Password = fmt.Sprintf("%02X", d[10:13])
 	//n.Gird = ""
 	n.CallSign = string(d[24:30])
 	n.SSID = d[30]

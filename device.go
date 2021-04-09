@@ -168,7 +168,7 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
 		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
 		return
 
 	}
@@ -182,10 +182,9 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,设备必须先绑定"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,设备必须先绑定,未绑定设备不支持切换群组"}}`))
 		return
 	}
-
 	w.Write([]byte(`{"code":20000,"data":{"message":"设备更新成功成功"}}`))
 
 }

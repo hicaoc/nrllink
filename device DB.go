@@ -260,6 +260,10 @@ func updateDevice(e *deviceInfo) error {
 
 	//不更新设备所有者，所有者在绑定的时候一次性生成
 
+	if e.ID > 1000000 {
+		return fmt.Errorf("temp device no support change group %v %v ", e.CPUID, e.GroupID)
+	}
+
 	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 
 	public_group_id=$5,group_id=$6, note=$7,update_time=now()  where id=$8`,
 		e.Name, e.Gird, e.DevType, e.DevModel, e.PublicGroupID, e.GroupID, e.Note, e.ID)
