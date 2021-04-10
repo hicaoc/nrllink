@@ -195,7 +195,6 @@ func NRL21parser(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.U
 		conn.WriteToUDP(packet, n.UDPAddr)
 	case 3:
 		//控制报文
-
 		devinfo.DeviceParm = decodeControlPacket(n.DATA)
 
 	case 4:

@@ -234,6 +234,12 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 	stb := &deviceInfo{}
 	err := jsonextra.Unmarshal(result, &stb)
 
+	if err != nil {
+		log.Println("device parm query  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误"}}`))
+		return
+	}
+
 	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
 		log.Println("device parm query  err")
 		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
@@ -241,12 +247,13 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 
 	}
 
-	dev := queryDeviceParm(stb.CPUID)
+	dev, err := queryDeviceParm(stb.CPUID)
 
-	if dev == nil {
+	if err != nil {
 		log.Println("device parm query  err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误，可能设备不在线，或者固件版本过低"}}`))
 		return
+
 	}
 
 	rescode, _ := jsonextra.Marshal(dev)

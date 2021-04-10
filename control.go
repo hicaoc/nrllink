@@ -178,20 +178,21 @@ func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 
 	id, _ := hex.DecodeString(dev.CPUID)
 
-	packet = append(packet, id...)                 //本机CPUID  6-12
-	packet = append(packet, id...)                 //目标CPUID  13-19
-	packet = append(packet, 3)                     //类型3  20
-	packet = append(packet, 0)                     //busy 21
-	packet = append(packet, []byte{0x00, 0x00}...) //计数器  22-23
+	packet = append(packet, id...) //本机CPUID  6-10
 
-	cs := make([]byte, 6)
-	copy(cs, []byte(dev.CallSign))
-	packet = append(packet, cs...)                       //callsign     24-29
-	packet = append(packet, dev.SSID)                    // 30
-	packet = append(packet, []byte{0x21, 0x03, 0x14}...) //version  31-33
-	packet = append(packet, make([]byte, 12)...)         //Reserved  34-45
-	packet = append(packet, []byte{0x00, 0x00}...)       //crc   46-47
-	packet = append(packet, subtype)                     // 查询
+	pass_hex_data, _ := hex.DecodeString(dev.Password)
+	packet = append(packet, []byte(pass_hex_data)[:3]...) //本机设备密码  10-12
+	packet = append(packet, id...)                        //目标CPUID  13-19
+	packet = append(packet, []byte(pass_hex_data)[:3]...) //目标设备密码  10-12
+	packet = append(packet, 3)                            //类型3  20
+	packet = append(packet, 0)                            //busy 21
+	packet = append(packet, []byte{0x00, 0x00}...)        //计数器  22-23
+	packet = append(packet, []byte(dev.CallSign)[:6]...)  //callsign     24-29
+	packet = append(packet, dev.SSID)                     // 30
+	packet = append(packet, []byte{0x21, 0x03, 0x14}...)  //version  31-33
+	packet = append(packet, make([]byte, 12)...)          //Reserved  34-45
+	packet = append(packet, []byte{0x00, 0x00}...)        //crc   46-47
+	packet = append(packet, subtype)                      // 查询
 
 	fmt.Println(len(packet), fmt.Sprintf("%02X", packet))
 
