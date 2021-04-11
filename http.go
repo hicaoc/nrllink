@@ -67,12 +67,14 @@ type platforminfo struct {
 var totalstats = totalStats{}
 
 type totalStats struct {
-	DevNumber     int `json:"dev_number"`
-	UserNumbert   int `json:"user_number"`
-	PacketNumber  int `json:"packet_number"`
-	SessionNumber int `json:"session_number"`
-	MsgNumber     int `json:"msg_number"`
-	LostPercent   int `json:"lost_percent"`
+	DevNumber       int `json:"dev_number"`
+	OnlineDevNumber int `json:"online_dev_number"`
+	UserNumbert     int `json:"user_number"`
+	Traffic         int `json:"traffic"`
+	PacketNumber    int `json:"packet_number"`
+	SessionNumber   int `json:"session_number"`
+	MsgNumber       int `json:"msg_number"`
+	LostPercent     int `json:"lost_percent"`
 }
 
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {

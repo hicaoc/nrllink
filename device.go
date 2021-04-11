@@ -35,11 +35,15 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	var id int
 
+	totalstats.OnlineDevNumber = 0
+
 	for _, vv := range devCPUIDMap {
 
 		t := time.Now()
 		if t.Sub(vv.LastPacketTime) > 5*time.Second {
 			vv.ISOnline = false
+		} else {
+			totalstats.OnlineDevNumber++
 		}
 
 		dev := *vv

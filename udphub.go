@@ -85,6 +85,8 @@ func udpProcess(conn *net.UDPConn) {
 
 			dev.udpAddr = nrl.UDPAddr
 			dev.LastPacketTime = nrl.timeStamp
+			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
+			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
 			//  没有加入公共组的设备，使用用户内置连接池
 			if dev.GroupID != 0 && dev.PublicGroupID == 0 {
@@ -232,7 +234,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 			//删除超时的会话
 
 			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
-				log.Println("device timeout offline:", kk)
+				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
 				delete(connpool.devConnList, kk)
 				continue
 			}
@@ -270,7 +272,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 
 		for kk, vv := range connpool.devConnList {
 			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
-				log.Println("device timeout offline:", kk)
+				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
 				delete(connpool.devConnList, kk)
 				continue
 			}
