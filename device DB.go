@@ -31,6 +31,7 @@ type deviceInfo struct {
 	OnlineTime     time.Time `json:"online_time" db:"online_time"` //设备上线时间
 	ISOnline       bool      `json:"is_online" db:"is_online"`     //当前是否在线
 	LastPacketTime time.Time `json:"last_packet_time" `            //最后一次报文时间
+	LastVoiceTime  time.Time `json:"last_voice_time"`              //最后语音时间
 	Note           string    `json:"note" db:"note"`               //设备上线时间
 	DeviceParm     *control  `json:"device_parm"`
 }
