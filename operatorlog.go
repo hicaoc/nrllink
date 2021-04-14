@@ -32,7 +32,7 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 
 	req.Body.Close()
 
-	list := make([]OperatorLog, 0)
+	//list := make([]OperatorLog, 0)
 	var total = 0
 
 	stb := &query{}
@@ -46,7 +46,7 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 
 	ww, p, _ := queryToWhere("", *stb)
 
-	list, total = getOperatorLog(ww, p, u)
+	list, total := getOperatorLog(ww, p, u)
 
 	// list := getOperatorLog()
 

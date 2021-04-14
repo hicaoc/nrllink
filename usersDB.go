@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/sha1"
+	"errors"
 	"fmt"
 	"log"
 
@@ -16,29 +16,29 @@ import (
 // 	}
 // }
 
-func getsha1(s string) string {
+// func getsha1(s string) string {
 
-	// 生成一个hash的模式是`sha1.New()`，`sha1.Write(bytes)`
-	// 然后是`sha1.Sum([]byte{})`，下面我们开始一个新的hash
-	// 示例
-	h := sha1.New()
+// 	// 生成一个hash的模式是`sha1.New()`，`sha1.Write(bytes)`
+// 	// 然后是`sha1.Sum([]byte{})`，下面我们开始一个新的hash
+// 	// 示例
+// 	h := sha1.New()
 
-	// 写入要hash的字节，如果你的参数是字符串，使用`[]byte(s)`
-	// 把它强制转换为字节数组
-	h.Write([]byte(s))
+// 	// 写入要hash的字节，如果你的参数是字符串，使用`[]byte(s)`
+// 	// 把它强制转换为字节数组
+// 	h.Write([]byte(s))
 
-	// 这里计算最终的hash值，Sum的参数是用来追加而外的字节到要
-	// 计算的hash字节里面，一般来讲，如果上面已经把需要hash的
-	// 字节都写入了，这里就设为nil就可以了
-	bs := h.Sum(nil)
+// 	// 这里计算最终的hash值，Sum的参数是用来追加而外的字节到要
+// 	// 计算的hash字节里面，一般来讲，如果上面已经把需要hash的
+// 	// 字节都写入了，这里就设为nil就可以了
+// 	bs := h.Sum(nil)
 
-	// SHA1散列值经常以16进制的方式输出，例如git commit就是
-	// 这样，所以可以使用`%x`来将散列结果格式化为16进制的字符串
+// 	// SHA1散列值经常以16进制的方式输出，例如git commit就是
+// 	// 这样，所以可以使用`%x`来将散列结果格式化为16进制的字符串
 
-	return string(bs)
-	// fmt.Println(s)
-	// fmt.Printf("%x\n", bs)
-}
+// 	return string(bs)
+// 	// fmt.Println(s)
+// 	// fmt.Printf("%x\n", bs)
+// }
 
 type userinfo struct {
 	//uUID     string `db:"uuid"`
@@ -188,7 +188,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
+	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,to_char(birthday,'YYYY-MM-DD') as birthday,
 	sex,nickname,openid,avatar,status,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
 	login_err_times,alarm_msg,roles,create_time,update_time FROM users  %v   ORDER by id asc %v  `, w, p)
 
@@ -216,45 +216,45 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 
 }
 
-func selectuserBySuperadmin(idlist pq.Int64Array, w string, p string, sort string) ([]userinfo, int) {
+// func selectuserBySuperadmin(idlist pq.Int64Array, w string, p string, sort string) ([]userinfo, int) {
 
-	emp := []userinfo{}
+// 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
-	sex,nickname,openid,avatar,status,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
-	login_err_times,alarm_msg,roles,create_time,update_time FROM users  %v ORDER by id asc %v  `, w, p)
+// 	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
+// 	sex,nickname,openid,avatar,status,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
+// 	login_err_times,alarm_msg,roles,create_time,update_time FROM users  %v ORDER by id asc %v  `, w, p)
 
-	//fmt.Println(query)
+// 	//fmt.Println(query)
 
-	err := db.Select(&emp, query, idlist)
+// 	err := db.Select(&emp, query, idlist)
 
-	if err != nil {
-		log.Println("查询用户列表错误: ", err, "\n", query)
-		return nil, 0
+// 	if err != nil {
+// 		log.Println("查询用户列表错误: ", err, "\n", query)
+// 		return nil, 0
 
-	}
+// 	}
 
-	t := &total{}
-	q := fmt.Sprintf(`SELECT count(*) as total FROM users  %v  `, w)
-	//fmt.Println(q)
-	err2 := db.Get(t, q, idlist)
-	if err2 != nil {
-		log.Println(" 查询用户列表total错误 err:", err, t)
-		return nil, 0
-	}
-	//fmt.Println(emp)
-	return emp, t.Total
-	//fmt.Println(emp)
+// 	t := &total{}
+// 	q := fmt.Sprintf(`SELECT count(*) as total FROM users  %v  `, w)
+// 	//fmt.Println(q)
+// 	err2 := db.Get(t, q, idlist)
+// 	if err2 != nil {
+// 		log.Println(" 查询用户列表total错误 err:", err, t)
+// 		return nil, 0
+// 	}
+// 	//fmt.Println(emp)
+// 	return emp, t.Total
+// 	//fmt.Println(emp)
 
-}
+// }
 
 func getuser(username string) *userinfo {
 
 	r := &userinfo{}
 
-	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
+	query := `SELECT  id,pid,name,phone,callsign,gird,to_char(birthday,'YYYY-MM-DD') as birthday,
 	sex,	nickname,openid,avatar,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
-	login_err_times,alarm_msg,roles,create_time,update_time FROM users where phone=$1  `)
+	login_err_times,alarm_msg,roles,create_time,update_time FROM users where phone=$1  `
 
 	err := db.Get(r, query, username)
 	if err != nil {
@@ -272,31 +272,31 @@ func getuser(username string) *userinfo {
 	return r
 }
 
-func getuserByID(id int) *userinfo {
+// func getuserByID(id int) *userinfo {
 
-	r := &userinfo{}
+// 	r := &userinfo{}
 
-	if id == 0 {
-		return r
-	}
+// 	if id == 0 {
+// 		return r
+// 	}
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+// 	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
 
-	//fmt.Println(id, query)
-	err := db.Get(r, `SELECT  id,pid,name,phone,callsign,gird,
-	sex,	nickname,openid,avatar,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
-	login_err_times,alarm_msg,roles,create_time,update_time FROM users  where id=$1`, id)
-	if err != nil {
-		log.Println("get user by ID err:", err, r, id)
-	}
-	return r
-}
+// 	//fmt.Println(id, query)
+// 	err := db.Get(r, `SELECT  id,pid,name,phone,callsign,gird,
+// 	sex,	nickname,openid,avatar,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
+// 	login_err_times,alarm_msg,roles,create_time,update_time FROM users  where id=$1`, id)
+// 	if err != nil {
+// 		log.Println("get user by ID err:", err, r, id)
+// 	}
+// 	return r
+// }
 
 func getEmpListByRole(role string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,
+	query := fmt.Sprintf(`SELECT  id,pid,name,phone,callsign,gird,to_char(birthday,'YYYY-MM-DD') as birthday,
 	sex,nickname,openid,avatar,to_char(last_login_time,'YYYY-MM-DD HH24:MI:SS') as last_login_time,
 	login_err_times,alarm_msg,roles,create_time,update_time FROM users
 	 where  roles @> '{%v}'  ORDER BY id ASC`, role)
@@ -460,9 +460,9 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 func addUser(e *userinfo) error {
 
 	//	fmt.Println("user:", e)
-	query := fmt.Sprintf(`INSERT INTO users (pid,name,phone,sex,callsign,gird,address,birthday,introduction,
+	query := `INSERT INTO users (pid,name,phone,sex,callsign,gird,address,birthday,introduction,
 		avatar,status,password,roles,alarm_msg,last_login_time,login_err_times,update_time) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,crypt($12, gen_salt('md5')),$13,false,now(),0,now())`)
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,crypt($12, gen_salt('md5')),$13,false,now(),0,now())`
 	//	e.Avatar = "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif"
 	e.Avatar = conf.avatarurl
 
@@ -481,7 +481,7 @@ func addUser(e *userinfo) error {
 
 func deleteUser(e *userinfo) {
 
-	_, err := db.Exec("delete from user where id=$1", e.ID)
+	_, err := db.Exec("delete from users where id=$1", e.ID)
 	if err != nil {
 		log.Println("delete user failed, ", err)
 		return
@@ -535,5 +535,20 @@ func updateUser(e *userinfo) {
 		}
 
 	}
+
+}
+
+func updateUserPassword(id int, password string) error {
+
+	if password != "" {
+		//	fmt.Println("password:", e.Password, len(e.Password))
+		_, err := db.Exec("update users set password= crypt($1, gen_salt('md5'))  where id=$2", password, id)
+		if err != nil {
+			log.Println("update user password failed, ", err)
+			return errors.New("passord update err")
+		}
+
+	}
+	return nil
 
 }

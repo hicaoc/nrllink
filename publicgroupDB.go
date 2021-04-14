@@ -14,6 +14,7 @@ type publicgroup struct {
 	ID           int           `json:"id" db:"id"`
 	Name         string        `json:"name" db:"name"`
 	Type         int           `json:"type" db:"type"`
+	AllowCPUID   string        `json:"allow_cpuid" db:"allow_cpuid"`
 	DevList      pq.Int64Array `json:"devlist" db:"devlist"`
 	Status       int           `json:"status" db:"status"`
 	OwerID       int           `json:"ower_id" db:"ower_id"`
@@ -54,16 +55,37 @@ func initPublicGroup() {
 	}
 
 	for rows.Next() {
-		pg := &publicgroup{connPool: &currentConnPool{devConnList: make(map[string]*connPool)},
-			DevMap: make(map[int]*deviceInfo, 10)}
+		pg := &publicgroup{}
 		err := rows.StructScan(pg)
 		if err != nil {
 			log.Println("query  all public group rows err:", err)
 		}
 
+		pg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
+		pg.DevMap = make(map[int]*deviceInfo, 10)
+
+		// 类型为3的公共组，只能一个设备转发，用于中继收听
+		if pg.Type == 3 {
+			pg.connPool.allowCPUID = pg.AllowCPUID
+		}
+
 		publicGroupMap[pg.ID] = pg
 
 	}
+
+}
+
+func getGroup(name string) (gp *publicgroup) {
+	gp = &publicgroup{}
+
+	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+
+	//fmt.Println(id, query)
+	err := db.Get(gp, `select * FROM public_groups  where name=$1`, name)
+	if err != nil {
+		log.Println("get group by name err:", err, name)
+	}
+	return gp
 
 }
 
@@ -121,20 +143,23 @@ func (u *userinfo) addDevToRoom(dev *deviceInfo, roomid int) (err error) {
 func addPublicGroup(pg *publicgroup) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO public_groups (name,type,callsign,ower_id,devlist,master_server,backup_server,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),now())`
+	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,devlist,master_server,backup_server,status,note,create_time,update_time	) 
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())`
 
-	resault, err := db.Exec(query,
-		pg.Name, pg.Type, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.MasterServer, pg.BackupServer, pg.Status, pg.Note)
+	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.MasterServer, pg.BackupServer, pg.Status, pg.Note)
 
 	if err != nil {
-		log.Println("bing dev failed, ", err, '\n', query)
+		log.Println("add public group failed, ", err, '\n', query)
 		return err
-	} else {
-		fmt.Println("resault:", resault)
+	}
+	newpg := getGroup(pg.Name)
+	if _, ok := publicGroupMap[newpg.ID]; !ok {
+		newpg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
+		newpg.DevMap = make(map[int]*deviceInfo, 10)
+		publicGroupMap[newpg.ID] = newpg
 	}
 
-	initPublicGroup()
+	//initPublicGroup()
 
 	return nil
 
@@ -142,14 +167,32 @@ func addPublicGroup(pg *publicgroup) error {
 
 func updatePublicGroup(pg *publicgroup) error {
 
-	_, err := db.Exec(`update public_groups set name=$1, type=$2,   status=$3,master_server=$4,backup_server=$5, note=$6 ,update_time=now()  where id=$7`,
-		pg.Name, pg.Type, pg.Status, pg.MasterServer, pg.BackupServer, pg.Note, pg.ID)
+	_, err := db.Exec(`update public_groups set name=$1, type=$2,   allow_cpuid=$3, status=$4,master_server=$5,backup_server=$6, note=$7 ,update_time=now()  where id=$8`,
+		pg.Name, pg.Type, pg.AllowCPUID, pg.Status, pg.MasterServer, pg.BackupServer, pg.Note, pg.ID)
+
 	if err != nil {
-		log.Println("update device failed, ", err)
+		log.Println("update public group failed, ", err)
 		return err
 	}
 
-	initPublicGroup()
+	if p, ok := publicGroupMap[pg.ID]; ok {
+
+		p.Name = pg.Name
+		p.Type = pg.Type
+		p.Status = pg.Status
+		p.Note = pg.Note
+		p.UpdateTime = time.Now()
+		p.AllowCPUID = pg.AllowCPUID
+		p.connPool.allowCPUID = pg.AllowCPUID
+
+		if pg.Type == 3 {
+			p.connPool.allowCPUID = pg.AllowCPUID
+		} else {
+
+			p.connPool.allowCPUID = ""
+		}
+
+	}
 
 	return nil
 
@@ -162,6 +205,7 @@ func deletePublicGroup(pg *publicgroup) error {
 		log.Println("delete public group failed, ", err)
 		return err
 	}
+	delete(publicGroupMap, pg.ID)
 
 	return nil
 
