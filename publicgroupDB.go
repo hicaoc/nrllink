@@ -18,6 +18,8 @@ type publicgroup struct {
 	Status       int           `json:"status" db:"status"`
 	OwerID       int           `json:"ower_id" db:"ower_id"`
 	OwerCallsign string        `json:"callsign" db:"callsign"`
+	MasterServer int           `json:"master_server" db:"master_server"`
+	BackupServer int           `json:"backup_server" db:"backup_server"`
 	CreateTime   time.Time     `json:"create_time" db:"create_time"`
 	UpdateTime   time.Time     `json:"update_time" db:"update_time"`
 	Note         string        `json:"note" db:"note"`
@@ -119,11 +121,11 @@ func (u *userinfo) addDevToRoom(dev *deviceInfo, roomid int) (err error) {
 func addPublicGroup(pg *publicgroup) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO public_groups (name,type,callsign,ower_id,devlist,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,now(),now()) RETURNING id`
+	query := `INSERT INTO public_groups (name,type,callsign,ower_id,devlist,master_server,backup_server,status,note,create_time,update_time	) 
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),now())`
 
 	resault, err := db.Exec(query,
-		pg.Name, pg.Type, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.Status, pg.Note)
+		pg.Name, pg.Type, pg.OwerCallsign, pg.OwerID, pg.DevList, pg.MasterServer, pg.BackupServer, pg.Status, pg.Note)
 
 	if err != nil {
 		log.Println("bing dev failed, ", err, '\n', query)
@@ -140,8 +142,8 @@ func addPublicGroup(pg *publicgroup) error {
 
 func updatePublicGroup(pg *publicgroup) error {
 
-	_, err := db.Exec(`update public_groups set name=$1, type=$2,   status=$3, note=$4 ,update_time=now()  where id=$5`,
-		pg.Name, pg.Type, pg.Status, pg.Note, pg.ID)
+	_, err := db.Exec(`update public_groups set name=$1, type=$2,   status=$3,master_server=$4,backup_server=$5, note=$6 ,update_time=now()  where id=$7`,
+		pg.Name, pg.Type, pg.Status, pg.MasterServer, pg.BackupServer, pg.Note, pg.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err
@@ -155,8 +157,7 @@ func updatePublicGroup(pg *publicgroup) error {
 
 func deletePublicGroup(pg *publicgroup) error {
 
-	_, err := db.Exec(`delete from public_groups  where id=$5`,
-		pg.Name, pg.Type, pg.Status, pg.Note, pg.ID)
+	_, err := db.Exec(`delete from public_groups  where id=$1`, pg.ID)
 	if err != nil {
 		log.Println("delete public group failed, ", err)
 		return err

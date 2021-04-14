@@ -193,7 +193,7 @@ func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 	packet = append(packet, []byte{0x00, 0x00}...)       //crc   46-47
 	packet = append(packet, subtype)                     // 查询
 
-	fmt.Println(len(packet), fmt.Sprintf("%02X ", packet))
+	fmt.Println(len(packet), fmt.Sprintf("%02X", packet))
 
 	//fmt.Println(string(packet))
 

@@ -310,7 +310,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(stb, []string{"admin"}) == true {
+	if checkrole(stb, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"内置账号无法删除"}}`))
 		return
 
@@ -338,7 +338,7 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 
 	query := " where name_key != 'admin' "
 
-	if checkrole(u, []string{"admin"}) == true {
+	if checkrole(u, []string{"admin"}) {
 		query = ""
 	}
 

@@ -163,6 +163,11 @@ func (j *jsonapi) msghttp() {
 
 	http.HandleFunc("/room/list", j.httpRoomList)
 
+	http.HandleFunc("/server/list", j.httpServersList)
+	http.HandleFunc("/server/create", j.httpAddServer)
+	http.HandleFunc("/server/update", j.httpUpdateServer)
+	http.HandleFunc("/server/delete", j.httpDeleteServer)
+
 	// http.HandleFunc("/device/create", j.httpAddDevice)
 	// http.HandleFunc("/device/update", j.httpUpdateDevice)
 	// http.HandleFunc("/device/delete", j.httpDeleteDevice)

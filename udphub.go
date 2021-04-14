@@ -40,6 +40,7 @@ func main() {
 
 	db = getDB()
 
+	initServers()
 	initPublicGroup()
 	initAllUserList()
 	initAllDevList()
