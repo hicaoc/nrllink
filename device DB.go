@@ -213,7 +213,7 @@ func bindDevice(dev *deviceInfo, userid int) error {
 
 	if u, ok := userlist[userid]; ok {
 		if _, okok := u.DevList[d.ID]; !okok {
-			dev.ID = d.ID
+			//dev.ID = d.ID
 			u.DevList[d.ID] = dev
 		}
 
@@ -227,6 +227,8 @@ func bindDevice(dev *deviceInfo, userid int) error {
 		}
 
 	}
+
+	//dev.ID = d.ID
 
 	return nil
 
