@@ -11,21 +11,23 @@ import (
 var publicGroupMap = make(map[int]*publicgroup, 1000) //key 房间号
 
 type publicgroup struct {
-	ID           int           `json:"id" db:"id"`
-	Name         string        `json:"name" db:"name"`
-	Type         int           `json:"type" db:"type"`
-	AllowCPUID   string        `json:"allow_cpuid" db:"allow_cpuid"`
-	DevList      pq.Int64Array `json:"devlist" db:"devlist"`
-	Status       int           `json:"status" db:"status"`
-	OwerID       int           `json:"ower_id" db:"ower_id"`
-	OwerCallsign string        `json:"callsign" db:"callsign"`
-	MasterServer int           `json:"master_server" db:"master_server"`
-	BackupServer int           `json:"backup_server" db:"backup_server"`
-	CreateTime   time.Time     `json:"create_time" db:"create_time"`
-	UpdateTime   time.Time     `json:"update_time" db:"update_time"`
-	Note         string        `json:"note" db:"note"`
-	connPool     *currentConnPool
-	DevMap       map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
+	ID               int           `json:"id" db:"id"`
+	Name             string        `json:"name" db:"name"`
+	Type             int           `json:"type" db:"type"`
+	AllowCPUID       string        `json:"allow_cpuid" db:"allow_cpuid"`
+	DevList          pq.Int64Array `json:"devlist" db:"devlist"`
+	Status           int           `json:"status" db:"status"`
+	OwerID           int           `json:"ower_id" db:"ower_id"`
+	OwerCallsign     string        `json:"callsign" db:"callsign"`
+	MasterServer     int           `json:"master_server" db:"master_server"`
+	MasterServerPort int           `json:"master_server_port" db:"master_server_port"`
+	BackupServer     int           `json:"backup_server" db:"backup_server"`
+	BackupServerPort int           `json:"backup_server_port" db:"backup_server_port"`
+	CreateTime       time.Time     `json:"create_time" db:"create_time"`
+	UpdateTime       time.Time     `json:"update_time" db:"update_time"`
+	Note             string        `json:"note" db:"note"`
+	connPool         *currentConnPool
+	DevMap           map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
 }
 
 func (p *publicgroup) String() string {

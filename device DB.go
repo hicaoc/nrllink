@@ -10,30 +10,32 @@ import (
 )
 
 type deviceInfo struct {
-	ID             int    `json:"id" db:"id"` //设备唯一编号
-	Name           string `json:"name" db:"name"`
-	CPUID          string `json:"cpuid" db:"cpuid"`                     //设备CPUID
-	Password       string `json:"password" db:"password"`               //设备接入密码
-	Gird           string `json:"gird" db:"gird"`                       //设备位置
-	DevType        int    `json:"dev_type" db:"dev_type"`               //设备型号
-	DevModel       int    `json:"dev_model" db:"dev_model"`             //设备型号
-	CallSign       string `json:"callsign" db:"callsign"`               //所有者呼号
-	SSID           byte   `json:"ssid" db:"ssid"`                       //所有者呼号
-	OwerID         int    `json:"ower_id" db:"ower_id"`                 //所有者ID
-	PublicGroupID  int    `json:"public_group_id" db:"public_group_id"` //公共群组编号
-	GroupID        int    `json:"group_id" db:"group_id"`               //内置群租编号
-	Status         int    `json:"status" db:"status"`                   //状态  0 未知   1 正常 2 拉黑
-	ISCerted       bool   `json:"is_certed" db:"is_certed"`             //是否认证过
-	Traffic        int    `json:"traffic"`
-	udpAddr        *net.UDPAddr
-	CreateTime     time.Time `json:"create_time" db:"create_time"` //加入时间
-	UpdateTime     time.Time `json:"update_time" db:"update_time"` //信息更新时间
-	OnlineTime     time.Time `json:"online_time" db:"online_time"` //设备上线时间
-	ISOnline       bool      `json:"is_online" db:"is_online"`     //当前是否在线
-	LastPacketTime time.Time `json:"last_packet_time" `            //最后一次报文时间
-	LastVoiceTime  time.Time `json:"last_voice_time"`              //最后语音时间
-	Note           string    `json:"note" db:"note"`               //设备上线时间
-	DeviceParm     *control  `json:"device_parm"`
+	ID              int    `json:"id" db:"id"` //设备唯一编号
+	Name            string `json:"name" db:"name"`
+	CPUID           string `json:"cpuid" db:"cpuid"`         //设备CPUID
+	Password        string `json:"password" db:"password"`   //设备接入密码
+	Gird            string `json:"gird" db:"gird"`           //设备位置
+	DevType         int    `json:"dev_type" db:"dev_type"`   //设备型号
+	DevModel        int    `json:"dev_model" db:"dev_model"` //设备型号
+	VoiceServerIP   string `json:"voice_server_ip"`
+	VoiceServerPort string `json:"voice_server_port"`
+	CallSign        string `json:"callsign" db:"callsign"`               //所有者呼号
+	SSID            byte   `json:"ssid" db:"ssid"`                       //所有者呼号
+	OwerID          int    `json:"ower_id" db:"ower_id"`                 //所有者ID
+	PublicGroupID   int    `json:"public_group_id" db:"public_group_id"` //公共群组编号
+	GroupID         int    `json:"group_id" db:"group_id"`               //内置群租编号
+	Status          int    `json:"status" db:"status"`                   //状态  0 未知   1 正常 2 拉黑
+	ISCerted        bool   `json:"is_certed" db:"is_certed"`             //是否认证过
+	Traffic         int    `json:"traffic"`
+	udpAddr         *net.UDPAddr
+	CreateTime      time.Time `json:"create_time" db:"create_time"` //加入时间
+	UpdateTime      time.Time `json:"update_time" db:"update_time"` //信息更新时间
+	OnlineTime      time.Time `json:"online_time" db:"online_time"` //设备上线时间
+	ISOnline        bool      `json:"is_online" db:"is_online"`     //当前是否在线
+	LastPacketTime  time.Time `json:"last_packet_time" `            //最后一次报文时间
+	LastVoiceTime   time.Time `json:"last_voice_time"`              //最后语音时间
+	Note            string    `json:"note" db:"note"`               //设备上线时间
+	DeviceParm      *control  `json:"device_parm"`
 }
 
 func initAllDevList() {

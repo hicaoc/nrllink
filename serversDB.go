@@ -18,9 +18,11 @@ type Server struct {
 	MemSize      int                 `json:"mem_size" db:"mem_size"`
 	InputRate    int                 `json:"input_rate" db:"input_rate"`
 	OuputRate    int                 `json:"output_rate" db:"output_rate"`
+	Providers    string              `json:"Providers"`                    //电信，联通，移动，其他
 	NetCard      string              `json:"netcard" db:"netcard"`         //网卡
 	IPType       int                 `json:"ip_type" db:"ip_type"`         //动态，静态，是否经过nat
 	IPAddr       string              `json:"ip_addr" db:"ip_addr"`         //动态IP可以写0.0.0.0
+	UDPPort      string              `json:"udp_port" db:"udp_port"`       //服务端口
 	DNSName      string              `json:"dns_name" db:"dns_name"`       //域名
 	ServerType   int                 `json:"server_type" db:"server_type"` //服务器类型： 物理机，虚拟机，树莓派等
 	GroupList    pq.Int64Array       `json:"group_list" db:"group_list"`   //服务器负责的群组列表
