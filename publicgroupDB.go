@@ -182,6 +182,8 @@ func updatePublicGroup(pg *publicgroup) error {
 
 		p.Name = pg.Name
 		p.Type = pg.Type
+		p.MasterServer = pg.MasterServer
+		p.SlaveServer = pg.SlaveServer
 		p.Status = pg.Status
 		p.Note = pg.Note
 		p.UpdateTime = time.Now()
