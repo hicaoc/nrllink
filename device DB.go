@@ -193,16 +193,31 @@ func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, e
 
 func bindDevice(dev *deviceInfo, userid int) error {
 
-	//	fmt.Println("user:", e)
-	query := `INSERT INTO devices (	name,cpuid,password,gird,dev_type,dev_model,callsign,ssid,ower_id,online_time,note,create_time,update_time) 
+	if dev.OwerID == 0 {
+
+		//	fmt.Println("user:", e)
+		query := `INSERT INTO devices (	name,cpuid,password,gird,dev_type,dev_model,callsign,ssid,ower_id,online_time,note,create_time,update_time) 
 	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())`
 
-	_, err := db.Exec(query,
-		dev.Name, dev.CPUID, dev.Password, dev.Gird, dev.DevType, dev.DevModel, dev.CallSign, dev.SSID, userid, dev.OnlineTime, dev.Note)
+		_, err := db.Exec(query,
+			dev.Name, dev.CPUID, dev.Password, dev.Gird, dev.DevType, dev.DevModel, dev.CallSign, dev.SSID, userid, dev.OnlineTime, dev.Note)
 
-	if err != nil {
-		log.Println("bing dev failed, ", err, '\n', query)
-		return err
+		if err != nil {
+			log.Println("bing dev failed, ", err, '\n', query)
+			return err
+		}
+
+	} else {
+
+		query := `update devices set ower_id=$1,callsign=$2,update_time=now() where id=$3 `
+
+		_, err := db.Exec(query, userid, dev.CallSign, dev.ID)
+
+		if err != nil {
+			log.Println("change bing dev failed, ", err, '\n', query)
+			return err
+		}
+
 	}
 
 	d := getDevice(dev.CPUID)
@@ -213,12 +228,20 @@ func bindDevice(dev *deviceInfo, userid int) error {
 
 	}
 
+	//在原来用户中，删除这个设备
+	if u, ok := userlist[dev.OwerID]; ok {
+		if _, okok := u.DevList[d.ID]; !okok {
+			//dev.ID = d.ID
+			delete(u.DevList, d.ID)
+		}
+	}
+
+	//绑定到新用户
 	if u, ok := userlist[userid]; ok {
 		if _, okok := u.DevList[d.ID]; !okok {
 			//dev.ID = d.ID
 			u.DevList[d.ID] = dev
 		}
-
 	}
 
 	if kkk, ok := publicGroupMap[0]; ok {
