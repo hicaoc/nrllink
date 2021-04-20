@@ -132,20 +132,15 @@ func (j *jsonapi) httpBindDevice(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if stb.OwerID == 0 {
+	err = bindDevice(stb, u.ID)
 
-		err = bindDevice(stb, u.ID)
-
-		if err != nil {
-			log.Println("device bind err :", err)
-			w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
-			return
-		}
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
+	if err != nil {
+		log.Println("device bind err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
 		return
-
 	}
-	w.Write([]byte(`{"code":20000,"data":{"message":"设备已经绑定，无需重复绑定"}}`))
+	w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
+	return
 
 }
 
