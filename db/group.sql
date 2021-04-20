@@ -10,6 +10,8 @@ CREATE TABLE public_groups
     allow_cpuid character varying COLLATE pg_catalog."default",
     ower_id   integer DEFAULT 0 ,
     devlist  integer[],
+    master_server integer DEFAULT 0 ,
+    slave_server integer DEFAULT 0 ,
 	status       integer DEFAULT 0 ,
     create_time timestamp without time zone,
     update_time timestamp without time zone,
