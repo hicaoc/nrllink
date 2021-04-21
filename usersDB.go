@@ -421,7 +421,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 	}
 
 	if !r.PasswordOK {
-		_, err = db.Exec(`update user set login_err_times = login_err_times + 1 where phone=$1`, username)
+		_, err = db.Exec(`update users set login_err_times = login_err_times + 1 where phone=$1`, username)
 		if err != nil {
 			log.Println("update user login_err_times failed ,and password err ", err)
 			return nil, false

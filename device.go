@@ -140,7 +140,6 @@ func (j *jsonapi) httpBindDevice(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
-	return
 
 }
 

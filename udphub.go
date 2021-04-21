@@ -90,14 +90,14 @@ func udpProcess(conn *net.UDPConn) {
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
 			//  没有加入公共组的设备，使用用户内置连接池
-			if dev.GroupID != 0 && dev.PublicGroupID == 0 {
+			if dev.GroupID > 0 && dev.GroupID < 1000 {
 				if u, okok := userlist[dev.OwerID]; okok {
 					NRL21parser(nrl, data[:n], dev, conn, u.ConnPoll[dev.GroupID])
 				}
 
 			} else {
 				//否则使用公共群组连接池
-				if p, ok := publicGroupMap[dev.PublicGroupID]; ok {
+				if p, ok := publicGroupMap[dev.GroupID]; ok {
 
 					NRL21parser(nrl, data[:n], dev, conn, p.connPool)
 				}

@@ -93,14 +93,14 @@ func addDevToGroup(dev *deviceInfo, publicgroupid int) (err error) {
 
 	//从之前的组删除
 
-	if g, ok := publicGroupMap[dev.PublicGroupID]; ok {
+	if g, ok := publicGroupMap[dev.GroupID]; ok {
 		delete(g.DevMap, dev.ID)
 	}
 
 	//加入新的组
 
 	if g, ok := publicGroupMap[publicgroupid]; ok {
-		dev.PublicGroupID = publicgroupid
+		dev.GroupID = publicgroupid
 		g.DevMap[dev.ID] = dev
 
 	}

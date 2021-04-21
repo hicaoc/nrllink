@@ -14,7 +14,7 @@ CREATE TABLE devices
     dev_model  integer DEFAULT 0 ,
     ower_id   integer DEFAULT 0 ,
    	group_id   integer DEFAULT 0 ,
-    public_group_id   integer DEFAULT 0 ,
+   
 	status       integer DEFAULT 0 ,
 	is_certed   boolean DEFAULT false,
 	is_online     boolean DEFAULT false ,

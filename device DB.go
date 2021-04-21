@@ -19,13 +19,12 @@ type deviceInfo struct {
 	DevModel        int    `json:"dev_model" db:"dev_model"` //设备型号
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
-	CallSign        string `json:"callsign" db:"callsign"`               //所有者呼号
-	SSID            byte   `json:"ssid" db:"ssid"`                       //所有者呼号
-	OwerID          int    `json:"ower_id" db:"ower_id"`                 //所有者ID
-	PublicGroupID   int    `json:"public_group_id" db:"public_group_id"` //公共群组编号
-	GroupID         int    `json:"group_id" db:"group_id"`               //内置群租编号
-	Status          int    `json:"status" db:"status"`                   //状态  0 未知   1 正常 2 拉黑
-	ISCerted        bool   `json:"is_certed" db:"is_certed"`             //是否认证过
+	CallSign        string `json:"callsign" db:"callsign"`   //所有者呼号
+	SSID            byte   `json:"ssid" db:"ssid"`           //所有者呼号
+	OwerID          int    `json:"ower_id" db:"ower_id"`     //所有者ID
+	GroupID         int    `json:"group_id" db:"group_id"`   //内置群租编号
+	Status          int    `json:"status" db:"status"`       //状态  0 未知   1 正常 2 拉黑
+	ISCerted        bool   `json:"is_certed" db:"is_certed"` //是否认证过
 	Traffic         int    `json:"traffic"`
 	udpAddr         *net.UDPAddr
 	CreateTime      time.Time `json:"create_time" db:"create_time"` //加入时间
@@ -56,7 +55,7 @@ func initAllDevList() {
 
 		devCPUIDMap[dev.CPUID] = dev
 
-		if kk, ok := publicGroupMap[dev.PublicGroupID]; ok {
+		if kk, ok := publicGroupMap[dev.GroupID]; ok {
 
 			kk.DevMap[dev.ID] = dev
 			kk.DevList = append(kk.DevList, int64(dev.ID))
@@ -301,8 +300,8 @@ func updateDevice(e *deviceInfo) error {
 	}
 
 	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 
-	public_group_id=$5,group_id=$6, note=$7,password=$8,update_time=now()  where id=$9`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.PublicGroupID, e.GroupID, e.Note, e.Password, e.ID)
+	group_id=$5, note=$6,password=$7,update_time=now()  where id=$8`,
+		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Note, e.Password, e.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err
@@ -314,8 +313,8 @@ func updateDevice(e *deviceInfo) error {
 		d.DevType = e.DevType
 		d.DevModel = e.DevModel
 
-		if d.PublicGroupID != e.PublicGroupID {
-			addDevToGroup(d, e.PublicGroupID)
+		if d.GroupID != e.GroupID {
+			addDevToGroup(d, e.GroupID)
 
 		}
 
