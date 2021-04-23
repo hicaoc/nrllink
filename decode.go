@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.CPUID = fmt.Sprintf("%02X", d[6:10])
 	n.Password = fmt.Sprintf("%02X", d[10:13])
 	//n.Gird = ""
-	n.CallSign = string(d[24:30])
+	n.CallSign = string(bytes.TrimRight(d[24:30], string([]byte{0x00})))
 	n.SSID = d[30]
 	n.DATA = d[48:]
 
