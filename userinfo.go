@@ -40,21 +40,21 @@ func (u *userinfo) userinit() {
 	}
 
 	u.Groups[2] = &group{
-		ID:       1,
+		ID:       2,
 		Name:     "房间2",
 		KeepTime: 200,
 		connPool: &currentConnPool{devConnList: make(map[string]*connPool)},
 	}
 
 	u.Groups[3] = &group{
-		ID:       1,
+		ID:       3,
 		Name:     "房间3",
 		KeepTime: 200,
 		connPool: &currentConnPool{devConnList: make(map[string]*connPool)},
 	}
 
 	u.Groups[4] = &group{
-		ID:       1,
+		ID:       4,
 		Name:     "房间4",
 		KeepTime: 200,
 		connPool: &currentConnPool{devConnList: make(map[string]*connPool)},
