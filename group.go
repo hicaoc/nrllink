@@ -58,7 +58,7 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	stb := &publicgroup{}
+	stb := &group{}
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
@@ -99,7 +99,7 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	stb := &publicgroup{}
+	stb := &group{}
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
@@ -142,7 +142,7 @@ func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	stb := &publicgroup{}
+	stb := &group{}
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {

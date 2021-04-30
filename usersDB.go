@@ -56,8 +56,9 @@ type userinfo struct {
 	Mail     string
 	//CanSpeekerDev *connPoll
 	//GroupsList []map[uint64]bool
-	DevList  map[int]*deviceInfo      `json:"devlist"` //key 房间号
-	ConnPoll map[int]*currentConnPool //群组连接池表，每个组有一个连接池列表 /key为组号
+	DevList map[int]*deviceInfo `json:"devlist"` //key 房间号
+	//ConnPoll map[int]*currentConnPool //群组连接池表，每个组有一个连接池列表 /key为组号
+	Groups map[int]*group
 	//	userID        int            `db:"user_id" json:"user_id"`
 	//Position          int                 `db:"position" json:"position"`
 	Introduction string         `db:"introduction" json:"introduction"`
