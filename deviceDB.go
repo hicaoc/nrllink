@@ -352,7 +352,7 @@ func updateDevice(e *deviceInfo) error {
 		d.DevModel = e.DevModel
 
 		if d.GroupID != e.GroupID {
-			err := addDevToGroup(d, e.GroupID)
+			err := changeDevGroup(d, e.GroupID)
 			if err != nil {
 				return err
 			}
