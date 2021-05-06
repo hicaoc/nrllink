@@ -90,21 +90,45 @@ func getGroup(name string) (gp *group) {
 
 }
 
-func addDevToGroup(dev *deviceInfo, publicgroupid int) (err error) {
+func addDevToGroup(dev *deviceInfo, groupid int) (err error) {
 
 	//从之前的组删除
 
 	if g, ok := publicGroupMap[dev.GroupID]; ok {
 		delete(g.DevMap, dev.ID)
+	} else {
+		return fmt.Errorf("dev not in group ")
 	}
 
 	//加入新的组
 
-	if g, ok := publicGroupMap[publicgroupid]; ok {
-		dev.GroupID = publicgroupid
+	if g, ok := publicGroupMap[groupid]; ok {
+		dev.GroupID = groupid
 		g.DevMap[dev.ID] = dev
 
+	} else {
+
+		return fmt.Errorf("group not found")
+
 	}
+
+	// if u, okok := userlist[dev.OwerID]; okok {
+
+	// 	if g, ok := u.DevList[dev.ID]; !ok {
+
+	// 		g.GroupID = groupid
+
+	// 	} else {
+
+	// 		dev.GroupID = groupid
+
+	// 		u.DevList[dev.ID] = dev
+
+	// 	}
+
+	// } else {
+	// 	return fmt.Errorf("dev ower not found")
+	// }
 
 	return
 
@@ -121,25 +145,25 @@ func addDevToGroup(dev *deviceInfo, publicgroupid int) (err error) {
 
 // }
 
-func (u *userinfo) addDevToRoom(dev *deviceInfo, roomid int) (err error) {
+// func (u *userinfo) addDevToRoom(dev *deviceInfo, roomid int) (err error) {
 
-	//加入新的组
+// 	//加入新的组
 
-	if g, ok := u.DevList[dev.ID]; ok {
+// 	if g, ok := u.DevList[dev.ID]; ok {
 
-		g.GroupID = roomid
+// 		g.GroupID = roomid
 
-	} else {
+// 	} else {
 
-		dev.GroupID = roomid
+// 		dev.GroupID = roomid
 
-		u.DevList[dev.ID] = dev
+// 		u.DevList[dev.ID] = dev
 
-	}
+// 	}
 
-	return
+// 	return
 
-}
+// }
 
 func addPublicGroup(pg *group) error {
 

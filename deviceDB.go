@@ -345,14 +345,6 @@ func updateDevice(e *deviceInfo) error {
 		return fmt.Errorf("temp device no support change group %v %v ", e.CPUID, e.GroupID)
 	}
 
-	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 
-	group_id=$5, note=$6,password=$7,update_time=now()  where id=$8`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Note, e.Password, e.ID)
-	if err != nil {
-		log.Println("update device failed, ", err)
-		return err
-	}
-
 	if d, ok := devCPUIDMap[e.CPUID]; ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
@@ -360,16 +352,21 @@ func updateDevice(e *deviceInfo) error {
 		d.DevModel = e.DevModel
 
 		if d.GroupID != e.GroupID {
-			addDevToGroup(d, e.GroupID)
-
-		}
-
-		if d.GroupID != e.GroupID {
-			if u, okok := userlist[e.OwerID]; okok {
-				u.addDevToRoom(d, e.GroupID)
-
+			err := addDevToGroup(d, e.GroupID)
+			if err != nil {
+				return err
 			}
+
 		}
+
+	}
+
+	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 
+	group_id=$5, note=$6,password=$7,update_time=now()  where id=$8`,
+		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Note, e.Password, e.ID)
+	if err != nil {
+		log.Println("update device failed, ", err)
+		return err
 	}
 
 	return nil
