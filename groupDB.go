@@ -11,20 +11,20 @@ import (
 var publicGroupMap = make(map[int]*group, 1000) //key 房间号
 
 type group struct {
-	ID           int           `json:"id" db:"id"`
-	Name         string        `json:"name" db:"name"`
-	Type         int           `json:"type" db:"type"`
-	AllowCPUID   string        `json:"allow_cpuid" db:"allow_cpuid"`
-	DevList      pq.Int64Array `json:"devlist" db:"devlist"`
-	KeepTime     int           `json:"keep_time" db:"keep_time"`
-	Status       int           `json:"status" db:"status"`
-	OwerID       int           `json:"ower_id" db:"ower_id"`
-	OwerCallsign string        `json:"callsign" db:"callsign"`
-	MasterServer int           `json:"master_server" db:"master_server"`
-	SlaveServer  int           `json:"slave_server" db:"slave_server"`
-	CreateTime   time.Time     `json:"create_time" db:"create_time"`
-	UpdateTime   time.Time     `json:"update_time" db:"update_time"`
-	Note         string        `json:"note" db:"note"`
+	ID         int           `json:"id" db:"id"`
+	Name       string        `json:"name" db:"name"`
+	Type       int           `json:"type" db:"type"`
+	AllowCPUID string        `json:"allow_cpuid" db:"allow_cpuid"`
+	DevList    pq.Int64Array `json:"devlist" db:"devlist"`
+	//KeepTime     int           `json:"keep_time" db:"keep_time"`
+	Status       int       `json:"status" db:"status"`
+	OwerID       int       `json:"ower_id" db:"ower_id"`
+	OwerCallsign string    `json:"callsign" db:"callsign"`
+	MasterServer int       `json:"master_server" db:"master_server"`
+	SlaveServer  int       `json:"slave_server" db:"slave_server"`
+	CreateTime   time.Time `json:"create_time" db:"create_time"`
+	UpdateTime   time.Time `json:"update_time" db:"update_time"`
+	Note         string    `json:"note" db:"note"`
 	connPool     *currentConnPool
 	DevMap       map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
 }
@@ -41,7 +41,6 @@ func initPublicGroup() {
 		ID:           0,
 		Name:         "公共大厅",
 		OwerCallsign: "default",
-		KeepTime:     200,
 		connPool:     &currentConnPool{devConnList: make(map[string]*connPool)},
 		DevMap:       make(map[int]*deviceInfo, 10),
 		CreateTime:   time.Now(),
@@ -145,11 +144,11 @@ func (u *userinfo) addDevToRoom(dev *deviceInfo, roomid int) (err error) {
 func addPublicGroup(pg *group) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,keep_time,devlist,
+	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,devlist,
 		master_server,slave_server,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())`
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())`
 
-	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.KeepTime, pg.DevList,
+	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.DevList,
 		pg.MasterServer, pg.SlaveServer, pg.Status, pg.Note)
 
 	if err != nil {
@@ -172,8 +171,8 @@ func addPublicGroup(pg *group) error {
 func updatePublicGroup(pg *group) error {
 
 	_, err := db.Exec(`update public_groups set name=$1, type=$2, allow_cpuid=$3, status=$4,
-	master_server=$5,slave_server=$6,note=$7 , keep_time=$8, update_time=now()  where id=$9`,
-		pg.Name, pg.Type, pg.AllowCPUID, pg.Status, pg.MasterServer, pg.SlaveServer, pg.Note, pg.KeepTime, pg.ID)
+	master_server=$5,slave_server=$6,note=$7 ,  update_time=now()  where id=$8`,
+		pg.Name, pg.Type, pg.AllowCPUID, pg.Status, pg.MasterServer, pg.SlaveServer, pg.Note, pg.ID)
 
 	if err != nil {
 		log.Println("update public group failed, ", err)
@@ -186,7 +185,6 @@ func updatePublicGroup(pg *group) error {
 		p.Type = pg.Type
 		p.MasterServer = pg.MasterServer
 		p.SlaveServer = pg.SlaveServer
-		p.KeepTime = pg.KeepTime
 		p.Status = pg.Status
 		p.Note = pg.Note
 		p.UpdateTime = time.Now()

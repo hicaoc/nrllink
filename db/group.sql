@@ -9,7 +9,6 @@ CREATE TABLE public_groups
     callsign character varying COLLATE pg_catalog."default",
     allow_cpuid character varying COLLATE pg_catalog."default",
     ower_id   integer DEFAULT 0 ,
-    keep_time   integer DEFAULT 200 ,
     devlist  integer[],
     master_server integer DEFAULT 0 ,
     slave_server integer DEFAULT 0 ,

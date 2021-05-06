@@ -261,7 +261,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
 		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
-		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < time.Duration(gp.KeepTime)*time.Millisecond) || nrl.Status&0x01 == 0 {
+		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
 				k.lastVoiceTime = nrl.timeStamp
