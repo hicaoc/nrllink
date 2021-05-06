@@ -138,6 +138,7 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/device/update", j.httpUpdateDevice)
 	http.HandleFunc("/device/query", j.httpQueryDeviceParm)
 	http.HandleFunc("/device/change", j.httpChangeDeviceParm)
+	http.HandleFunc("/device/change1w", j.httpChange1W)
 
 	http.HandleFunc("/group/list", j.httpPublicGroupList)
 	http.HandleFunc("/group/create", j.httpAddGroup)

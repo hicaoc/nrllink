@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -170,6 +171,51 @@ func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, e
 		} else {
 			d.DeviceParm.data[offset+1] = byte(val & 0xFF)
 			d.DeviceParm.data[offset] = byte(val >> 8)
+
+			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+			globelconn.WriteToUDP(newpacket, d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
+
+			rescode, _ := jsonextra.Marshal(d)
+			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+
+		}
+
+	}
+
+	return nil, errors.New("device is not found")
+
+	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+
+	//fmt.Println(id, query)
+
+}
+
+func changeDevice1W(ctr *control) (res []byte, err error) {
+
+	if d, ok := devCPUIDMap[ctr.LocalCPUID]; ok {
+
+		oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
+		oneParm[1] = []byte(ctr.OneReciveFreq)
+		oneParm[2] = []byte(ctr.OneTransmitFreq)
+		oneParm[3] = []byte(ctr.OneReciveCXCSS)
+		oneParm[4] = []byte(ctr.OneSQLLevel)
+		oneParm[5] = []byte(ctr.OneTransmitCXCSS)
+
+		p := bytes.Join(oneParm, []byte{','})
+
+		fmt.Println(string(p))
+
+		t := time.Now()
+		// fmt.Println(t.Sub(d.LastPacketTime))
+		if t.Sub(d.LastPacketTime) > 5*time.Second {
+			d.ISOnline = false
+			return nil, errors.New("device be offline")
+
+		} else {
+			copy(d.DeviceParm.data[128:], p)
+			d.DeviceParm.data[160] = []byte(ctr.OneVolume)[0]
+			d.DeviceParm.data[161] = []byte(ctr.OneMICSensitivity)[0]
 
 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
 			globelconn.WriteToUDP(newpacket, d.udpAddr)
