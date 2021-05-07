@@ -350,6 +350,9 @@ func updateDevice(e *deviceInfo) error {
 		d.Gird = e.Gird
 		d.DevType = e.DevType
 		d.DevModel = e.DevModel
+		d.Status = e.Status
+		d.Note = e.Note
+		d.Password = e.Password
 
 		if d.GroupID != e.GroupID {
 			err := changeDevGroup(d, e.GroupID)
@@ -362,8 +365,8 @@ func updateDevice(e *deviceInfo) error {
 	}
 
 	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 
-	group_id=$5, note=$6,password=$7,update_time=now()  where id=$8`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Note, e.Password, e.ID)
+	group_id=$5,status=$6, note=$7,password=$8,update_time=now()  where id=$9`,
+		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.Note, e.Password, e.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err

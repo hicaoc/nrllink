@@ -85,6 +85,8 @@ func udpProcess(conn *net.UDPConn) {
 		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
 
 			if dev.Status == 1 {
+				dev.ISOnline = true
+				dev.LastPacketTime = nrl.timeStamp
 				continue
 			}
 
