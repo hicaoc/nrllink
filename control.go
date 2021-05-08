@@ -49,10 +49,10 @@ type control struct {
 	OneTransmitFreq   string `json:"one_transimit_freq"` //
 	OneReciveCXCSS    string `json:"one_recive_cxcss"`   //
 	OneTransmitCXCSS  string `json:"one_transmit_cxcss"` //
-	OneSQLLevel       string `json:"one_sql_level"`
-	OneVolume         string `json:"one_volume"`          //0xA0  UV1模块音量1-9级
-	OneMICSensitivity string `json:"one_mic_sensitivity"` //0xA1  MIC灵敏度1-8
-	OneMICEncryption  string `json:"one_mic_encryption"`  //0xA2  MIC语音加密 0 1-8
+	OneSQLLevel       int    `json:"one_sql_level"`
+	OneVolume         int    `json:"one_volume"`          //0xA0  UV1模块音量1-9级
+	OneMICSensitivity int    `json:"one_mic_sensitivity"` //0xA1  MIC灵敏度1-8
+	OneMICEncryption  int    `json:"one_mic_encryption"`  //0xA2  MIC语音加密 0 1-8
 	OneUVPower        byte   `json:"one_uv_power"`        //0xA3 PD 内置UV模块电源开关
 
 	//2w parm
@@ -125,15 +125,16 @@ func decodeControlPacket(data []byte) *control {
 			c.OneReciveFreq = string(oneParm[1])
 			c.OneTransmitFreq = string(oneParm[2])
 			c.OneReciveCXCSS = string(oneParm[3])
-			c.OneSQLLevel = string(oneParm[4])
+			c.OneSQLLevel, _ = strconv.Atoi(string(oneParm[4]))
+
 			c.OneTransmitCXCSS = string(oneParm[5])
 
 		}
 
-		c.OneVolume = string(c.data[160])         //0xA0  UV1模块音量1-9级
-		c.OneMICSensitivity = string(c.data[161]) //0xA1  MIC灵敏度1-8
-		c.OneMICEncryption = string(c.data[162])  //0xA2  MIC语音加密 0 1-8
-		c.OneUVPower = c.data[163]                //0xA3 PD 内置UV模块电源开关
+		c.OneVolume, _ = strconv.Atoi(string(c.data[160]))         //0xA0  UV1模块音量1-9级
+		c.OneMICSensitivity, _ = strconv.Atoi(string(c.data[161])) //0xA1  MIC灵敏度1-8
+		c.OneMICEncryption, _ = strconv.Atoi(string(c.data[162]))  //0xA2  MIC语音加密 0 1-8
+		c.OneUVPower = c.data[163]                                 //0xA3 PD 内置UV模块电源开关
 
 		twoParm := bytes.Split(bytes.Split(c.data[192:227], []byte{0x00})[0], []byte{','})
 
