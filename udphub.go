@@ -180,7 +180,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			return
 		}
 
-		dev.LastVoiceTime = nrl.timeStamp
+		if nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
+			dev.LastVoiceBeginTime = nrl.timeStamp
+		}
+		dev.LastVoiceDuration = int(nrl.timeStamp.Sub(dev.LastVoiceBeginTime).Milliseconds())
+		dev.LastVoiceEndTime = nrl.timeStamp
+
 		dev.VoiceTime = dev.VoiceTime + 63
 		totalstats.VoiceTime = totalstats.VoiceTime + 63
 
