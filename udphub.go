@@ -83,10 +83,11 @@ func udpProcess(conn *net.UDPConn) {
 		//fmt.Println(remoteaddr.String(), nrl.CPUID)
 
 		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
-			dev.ISOnline = true
+
 			dev.udpAddr = nrl.UDPAddr
 			dev.LastPacketTime = nrl.timeStamp
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
+
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
 			//  没有加入公共组的设备，使用用户内置连接池
@@ -180,6 +181,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 		dev.LastVoiceTime = nrl.timeStamp
+		dev.VoiceTime = dev.VoiceTime + 63
+		totalstats.VoiceTime = totalstats.VoiceTime + 63
 
 		if gp.connPool.allowCPUID != "" && nrl.CPUID != gp.connPool.allowCPUID {
 			return
@@ -194,6 +197,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//心跳包，用于保存设备在线存活状态， 目前设备60ms一次发送，后期需要优化成60秒以上一次
 		dev.CallSign = nrl.CallSign
 		dev.SSID = nrl.SSID
+		dev.ISOnline = true
 
 		if kk, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
 			kk.lastTime = nrl.timeStamp

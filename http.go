@@ -70,6 +70,7 @@ type totalStats struct {
 	DevNumber       int `json:"dev_number"`
 	OnlineDevNumber int `json:"online_dev_number"`
 	UserNumbert     int `json:"user_number"`
+	VoiceTime       int `json:"voice_time"`
 	Traffic         int `json:"traffic"`
 	PacketNumber    int `json:"packet_number"`
 	SessionNumber   int `json:"session_number"`
@@ -151,6 +152,11 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/server/create", j.httpAddServer)
 	http.HandleFunc("/server/update", j.httpUpdateServer)
 	http.HandleFunc("/server/delete", j.httpDeleteServer)
+
+	http.HandleFunc("/relay/list", j.httpGetRelayList)
+	http.HandleFunc("/relay/create", j.httpAddrelay)
+	http.HandleFunc("/relay/update", j.httpUpdaterelay)
+	http.HandleFunc("/relay/delete", j.httpDeleterelay)
 
 	// http.HandleFunc("/device/create", j.httpAddDevice)
 	// http.HandleFunc("/device/update", j.httpUpdateDevice)

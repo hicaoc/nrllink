@@ -26,7 +26,8 @@ type deviceInfo struct {
 	GroupID         int    `json:"group_id" db:"group_id"`   //内置群租编号
 	Status          int    `json:"status" db:"status"`       //状态  0 未知   1 正常 2 拉黑
 	ISCerted        bool   `json:"is_certed" db:"is_certed"` //是否认证过
-	Traffic         int    `json:"traffic"`
+	Traffic         int    `json:"traffic"`                  //流量消耗
+	VoiceTime       int    `json:"voice_time"`               //通话时长
 	udpAddr         *net.UDPAddr
 	CreateTime      time.Time `json:"create_time" db:"create_time"` //加入时间
 	UpdateTime      time.Time `json:"update_time" db:"update_time"` //信息更新时间

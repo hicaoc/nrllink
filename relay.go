@@ -10,7 +10,7 @@ import (
 // var CanSpeekerDev = &connPoll{}
 // var globelConnPoll = make(map[string]connPoll, 100)
 
-func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
+func (j *jsonapi) httpGetRelayList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
 	_, ok := checktoken(w, req)
@@ -23,24 +23,27 @@ func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
+
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
-		log.Println("device list err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询服务器列表参数错误"}}`))
+		log.Println("query freq list  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"total":0,"message":"频点列表查询参数错误"}}`))
 		return
 	}
 
-	rescode, _ := jsonextra.Marshal(ServersMap)
+	where, page, sort := queryToWhere("", *stb)
+	list, total := selectrelay(where, sort, page)
 
-	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(ServersMap), rescode)
+	rescode, _ := jsonextra.Marshal(list)
+
+	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`, total, rescode)
 
 	w.Write([]byte(respone))
 
 }
 
-func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
+func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
 	u, ok := checktoken(w, req)
@@ -58,7 +61,7 @@ func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	stb := &Server{}
+	stb := &relay{}
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
@@ -73,15 +76,15 @@ func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
 	// }
 
 	//stb.Area = u.Area
-	updateServer(stb)
+	updaterelay(stb)
 
-	addOperatorLog(stb.String(), "修改服务器信息成功", u)
+	addOperatorLog(stb.String(), "修改频点成功", u)
 
-	w.Write([]byte(`{"code":20000,"data":{"message":"服务器更新成功"}}`))
+	w.Write([]byte(`{"code":20000,"data":{"message":"修改频点成功"}}`))
 
 }
 
-func (j *jsonapi) httpAddServer(w http.ResponseWriter, req *http.Request) {
+func (j *jsonapi) httpAddrelay(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
 	u, ok := checktoken(w, req)
@@ -99,32 +102,31 @@ func (j *jsonapi) httpAddServer(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	stb := &Server{}
+	stb := &relay{}
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user add err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"新增服务器失败,json格式错误"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"新增群组失败,json格式错误"}}`))
 		return
 	}
 
-	stb.OwerID = u.ID
 	stb.OwerCallsign = u.CallSign
 
-	if addServers(stb) != nil {
+	if addrelay(stb) != nil {
 
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"新增服务器失败"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"新增频点失败"}}`))
 		return
 
 	}
 
-	addOperatorLog(stb.String(), "新增服务器成功", u)
+	addOperatorLog(stb.String(), "新增频点成功", u)
 
-	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"新增服务器成功"}}`))
+	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"新增频点成功"}}`))
 
 }
 
-func (j *jsonapi) httpDeleteServer(w http.ResponseWriter, req *http.Request) {
+func (j *jsonapi) httpDeleterelay(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
 	u, ok := checktoken(w, req)
@@ -142,18 +144,18 @@ func (j *jsonapi) httpDeleteServer(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	stb := &Server{}
+	stb := &relay{}
 	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
-		log.Println("user delete err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"服务器删除失败"}}`))
+		log.Println("freq delete err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"频点删除失败"}}`))
 		return
 	}
 
-	deleteServer(stb)
-	addOperatorLog(stb.String(), "服务器删除成功", u)
+	deleterelay(stb)
+	addOperatorLog(stb.String(), "频点删除成功", u)
 
-	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"服务器删除成功"}}`))
+	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"频点删除成功"}}`))
 
 }
