@@ -46,7 +46,7 @@ type control struct {
 	OneGBWBand        byte   `json:"one_band"`
 	OneGBWDTMF        byte   `json:"one_dtmf"`
 	OneReciveFreq     string `json:"one_recive_freq"`    //
-	OneTransmitFreq   string `json:"one_transimit_freq"` //
+	OneTransmitFreq   string `json:"one_transmit_freq"`  //
 	OneReciveCXCSS    string `json:"one_recive_cxcss"`   //
 	OneTransmitCXCSS  string `json:"one_transmit_cxcss"` //
 	OneSQLLevel       int    `json:"one_sql_level"`
@@ -122,8 +122,8 @@ func decodeControlPacket(data []byte) *control {
 				c.OneGBWDTMF = byte(s) & 0x02
 			}
 
-			c.OneReciveFreq = string(oneParm[1])
-			c.OneTransmitFreq = string(oneParm[2])
+			c.OneTransmitFreq = string(oneParm[1])
+			c.OneReciveFreq = string(oneParm[2])
 			c.OneReciveCXCSS = string(oneParm[3])
 			c.OneSQLLevel, _ = strconv.Atoi(string(oneParm[4]))
 

@@ -201,8 +201,8 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 	if d, ok := devCPUIDMap[ctr.LocalCPUID]; ok {
 
 		oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
-		oneParm[1] = []byte(ctr.OneReciveFreq)
-		oneParm[2] = []byte(ctr.OneTransmitFreq)
+		oneParm[1] = []byte(ctr.OneTransmitFreq)
+		oneParm[2] = []byte(ctr.OneReciveFreq)
 		oneParm[3] = []byte(ctr.OneReciveCXCSS)
 		oneParm[4] = []byte(strconv.Itoa(ctr.OneSQLLevel))
 		oneParm[5] = []byte(ctr.OneTransmitCXCSS)

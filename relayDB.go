@@ -3,21 +3,20 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
 )
 
 type relay struct {
-	ID           int       `json:"id" db:"id"`
-	Name         string    `json:"name" db:"name"`
-	UPFreq       string    `json:"up_freq" db:"up_freq"`
-	DownFreq     string    `json:"down_freq" db:"down_freq"`
-	SendCTSS     int       `json:"send_ctss" db:"send_ctss"`
-	ReciveCTSS   int       `json:"recive_ctss" db:"send_ctss"`
-	OwerCallsign string    `json:"ower_callsign" db:"ower_callsign"` //创建者呼号
-	CreateTime   time.Time `json:"create_time" db:"create_time"`
-	UpdateTime   time.Time `json:"update_time" db:"update_time"`
-	Status       int       `json:"status" db:"status"`
-	Note         string    `json:"note" db:"note"`
+	ID           int    `json:"id" db:"id"`
+	Name         string `json:"name" db:"name"`
+	UPFreq       string `json:"up_freq" db:"up_freq"`
+	DownFreq     string `json:"down_freq" db:"down_freq"`
+	SendCTSS     string `json:"send_ctss" db:"send_ctss"`
+	ReciveCTSS   string `json:"recive_ctss" db:"recive_ctss"`
+	OwerCallsign string `json:"ower_callsign" db:"ower_callsign"` //创建者呼号
+	CreateTime   string `json:"create_time" db:"create_time"`
+	UpdateTime   string `json:"update_time" db:"update_time"`
+	Status       int    `json:"status" db:"status"`
+	Note         string `json:"note" db:"note"`
 }
 
 func (p *relay) String() string {
@@ -31,7 +30,7 @@ func selectrelay(w string, p string, sort string) ([]relay, int) {
 	emp := []relay{}
 
 	query := fmt.Sprintf(`SELECT  id,name,up_freq,down_freq,send_ctss,recive_ctss,ower_callsign,status,note,
-    to_char(create_time,'YYYY-MM-DD HH24:MI:SS') as create_time,to_char(update_time,'YYYY-MM-DD HH24:MI:SS') as uptime_time
+    to_char(create_time,'YYYY-MM-DD HH24:MI:SS') as create_time,to_char(update_time,'YYYY-MM-DD HH24:MI:SS') as update_time
     FROM relay  %v   ORDER by id asc %v  `, w, p)
 
 	//fmt.Println(query)

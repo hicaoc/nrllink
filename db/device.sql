@@ -43,12 +43,12 @@ CREATE TABLE relay
     name character varying COLLATE pg_catalog."default",
     up_freq character varying COLLATE pg_catalog."default",
     down_freq character varying COLLATE pg_catalog."default",
-
-    send_ctss  integer DEFAULT 0 ,
-    recive_ctss  integer DEFAULT 0 ,
-  ower_callsign  character varying COLLATE pg_catalog."default",    
+    send_ctss   character varying COLLATE pg_catalog."default",
+    recive_ctss   character varying COLLATE pg_catalog."default",
+    ower_callsign  character varying COLLATE pg_catalog."default",    
     create_time timestamp without time zone,
     update_time timestamp without time zone,
+    status  integer DEFAULT 0 ,
   
     note character varying COLLATE pg_catalog."default",
     CONSTRAINT relay_pkey PRIMARY KEY (id)
