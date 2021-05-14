@@ -48,7 +48,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 		dev := *vv
 
-		if !isadmin {
+		if !isadmin && dev.CallSign != u.CallSign {
 			dev.CPUID = ""
 			dev.DeviceParm = nil
 		}
