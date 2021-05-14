@@ -258,6 +258,8 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 		fmt.Println("two w : ", string(p))
 
+		p = append(p, byte(0x00))
+
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
 		if t.Sub(d.LastPacketTime) > 5*time.Second {
