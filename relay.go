@@ -51,12 +51,6 @@ func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
-		return
-
-	}
-
 	result, _ := ioutil.ReadAll(req.Body)
 
 	req.Body.Close()
@@ -68,6 +62,12 @@ func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 		log.Println("update user  err :", err)
 		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
 		return
+	}
+
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.OwerCallsign {
+		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
+		return
+
 	}
 
 	// if checkrole(stb, []string{"admin"}) {
@@ -90,12 +90,6 @@ func (j *jsonapi) httpAddrelay(w http.ResponseWriter, req *http.Request) {
 	u, ok := checktoken(w, req)
 	if !ok {
 		return
-	}
-
-	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
-		return
-
 	}
 
 	result, _ := ioutil.ReadAll(req.Body)
