@@ -57,16 +57,16 @@ type control struct {
 
 	//2w parm
 	TwoReciveFreq    string `json:"two_recive_freq"`    //0xC0-0xC8  UV2     对讲机模块频率     	 35字节
-	TwoTransmitFreq  string `json:"two_transimit_freq"` //0xCA-0xD3
+	TwoTransmitFreq  string `json:"two_transmit_freq"`  //0xCA-0xD3
 	TwoReciveCXCSS   string `json:"two_recive_cxcss"`   //0xD4-0xD8 接收哑音
 	TwoTransmitCXCSS string `json:"two_transmit_cxcss"` //0xDA-0xDE
 	FLAG1            string `json:"flag1"`              //0xE0
 	FLAG2            string `json:"flag2"`              //0xE2
-	TwoVolume        string `json:"two_volume"`         //0xEE 2W音量
-	TwoSavePower     string `json:"two_save_power"`     //0xEF 2W SAVE  0=开启省电  1=关闭省电
-	TwoSQLLevel      string `json:"two_sql_level"`      //0xF0  SQL，MICLVL, TOT，SCRAMLVL ,COMP  0X00结束符号
-	TwoMICLevel      string `json:"two_mic_level"`      //0xF2
-	TwoTOTLevel      string `json:"two_tot_level"`      //0xF4
+	TwoVolume        int    `json:"two_volume"`         //0xEE 2W音量
+	TwoSavePower     int    `json:"two_save_power"`     //0xEF 2W SAVE  0=开启省电  1=关闭省电
+	TwoSQLLevel      int    `json:"two_sql_level"`      //0xF0  SQL，MICLVL, TOT，SCRAMLVL ,COMP  0X00结束符号
+	TwoMICLevel      int    `json:"two_mic_level"`      //0xF2
+	TwoTOTLevel      int    `json:"two_tot_level"`      //0xF4
 
 	data []byte //原始
 }
@@ -136,6 +136,7 @@ func decodeControlPacket(data []byte) *control {
 		c.OneMICEncryption, _ = strconv.Atoi(string(c.data[162]))  //0xA2  MIC语音加密 0 1-8
 		c.OneUVPower = c.data[163]                                 //0xA3 PD 内置UV模块电源开关
 
+		//取出\0 前的字符串，并用逗号分割
 		twoParm := bytes.Split(bytes.Split(c.data[192:227], []byte{0x00})[0], []byte{','})
 
 		if len(twoParm) >= 6 {
@@ -156,11 +157,11 @@ func decodeControlPacket(data []byte) *control {
 		// c.TwoTransmitCXCSS =fmt.Sprintf("%02X ", c.data[27:30])    string(c.data[218:222]) //0xDA-0xDE
 		// c.FLAG1 = string(c.data[224])                //0xE0
 		// c.FLAG2 = string(c.data[226])                //0xE2
-		c.TwoVolume = string(c.data[238])    //0xEE 2W音量
-		c.TwoSavePower = string(c.data[239]) //0xEF 2W SAVE  0=开启省电  1=关闭省电
-		c.TwoSQLLevel = string(c.data[240])  //0xF0  SQL，MICLVL, TOT，SCRAMLVL ,COMP  0X00结束符号
-		c.TwoMICLevel = string(c.data[242])  //0xF2
-		c.TwoTOTLevel = string(c.data[244])  //0xF4
+		c.TwoVolume, _ = strconv.Atoi(string(c.data[238]))    //0xEE 2W音量
+		c.TwoSavePower, _ = strconv.Atoi(string(c.data[239])) //0xEF 2W SAVE  0=开启省电  1=关闭省电
+		c.TwoSQLLevel, _ = strconv.Atoi(string(c.data[240]))  //0xF0  SQL，MICLVL, TOT，SCRAMLVL ,COMP  0X00结束符号
+		c.TwoMICLevel, _ = strconv.Atoi(string(c.data[242]))  //0xF2
+		c.TwoTOTLevel, _ = strconv.Atoi(string(c.data[244]))  //0xF4
 
 	} else {
 

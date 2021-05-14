@@ -209,7 +209,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 
 		p := bytes.Join(oneParm, []byte{','})
 
-		fmt.Println(string(p))
+		fmt.Println("One w:", string(p))
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
@@ -221,6 +221,57 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 			copy(d.DeviceParm.data[128:], p)
 			d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
 			d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
+
+			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+			globelconn.WriteToUDP(newpacket, d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
+
+			rescode, _ := jsonextra.Marshal(d)
+			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+
+		}
+
+	}
+
+	return nil, errors.New("device is not found")
+
+	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+
+	//fmt.Println(id, query)
+
+}
+
+func changeDevice2W(ctr *control) (res []byte, err error) {
+
+	if d, ok := devCPUIDMap[ctr.LocalCPUID]; ok {
+
+		//oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
+
+		twoParm := bytes.Split(bytes.Split(d.DeviceParm.data[192:227], []byte{0x00})[0], []byte{','})
+
+		twoParm[0] = []byte(ctr.TwoReciveFreq)
+		twoParm[1] = []byte(ctr.TwoTransmitFreq)
+		twoParm[2] = []byte(ctr.TwoReciveCXCSS)
+		twoParm[3] = []byte(ctr.TwoTransmitCXCSS)
+
+		p := bytes.Join(twoParm, []byte{','})
+
+		fmt.Println("two w : ", string(p))
+
+		t := time.Now()
+		// fmt.Println(t.Sub(d.LastPacketTime))
+		if t.Sub(d.LastPacketTime) > 5*time.Second {
+			d.ISOnline = false
+			return nil, errors.New("device be offline")
+
+		} else {
+			copy(d.DeviceParm.data[192:], p)
+
+			d.DeviceParm.data[238] = []byte(strconv.Itoa(ctr.TwoVolume))[0]
+			d.DeviceParm.data[239] = []byte(strconv.Itoa(ctr.TwoSavePower))[0]
+			d.DeviceParm.data[240] = []byte(strconv.Itoa(ctr.TwoSQLLevel))[0]
+			d.DeviceParm.data[242] = []byte(strconv.Itoa(ctr.TwoMICLevel))[0]
+			d.DeviceParm.data[244] = []byte(strconv.Itoa(ctr.TwoTOTLevel))[0]
 
 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
 			globelconn.WriteToUDP(newpacket, d.udpAddr)

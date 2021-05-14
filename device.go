@@ -488,3 +488,46 @@ func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 	w.Write(res)
 
 }
+
+func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	result, _ := ioutil.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &control{}
+	err := jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device parm update err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"1W设备参数信息更新错误,数据格式错误"}}`))
+		return
+	}
+
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
+		return
+
+	}
+
+	// if stb.CallSign != u.CallSign {
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
+	// 	return
+	// }
+
+	res, err := changeDevice2W(stb)
+
+	if err != nil {
+		w.Write([]byte(`{"code":20000,"data":{"message":"1W模块设置失败"}}`))
+		return
+	}
+	w.Write(res)
+
+}
