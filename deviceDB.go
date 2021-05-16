@@ -20,9 +20,8 @@ type deviceInfo struct {
 	DevModel        int    `json:"dev_model" db:"dev_model"` //设备型号
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
-	CallSign        string `json:"callsign" db:"callsign"`   //所有者呼号
+	CallSign        string `json:"callsign"`                 //所有者呼号
 	SSID            byte   `json:"ssid" db:"ssid"`           //所有者呼号
-	OwerID          int    `json:"ower_id" db:"ower_id"`     //所有者ID
 	GroupID         int    `json:"group_id" db:"group_id"`   //内置群租编号
 	Status          int    `json:"status" db:"status"`       //状态  0 未知   1 正常 2 拉黑
 	ISCerted        bool   `json:"is_certed" db:"is_certed"` //是否认证过
@@ -65,11 +64,6 @@ func initAllDevList() {
 
 			kk.DevMap[dev.ID] = dev
 			kk.DevList = append(kk.DevList, int64(dev.ID))
-
-		}
-
-		if kk, okok := userlist[dev.OwerID]; okok {
-			kk.DevList[dev.ID] = dev
 
 		}
 
@@ -294,106 +288,21 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 }
 
-func bindDevice(dev *deviceInfo, userid int) error {
+func addDevice(dev *deviceInfo) error {
 
-	if dev.OwerID == 0 {
+	//	fmt.Println("user:", e)
+	query := `INSERT INTO devices (	cpuid,create_time,update_time) VALUES ($1,now(),now())`
 
-		//	fmt.Println("user:", e)
-		query := `INSERT INTO devices (	name,cpuid,password,gird,dev_type,dev_model,callsign,ssid,ower_id,online_time,note,create_time,update_time) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())`
+	_, err := db.Exec(query, dev.CPUID)
 
-		_, err := db.Exec(query,
-			dev.Name, dev.CPUID, dev.Password, dev.Gird, dev.DevType, dev.DevModel, dev.CallSign, dev.SSID, userid, dev.OnlineTime, dev.Note)
-
-		if err != nil {
-			log.Println("bing dev failed, ", err, '\n', query)
-			return err
-		}
-
-	} else {
-
-		query := `update devices set ower_id=$1,callsign=$2,update_time=now() where id=$3 `
-
-		_, err := db.Exec(query, userid, dev.CallSign, dev.ID)
-
-		if err != nil {
-			log.Println("change bing dev failed, ", err, '\n', query)
-			return err
-		}
-
+	if err != nil {
+		log.Println("add dev failed, ", err, '\n', query)
+		return err
 	}
-
-	d := getDevice(dev.CPUID)
-
-	if ddd, ok := devCPUIDMap[dev.CPUID]; ok {
-		ddd.OwerID = userid
-		ddd.ID = d.ID
-
-	}
-
-	//在原来用户中，删除这个设备
-	if u, ok := userlist[dev.OwerID]; ok {
-		if _, okok := u.DevList[d.ID]; !okok {
-			//dev.ID = d.ID
-			delete(u.DevList, d.ID)
-		}
-	}
-
-	//绑定到新用户
-	if u, ok := userlist[userid]; ok {
-		if _, okok := u.DevList[d.ID]; !okok {
-			//dev.ID = d.ID
-			u.DevList[d.ID] = dev
-		}
-	}
-
-	if kkk, ok := publicGroupMap[0]; ok {
-		if kkkk, okok := kkk.DevMap[dev.ID]; okok {
-			kkk.DevMap[d.ID] = kkkk
-			delete(kkk.DevMap, dev.ID)
-
-		}
-
-	}
-
-	//dev.ID = d.ID
 
 	return nil
 
 }
-
-// func unbindDevice(dev *deviceInfo) error {
-
-// 	if dev.ID == 0 {
-
-// 		//	fmt.Println("user:", e)
-// 		query := `INSERT INTO devices (	name,cpuid,gird,dev_type,dev_model,callsign,ssid,ower_id,create_time,update_time	)
-// 	VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now(),now())`
-
-// 		_, err := db.Exec(query,
-// 			dev.Name, dev.CPUID, dev.Gird, dev.DevType, dev.DevModel, dev.CallSign, dev.SSID, 0)
-
-// 		if err != nil {
-// 			log.Println("bing dev failed, ", err, '\n', query)
-// 			return err
-// 		}
-
-// 		devCPUIDMap[dev.CPUID].OwerID = 0
-
-// 		return nil
-// 	} else {
-
-// 		_, err := db.Exec(`update devices set ower_id=$1  where id=$2`, 0, dev.ID)
-
-// 		if err != nil {
-// 			log.Println("rebind device failed, ", err)
-// 			return err
-// 		}
-// 		devCPUIDMap[dev.CPUID].OwerID = 0
-// 	}
-// 	return nil
-
-// }
 
 func updateDevice(e *deviceInfo) error {
 

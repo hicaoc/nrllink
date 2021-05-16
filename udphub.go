@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -11,7 +10,7 @@ import (
 	"github.com/json-iterator/go/extra"
 )
 
-var userlist = make(map[int]userinfo, 1000) //key 用户id
+var userlist = make(map[string]userinfo, 1000) //key 用户id
 
 var devCPUIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
 
@@ -92,7 +91,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			//  没有加入公共组的设备，使用用户内置连接池
 			if dev.GroupID > 0 && dev.GroupID < 1000 {
-				if u, okok := userlist[dev.OwerID]; okok {
+				if u, okok := userlist[dev.CallSign]; okok {
 					NRL21parser(nrl, data[:n], dev, conn, u.Groups[dev.GroupID])
 				}
 
@@ -105,25 +104,20 @@ func udpProcess(conn *net.UDPConn) {
 			}
 
 		} else {
-			//设备不存在，加入设备,并加入加入缺省0公共群组
-			newdev := &deviceInfo{
-				ID:             int(rand.Int63n(10000000000)) + 1000000,
-				CPUID:          nrl.CPUID,
-				CallSign:       nrl.CallSign,
-				SSID:           nrl.SSID,
-				ISOnline:       true,
-				OnlineTime:     nrl.timeStamp,
-				udpAddr:        nrl.UDPAddr,
-				LastPacketTime: nrl.timeStamp,
-			}
 
-			devCPUIDMap[nrl.CPUID] = newdev
+			//设备不存在，加入设备,并加入加入缺省0公共群组
+
+			addDevice(&deviceInfo{CPUID: nrl.CPUID})
+
+			d := getDevice(nrl.CPUID)
+
+			devCPUIDMap[nrl.CPUID] = d
 
 			if p, ok := publicGroupMap[0]; ok {
 
-				p.DevMap[newdev.ID] = newdev
+				p.DevMap[d.ID] = d
 
-				NRL21parser(nrl, data[:n], newdev, conn, p)
+				NRL21parser(nrl, data[:n], d, conn, p)
 
 			}
 

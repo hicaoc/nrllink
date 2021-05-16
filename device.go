@@ -106,42 +106,42 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (j *jsonapi) httpBindDevice(w http.ResponseWriter, req *http.Request) {
-	sethttphead(w)
+// func (j *jsonapi) httpBindDevice(w http.ResponseWriter, req *http.Request) {
+// 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
-		return
-	}
+// 	u, ok := checktoken(w, req)
+// 	if !ok {
+// 		return
+// 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+// 	result, _ := ioutil.ReadAll(req.Body)
 
-	req.Body.Close()
+// 	req.Body.Close()
 
-	stb := &deviceInfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+// 	stb := &deviceInfo{}
+// 	err := jsonextra.Unmarshal(result, &stb)
 
-	if err != nil {
-		log.Println("device bind err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
-		return
-	}
+// 	if err != nil {
+// 		log.Println("device bind err :", err)
+// 		w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
+// 		return
+// 	}
 
-	if stb.CallSign != u.CallSign {
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定或解除绑定操作错误，必须本人操作"}}`))
-		return
-	}
+// 	if stb.CallSign != u.CallSign {
+// 		w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定或解除绑定操作错误，必须本人操作"}}`))
+// 		return
+// 	}
 
-	err = bindDevice(stb, u.ID)
+// 	err = bindDevice(stb, u.ID)
 
-	if err != nil {
-		log.Println("device bind err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
-		return
-	}
-	w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
+// 	if err != nil {
+// 		log.Println("device bind err :", err)
+// 		w.Write([]byte(`{"code":20000,"data":{"message":"绑定设备表参数错误"}}`))
+// 		return
+// 	}
+// 	w.Write([]byte(`{"code":20000,"data":{"message":"设备绑定成功"}}`))
 
-}
+// }
 
 func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
