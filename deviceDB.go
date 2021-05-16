@@ -291,7 +291,7 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 func addDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO devices (	cpuid,create_time,update_time) VALUES ($1,now(),now())`
+	query := `INSERT INTO devices (	name,gird,cpuid,note,password,online_time,create_time,update_time) VALUES ('','',$1,'','',now(),now(),now())`
 
 	_, err := db.Exec(query, dev.CPUID)
 
