@@ -308,10 +308,6 @@ func updateDevice(e *deviceInfo) error {
 
 	//不更新设备所有者，所有者在绑定的时候一次性生成
 
-	if e.ID > 1000000 {
-		return fmt.Errorf("temp device no support change group %v %v ", e.CPUID, e.GroupID)
-	}
-
 	if d, ok := devCPUIDMap[e.CPUID]; ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
