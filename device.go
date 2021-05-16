@@ -39,6 +39,10 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	for _, vv := range devCPUIDMap {
 
+		if vv.CallSign == "" {
+			continue
+		}
+
 		t := time.Now()
 		if t.Sub(vv.LastPacketTime) > 5*time.Second {
 			vv.ISOnline = false
