@@ -16,11 +16,11 @@ import (
 
 //var tokenidmap = make(map[string]operater, 0)
 
-type token struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-	Scope       string `json:"scope"`
-}
+// type token struct {
+// 	AccessToken string `json:"access_token"`
+// 	ExpiresIn   int    `json:"expires_in"`
+// 	Scope       string `json:"scope"`
+// }
 
 type loginreq struct {
 	Username string `json:"username"`
@@ -41,7 +41,8 @@ type tokenpayload struct {
 	Name  string   `json:"name"`
 	Roles []string `json:"roles"`
 }
-type tokensignature struct{}
+
+// type tokensignature struct{}
 
 type tokenrescode struct {
 	Code    int     `json:"code"`
@@ -61,7 +62,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin", "superadmin"}) {
+	if !checkrole(u, []string{"admin", "ham"}) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -75,7 +76,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("user list err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询所有员工列表参数错误"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询所有用户列表错误"}}`))
 		return
 	}
 
@@ -243,6 +244,54 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	result, _ := ioutil.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &userinfo{}
+	err := jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("update user  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		return
+	}
+
+	if u.ID != stb.ID {
+		log.Println("update user  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"无权限更新密码"}}`))
+		return
+
+	}
+
+	// if checkrole(stb, []string{"admin"}) {
+	// 	w.Write([]byte("{"code":20000,"data":{"message":"内置账号，无法修改"}}"))
+	// 	return
+	// }
+
+	//stb.Area = u.Area
+	err = updateUserPassword(stb.ID, stb.Password)
+
+	if err != nil {
+		log.Println("update user password err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"密码修改失败"}}`))
+		return
+	}
+
+	addOperatorLog(stb.String(), "修改密码成功", u)
+
+	w.Write([]byte(`{"code":20000,"data":{"message":"密码更新成功"}}`))
+
+}
+
 func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
@@ -291,7 +340,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin", "master"}) {
+	if !checkrole(u, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -310,7 +359,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(stb, []string{"admin"}) == true {
+	if checkrole(stb, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"内置账号无法删除"}}`))
 		return
 
@@ -330,7 +379,7 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(u, []string{"superadmin", "master", "admin", "view", "xiaozhang"}) == false {
+	if !checkrole(u, []string{"superadmin", "master", "admin", "view", "xiaozhang"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -338,7 +387,7 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 
 	query := " where name_key != 'admin' "
 
-	if checkrole(u, []string{"admin"}) == true {
+	if checkrole(u, []string{"admin"}) {
 		query = ""
 	}
 
@@ -362,7 +411,7 @@ func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(u, []string{"admin"}) == false {
+	if !checkrole(u, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
 		return
 
@@ -586,7 +635,7 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, bool) {
 	h.Write([]byte(p[1]))
 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
-	if strings.EqualFold(sign, p[2]) == false {
+	if !strings.EqualFold(sign, p[2]) {
 		log.Println("token err key not equal")
 		w.Write([]byte(`{"code":50008,"data":{"isok":1,"message":"token sign err"}}`))
 		return nil, false

@@ -82,7 +82,7 @@ func getOperatorLog(s string, p string, emp *userinfo) ([]OperatorLog, int) {
 
 func addOperatorLog(Content string, EventType string, emp *userinfo) {
 
-	query := fmt.Sprintf("INSERT INTO operator_log (timestamp,content,event_type,operator,operator_id) VALUES (now(),$1,$2,$3,$4)")
+	query := "INSERT INTO operator_log (timestamp,content,event_type,operator,operator_id) VALUES (now(),$1,$2,$3,$4)"
 
 	//fmt.Println(query)
 

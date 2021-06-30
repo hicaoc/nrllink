@@ -77,7 +77,7 @@ func initPublicGroup() {
 }
 
 func getGroup(name string) (gp *group) {
-	//gp = &group{}
+	gp = &group{}
 
 	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
 
@@ -85,6 +85,7 @@ func getGroup(name string) (gp *group) {
 	err := db.Get(gp, `select * FROM public_groups  where name=$1`, name)
 	if err != nil {
 		log.Println("get group by name err:", err, name)
+		return nil
 	}
 	return gp
 
@@ -140,7 +141,14 @@ func addPublicGroup(pg *group) error {
 		log.Println("add public group failed, ", err, '\n', query)
 		return err
 	}
+
 	newpg := getGroup(pg.Name)
+
+	if newpg == nil {
+
+		return fmt.Errorf("群组添加失败")
+
+	}
 	if _, ok := publicGroupMap[newpg.ID]; !ok {
 		newpg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
 		newpg.DevMap = make(map[int]*deviceInfo, 10)

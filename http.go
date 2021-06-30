@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"strconv"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
@@ -69,12 +67,15 @@ type platforminfo struct {
 var totalstats = totalStats{}
 
 type totalStats struct {
-	DevNumber     int `json:"dev_number"`
-	UserNumbert   int `json:"user_number"`
-	PacketNumber  int `json:"packet_number"`
-	SessionNumber int `json:"session_number"`
-	MsgNumber     int `json:"msg_number"`
-	LostPercent   int `json:"lost_percent"`
+	DevNumber       int `json:"dev_number"`
+	OnlineDevNumber int `json:"online_dev_number"`
+	UserNumbert     int `json:"user_number"`
+	VoiceTime       int `json:"voice_time"`
+	Traffic         int `json:"traffic"`
+	PacketNumber    int `json:"packet_number"`
+	SessionNumber   int `json:"session_number"`
+	MsgNumber       int `json:"msg_number"`
+	LostPercent     int `json:"lost_percent"`
 }
 
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
@@ -114,23 +115,6 @@ func sethttphead(w http.ResponseWriter) {
 
 }
 
-func upper(ws *websocket.Conn) {
-	var err error
-	for {
-		var reply string
-
-		if err = websocket.Message.Receive(ws, &reply); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		if err = websocket.Message.Send(ws, strings.ToUpper(reply)); err != nil {
-			fmt.Println(err)
-			continue
-		}
-	}
-}
-
 func (j *jsonapi) msghttp() {
 
 	// fs := http.FileServer(http.Dir(conf.topnpath))
@@ -151,8 +135,12 @@ func (j *jsonapi) msghttp() {
 
 	http.HandleFunc("/device/list", j.httpDeviceList)
 	http.HandleFunc("/device/mydevlist", j.httpMyDeviceList)
-	http.HandleFunc("/device/binddevice", j.httpBindDevice)
+	// http.HandleFunc("/device/binddevice", j.httpBindDevice)
 	http.HandleFunc("/device/update", j.httpUpdateDevice)
+	http.HandleFunc("/device/query", j.httpQueryDeviceParm)
+	http.HandleFunc("/device/change", j.httpChangeDeviceParm)
+	http.HandleFunc("/device/change1w", j.httpChange1W)
+	http.HandleFunc("/device/change2w", j.httpChange2W)
 
 	http.HandleFunc("/group/list", j.httpPublicGroupList)
 	http.HandleFunc("/group/create", j.httpAddGroup)
@@ -160,6 +148,16 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/group/delete", j.httpDeleteGroup)
 
 	http.HandleFunc("/room/list", j.httpRoomList)
+
+	http.HandleFunc("/server/list", j.httpServersList)
+	http.HandleFunc("/server/create", j.httpAddServer)
+	http.HandleFunc("/server/update", j.httpUpdateServer)
+	http.HandleFunc("/server/delete", j.httpDeleteServer)
+
+	http.HandleFunc("/relay/list", j.httpGetRelayList)
+	http.HandleFunc("/relay/create", j.httpAddrelay)
+	http.HandleFunc("/relay/update", j.httpUpdaterelay)
+	http.HandleFunc("/relay/delete", j.httpDeleterelay)
 
 	// http.HandleFunc("/device/create", j.httpAddDevice)
 	// http.HandleFunc("/device/update", j.httpUpdateDevice)
@@ -175,6 +173,7 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/user/detail", j.httpUserDetail)
 	http.HandleFunc("/user/create", j.httpAddUser)
 	http.HandleFunc("/user/update", j.httpUpdateUser)
+	http.HandleFunc("/user/password", j.httpUpdateUserPassword)
 	http.HandleFunc("/user/delete", j.httpDeleteUser)
 
 	//http.HandleFunc("/routes", j.httpRoutes)
@@ -189,7 +188,7 @@ func (j *jsonapi) msghttp() {
 	//http.HandleFunc("/login", j.httplogin)
 	//http.HandleFunc("/reg", j.httpreg)
 
-	//http.Handle("/ws", websocket.Handler(upper))
+	http.Handle("/ws", websocket.Handler(upper))
 
 	http.Handle("/", http.FileServer(http.Dir(conf.wwwpath)))
 
@@ -528,13 +527,13 @@ type total struct {
 	Total int `json:"total" db:"total"`
 }
 
-func array2strings(status []int) (s string) {
-	s = "("
+// func array2strings(status []int) (s string) {
+// 	s = "("
 
-	for _, v := range status {
-		s = s + strconv.Itoa(v) + ","
-	}
-	s = strings.TrimSuffix(s, ",") + ")"
+// 	for _, v := range status {
+// 		s = s + strconv.Itoa(v) + ","
+// 	}
+// 	s = strings.TrimSuffix(s, ",") + ")"
 
-	return s
-}
+// 	return s
+// }
