@@ -107,7 +107,7 @@ func queryDeviceParm(cpuid string) (dev deviceInfo, err error) {
 
 			globelconn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
 
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 
 			return *dev, nil
 		}

@@ -83,6 +83,7 @@ func udpProcess(conn *net.UDPConn) {
 
 		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
 
+			//设备端有bug，某些报文没有填充callsign
 			dev.CallSign = nrl.CallSign
 			dev.SSID = nrl.SSID
 			dev.ISOnline = true
