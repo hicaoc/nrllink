@@ -55,6 +55,9 @@ type control struct {
 	OneMICEncryption  int    `json:"one_mic_encryption"`  //0xA2  MIC语音加密 0 1-8
 	OneUVPower        byte   `json:"one_uv_power"`        //0xA3 PD 内置UV模块电源开关
 
+	//moto 3188 3688信道
+	MotoChannel byte `json:"moto_channel"`
+
 	//2w parm
 	TwoReciveFreq    string `json:"two_recive_freq"`    //0xC0-0xC8  UV2     对讲机模块频率     	 35字节
 	TwoTransmitFreq  string `json:"two_transmit_freq"`  //0xCA-0xD3
@@ -135,6 +138,9 @@ func decodeControlPacket(data []byte) *control {
 		c.OneMICSensitivity, _ = strconv.Atoi(string(c.data[161])) //0xA1  MIC灵敏度1-8
 		c.OneMICEncryption, _ = strconv.Atoi(string(c.data[162]))  //0xA2  MIC语音加密 0 1-8
 		c.OneUVPower = c.data[163]                                 //0xA3 PD 内置UV模块电源开关
+
+		//moto 3188
+		c.MotoChannel = c.data[164]
 
 		//取出\0 前的字符串，并用逗号分割
 		twoParm := bytes.Split(bytes.Split(c.data[192:227], []byte{0x00})[0], []byte{','})

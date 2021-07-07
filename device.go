@@ -406,6 +406,14 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 			}
 			w.Write(res)
 
+		case "moto_channel":
+			res, err := changeDeviceByteParm(cpuid, 164, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"改变摩托3188/3688信道失败"}}`))
+				return
+			}
+			w.Write(res)
+
 		}
 
 	}
