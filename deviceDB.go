@@ -8,6 +8,8 @@ import (
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type deviceInfo struct {
@@ -24,14 +26,16 @@ type deviceInfo struct {
 	SSID            byte   `json:"ssid" db:"ssid"`           //所有者呼号
 	GroupID         int    `json:"group_id" db:"group_id"`   //内置群租编号
 	Status          int    `json:"status" db:"status"`       //状态  0 未知   1 正常 2 拉黑
+	RFType          int    `json:"rf_type" db:"rf_type"`     //连接的射频设备类型：  0:无连接， 1,内置1W模块，2，内置2W模块，3，外接moto3188，4,moto3688, 5，外接yaesu，6，外接，icom，7，外接其它
 	ISCerted        bool   `json:"is_certed" db:"is_certed"` //是否认证过
 	Traffic         int    `json:"traffic"`                  //流量消耗
 	VoiceTime       int    `json:"voice_time"`               //通话时长
 	udpAddr         *net.UDPAddr
-	CreateTime      time.Time `json:"create_time" db:"create_time"` //加入时间
-	UpdateTime      time.Time `json:"update_time" db:"update_time"` //信息更新时间
-	OnlineTime      time.Time `json:"online_time" db:"online_time"` //设备上线时间
-	ISOnline        bool      `json:"is_online" db:"is_online"`     //当前是否在线
+	CreateTime      time.Time      `json:"create_time" db:"create_time"` //加入时间
+	UpdateTime      time.Time      `json:"update_time" db:"update_time"` //信息更新时间
+	OnlineTime      time.Time      `json:"online_time" db:"online_time"` //设备上线时间
+	ISOnline        bool           `json:"is_online" `                   //当前是否在线
+	ChanName        pq.StringArray `json:"chan_name" db:"chan_name"`     //射频信道名称
 
 	LastPacketTime     time.Time `json:"last_packet_time" `     //最后一次报文时间
 	LastVoiceBeginTime time.Time `json:"last_voice_begin_time"` //上次语音开始时间
@@ -291,9 +295,10 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 func addDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO devices (	name,gird,cpuid,note,password,online_time,create_time,update_time) VALUES ('','',$1,'','',now(),now(),now())`
+	query := `INSERT INTO devices (	name,gird,cpuid,chan_name,note,password,rf_type,online_time,create_time,update_time)
+		 VALUES ('','',$1,$2,'','',0,now(),now(),now())`
 
-	_, err := db.Exec(query, dev.CPUID)
+	_, err := db.Exec(query, dev.CPUID, dev.ChanName)
 
 	if err != nil {
 		log.Println("add dev failed, ", err, '\n', query)
@@ -316,6 +321,8 @@ func updateDevice(e *deviceInfo) error {
 		d.Status = e.Status
 		d.Note = e.Note
 		d.Password = e.Password
+		d.RFType = e.RFType
+		d.ChanName = e.ChanName
 
 		if d.GroupID != e.GroupID {
 			err := changeDevGroup(d, e.GroupID)
@@ -327,9 +334,9 @@ func updateDevice(e *deviceInfo) error {
 
 	}
 
-	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 
-	group_id=$5,status=$6, note=$7,password=$8,update_time=now()  where id=$9`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.Note, e.Password, e.ID)
+	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 	group_id=$5,status=$6,
+	chan_name=$7,	rf_type=$8,	 note=$9,password=$10,update_time=now()  where id=$11`,
+		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err

@@ -83,13 +83,9 @@ func udpProcess(conn *net.UDPConn) {
 
 		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
 
-			//设备端有bug，某些报文没有填充callsign
-			dev.CallSign = nrl.CallSign
-			dev.SSID = nrl.SSID
-			dev.ISOnline = true
-
 			dev.udpAddr = nrl.UDPAddr
 			dev.LastPacketTime = nrl.timeStamp
+
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
@@ -112,7 +108,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			//设备不存在，加入设备,并加入加入缺省0公共群组
 
-			addDevice(&deviceInfo{CPUID: nrl.CPUID})
+			addDevice(&deviceInfo{CPUID: nrl.CPUID, ChanName: make([]string, 8)})
 
 			d := getDevice(nrl.CPUID)
 
@@ -208,8 +204,22 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 		//原样回复心跳
 		conn.WriteToUDP(packet, nrl.UDPAddr)
+
+		//设备端有bug，某些报文没有填充callsign
+		if dev.CallSign != nrl.CallSign || dev.SSID != nrl.SSID {
+			dev.CallSign = nrl.CallSign
+			dev.SSID = nrl.SSID
+			updateDevice(dev)
+		}
+
+		if !dev.ISOnline {
+			dev.ISOnline = true
+			conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
+		}
+
 	case 3:
 		//控制报文
+		fmt.Println(dev)
 		dev.DeviceParm = decodeControlPacket(nrl.DATA)
 
 	case 4:
