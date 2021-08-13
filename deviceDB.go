@@ -22,14 +22,15 @@ type deviceInfo struct {
 	DevModel        int    `json:"dev_model" db:"dev_model"` //设备型号
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
-	CallSign        string `json:"callsign"`                 //所有者呼号
-	SSID            byte   `json:"ssid" db:"ssid"`           //所有者呼号
-	GroupID         int    `json:"group_id" db:"group_id"`   //内置群租编号
-	Status          int    `json:"status" db:"status"`       //状态  0 未知   1 正常 2 拉黑
-	RFType          int    `json:"rf_type" db:"rf_type"`     //连接的射频设备类型：  0:无连接， 1,内置1W模块，2，内置2W模块，3，外接moto3188，4,moto3688, 5，外接yaesu，6，外接，icom，7，外接其它
-	ISCerted        bool   `json:"is_certed" db:"is_certed"` //是否认证过
-	Traffic         int    `json:"traffic"`                  //流量消耗
-	VoiceTime       int    `json:"voice_time"`               //通话时长
+	CallSign        string `json:"callsign"`                           //所有者呼号
+	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者呼号
+	GroupID         int    `json:"group_id" db:"group_id"`             //内置群租编号
+	GroupPassword   string `json:"group_password" db:"group_password"` //加入组的密码
+	Status          int    `json:"status" db:"status"`                 //状态  0 未知   1 正常 2 拉黑
+	RFType          int    `json:"rf_type" db:"rf_type"`               //连接的射频设备类型：  0:无连接， 1,内置1W模块，2，内置2W模块，3，外接moto3188，4,moto3688, 5，外接yaesu，6，外接，icom，7，外接其它
+	ISCerted        bool   `json:"is_certed" db:"is_certed"`           //是否认证过
+	Traffic         int    `json:"traffic"`                            //流量消耗
+	VoiceTime       int    `json:"voice_time"`                         //通话时长
 	udpAddr         *net.UDPAddr
 	CreateTime      time.Time      `json:"create_time" db:"create_time"` //加入时间
 	UpdateTime      time.Time      `json:"update_time" db:"update_time"` //信息更新时间
@@ -325,9 +326,22 @@ func updateDevice(e *deviceInfo) error {
 		d.ChanName = e.ChanName
 
 		if d.GroupID != e.GroupID {
-			err := changeDevGroup(d, e.GroupID)
-			if err != nil {
-				return err
+
+			if g, okok := publicGroupMap[e.GroupID]; okok {
+
+				if e.GroupID == 0 || g.Password == "" || e.Password == g.Password {
+
+					err := changeDevGroup(d, e.GroupID)
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return fmt.Errorf("group pasword err")
+				}
+
+			} else {
+				return fmt.Errorf("group not found")
 			}
 
 		}
