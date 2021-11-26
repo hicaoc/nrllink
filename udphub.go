@@ -22,11 +22,13 @@ type connPool struct {
 	UDPAddr       *net.UDPAddr
 	lastTime      time.Time
 	lastVoiceTime time.Time
+	lastCtlTime   time.Time
 }
 
 type currentConnPool struct {
 	UDPAddr       *net.UDPAddr
 	lastVoiceTime time.Time
+	lastCtlTime   time.Time
 	allowCPUID    string
 	//lastVoiceTime time.Time
 	devConnList map[string]*connPool //key cpuid
@@ -166,7 +168,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//控制指令，用户远程控制设备
 		fmt.Println("recived control commond ", nrl)
 	case 1:
-		//语音消息，需要转发给群组内其它设备,
+		//1 语音消息，需要转发给群组内其它设备,
 		//fmt.Println("recived G.711 voice ")
 		// fmt.Println(connpool.allowDEV, n.CPUID, n.CallSign)
 
@@ -189,7 +191,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, nrl.timeStamp}
+			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
 		}
 
 		forwardVoice(nrl, packet, dev, conn, gp)
@@ -200,7 +202,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			kk.lastTime = nrl.timeStamp
 
 		} else {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, time.Time{}}
+			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, time.Time{}, time.Time{}}
 		}
 		//原样回复心跳
 		conn.WriteToUDP(packet, nrl.UDPAddr)
@@ -227,6 +229,31 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 	case 5:
 
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
+
+	case 6:
+		if dev.Status == 1 {
+
+			return
+		}
+
+		if nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
+			dev.LastCtlBeginTime = nrl.timeStamp
+		}
+		dev.LastCtlDuration = int(nrl.timeStamp.Sub(dev.LastCtlBeginTime).Milliseconds())
+		dev.LastCtlEndTime = nrl.timeStamp
+
+		dev.CtlTime = dev.CtlTime + 63
+		//totalstats.CtlTime = totalstats.CtlTime + 63
+
+		if gp.connPool.allowCPUID != "" && nrl.CPUID != gp.connPool.allowCPUID {
+			return
+		}
+
+		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
+			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
+		}
+
+		forwardCtl(nrl, packet, dev, conn, gp)
 
 	default:
 		fmt.Println("unknow data:", nrl)
@@ -276,10 +303,10 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
 		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
-		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
-				k.lastVoiceTime = nrl.timeStamp
+				k.lastCtlTime = nrl.timeStamp
 			}
 
 			return
@@ -322,7 +349,7 @@ func forwardMsg(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.UD
 		// }
 
 	} else {
-		connpool.devConnList[clientAddrStr] = &connPool{n.UDPAddr, n.timeStamp, time.Time{}}
+		connpool.devConnList[clientAddrStr] = &connPool{n.UDPAddr, n.timeStamp, time.Time{}, time.Time{}}
 
 	}
 
@@ -331,6 +358,82 @@ func forwardMsg(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.UD
 		if clientAddrStr != kk {
 			conn.WriteToUDP(packet, vv.UDPAddr)
 		}
+	}
+
+}
+
+//forwardCtl forwardCtl
+func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
+
+	switch len(gp.connPool.devConnList) {
+
+	case 0:
+		log.Println("err connpoll is null")
+	case 1: //只有一个设备，缺省为环路测试，报文原样返回
+		//fmt.Println("case 1 :", clientAddrStr)
+		conn.WriteToUDP(packet, nrl.UDPAddr)
+		gp.connPool.UDPAddr = nrl.UDPAddr
+		gp.connPool.lastCtlTime = nrl.timeStamp
+
+	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
+
+		for kk, vv := range gp.connPool.devConnList {
+			//删除超时的会话
+
+			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
+				delete(gp.connPool.devConnList, kk)
+				continue
+			}
+			//报文转发给其它设备，不包含自己
+			if nrl.UDPAddrStr != kk {
+				//fmt.Println("case 2 :", clientAddrStr)
+				conn.WriteToUDP(packet, vv.UDPAddr)
+			} else {
+				//更新自己的时间
+				vv.lastTime = nrl.timeStamp
+				vv.lastCtlTime = nrl.timeStamp
+				//必须要更新下地址，防止用户端口变化
+				// vv.UDPAddr = n.UDPAddr
+
+			}
+
+		}
+
+	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
+
+		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
+		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+
+			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
+				k.lastCtlTime = nrl.timeStamp
+			}
+
+			return
+			//否则重新让新设备抢占语音权，并更新上次报文时间
+		} else {
+			gp.connPool.UDPAddr = nrl.UDPAddr
+			gp.connPool.lastCtlTime = nrl.timeStamp
+
+		}
+
+		for kk, vv := range gp.connPool.devConnList {
+			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
+				delete(gp.connPool.devConnList, kk)
+				continue
+			}
+
+			if nrl.UDPAddrStr != kk {
+				conn.WriteToUDP(packet, vv.UDPAddr)
+			} else {
+				//更新自己连接池的上次报文接收时间
+				vv.lastTime = nrl.timeStamp
+				vv.lastCtlTime = nrl.timeStamp
+
+			}
+		}
+
 	}
 
 }

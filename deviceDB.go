@@ -30,18 +30,25 @@ type deviceInfo struct {
 	RFType          int    `json:"rf_type" db:"rf_type"`               //连接的射频设备类型：  0:无连接， 1,内置1W模块，2，内置2W模块，3，外接moto3188，4,moto3688, 5，外接yaesu，6，外接，icom，7，外接其它
 	ISCerted        bool   `json:"is_certed" db:"is_certed"`           //是否认证过
 	Traffic         int    `json:"traffic"`                            //流量消耗
-	VoiceTime       int    `json:"voice_time"`                         //通话时长
-	udpAddr         *net.UDPAddr
-	CreateTime      time.Time      `json:"create_time" db:"create_time"` //加入时间
-	UpdateTime      time.Time      `json:"update_time" db:"update_time"` //信息更新时间
-	OnlineTime      time.Time      `json:"online_time" db:"online_time"` //设备上线时间
-	ISOnline        bool           `json:"is_online" `                   //当前是否在线
-	ChanName        pq.StringArray `json:"chan_name" db:"chan_name"`     //射频信道名称
 
-	LastPacketTime     time.Time `json:"last_packet_time" `     //最后一次报文时间
+	udpAddr    *net.UDPAddr
+	CreateTime time.Time      `json:"create_time" db:"create_time"` //加入时间
+	UpdateTime time.Time      `json:"update_time" db:"update_time"` //信息更新时间
+	OnlineTime time.Time      `json:"online_time" db:"online_time"` //设备上线时间
+	ISOnline   bool           `json:"is_online" `                   //当前是否在线
+	ChanName   pq.StringArray `json:"chan_name" db:"chan_name"`     //射频信道名称
+
+	LastPacketTime time.Time `json:"last_packet_time" ` //最后一次报文时间
+
+	VoiceTime          int       `json:"voice_time"`            //通话时长
 	LastVoiceBeginTime time.Time `json:"last_voice_begin_time"` //上次语音开始时间
 	LastVoiceEndTime   time.Time `json:"last_voice_end_time"`   //最后语音时间
 	LastVoiceDuration  int       `json:"last_voice_duration"`   //上次语音持续时长  秒
+
+	CtlTime          int       `json:"ctl_time"`            //通话时长
+	LastCtlBeginTime time.Time `json:"last_ctl_begin_time"` //上次控制开始时间
+	LastCtlEndTime   time.Time `json:"last_ctl_end_time"`   //最后控制时间
+	LastCtlDuration  int       `json:"last_ctl_duration"`   //上次控制持续时长  秒
 
 	Note       string   `json:"note" db:"note"` //设备上线时间
 	DeviceParm *control `json:"device_parm"`
