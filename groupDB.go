@@ -133,7 +133,7 @@ func addPublicGroup(pg *group) error {
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,password,devlist,
 		master_server,slave_server,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())`
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())`
 
 	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.Password, pg.DevList,
 		pg.MasterServer, pg.SlaveServer, pg.Status, pg.Note)

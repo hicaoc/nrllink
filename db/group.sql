@@ -7,6 +7,7 @@ CREATE TABLE public_groups
     name character varying COLLATE pg_catalog."default",
     type integer  DEFAULT 0 ,
     callsign character varying COLLATE pg_catalog."default",
+    password character varying COLLATE pg_catalog."default",
     allow_cpuid character varying COLLATE pg_catalog."default",
     ower_id   integer DEFAULT 0 ,
     devlist  integer[],
