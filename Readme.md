@@ -10,6 +10,10 @@ http://bi4qzw.allazy.com
 http://bg6fcs.allazy.com:9998
 http://bh4aiu.allazy.com:9998
 
+目前支持 BH4TDV出品的NRL系列盒子，比如NRL2100 2200 2300 3188 2600 等
+
+https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os23Zo&id=583051536810
+
 板子连接端口
 udp端口 60050
 
