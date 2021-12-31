@@ -81,8 +81,6 @@ func udpProcess(conn *net.UDPConn) {
 			// return
 		}
 
-		//fmt.Println(remoteaddr.String(), nrl.CPUID)
-
 		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
 
 			dev.udpAddr = nrl.UDPAddr
@@ -94,11 +92,20 @@ func udpProcess(conn *net.UDPConn) {
 
 			//  没有加入公共组的设备，使用用户内置连接池
 			if dev.GroupID > 0 && dev.GroupID < 1000 {
+
 				if u, okok := userlist[dev.CallSign]; okok {
+
 					NRL21parser(nrl, data[:n], dev, conn, u.Groups[dev.GroupID])
+				} else {
+
+					fmt.Println("dev:", dev, nrl)
+					dev.CallSign = nrl.CallSign
+					dev.SSID = nrl.SSID
+
 				}
 
 			} else {
+
 				//否则使用公共群组连接池
 				if p, ok := publicGroupMap[dev.GroupID]; ok {
 
@@ -110,7 +117,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			//设备不存在，加入设备,并加入加入缺省0公共群组
 
-			addDevice(&deviceInfo{CPUID: nrl.CPUID, ChanName: make([]string, 8)})
+			addDevice(&deviceInfo{CallSign: nrl.CallSign, SSID: nrl.SSID, CPUID: nrl.CPUID, ChanName: make([]string, 8)})
 
 			d := getDevice(nrl.CPUID)
 
@@ -159,8 +166,6 @@ func udpServer() {
 }
 
 func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
-
-	//fmt.Println(nrl)
 
 	switch nrl.Type {
 
