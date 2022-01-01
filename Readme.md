@@ -1,29 +1,28 @@
 
-马工新玩具，服务器端功能描述：
+# 马工新玩具 通过网络连接无线电
+
+## 服务器端功能描述
 
 本系统可用于讲任意模式的设备进行各种形式的互联， 通过NRL硬件盒子将设备的音频重新编码后，通过网络转发。
 
 比如，可以用于组建类似BM（数字DMR）的网络，将各地模拟中继台，手台， 公网台，相互链接
 
+#
+# 服务器列表：
 
-服务器列表：
-
-管理端口
-
-http://bi4qzw.allazy.com
-http://bg6fcs.allazy.com:9998
-http://bh4aiu.allazy.com:9998
+    http://bi4qzw.allazy.com
+    http://bg6fcs.allazy.com:9998
+    http://bh4aiu.allazy.com:9998
 
 目前支持 BH4TDV出品的NRL系列盒子，比如NRL2100 2200 2300 3188 2600 等
 
-https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os23Zo&id=583051536810
+    https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os23Zo&id=583051536810
 
 板子连接端口
 udp端口 60050
 
 
-
-总功能描述：
+## 总功能描述（开发中）：
 
 1. 系统基本组成，用户账号，设备，内置群组，公共群组
    1. 用户账号： 注册用户，可以修改个人的设置，可以关联设备，可以改变设备的群组
@@ -37,9 +36,10 @@ udp端口 60050
 8. 服务器支持会议模式，支持多人同时说话，服务器将多路语音信号进行混音处理后转发给群组内所有设备。
 9. BM网关功能，后期可以接入BM网关
 10. 可以转发控制指令
-11. 控制功能，可以对电台进行远程配置修改，比如频率调整12. 
+11. 控制功能，可以对电台进行远程配置修改，比如频率调整
 
-WEB功能描述：
+## WEB功能描述(开发中)：
+
 1. 注册用户可以关联自己的设备
 2. 可以将设备加入到任一内置群组
 3. 可以改变设备的内置组
@@ -52,76 +52,86 @@ WEB功能描述：
 10. 
     
 
-centos 8 下安装方法：
+## centos 8 下安装方法：
 
-解压压缩包到 / 目录下 
+1. 解压压缩包到 / 目录下 
 
-    tar -zxf udphub.tgz 
+         tar -zxf udphub.tgz 
 
-关闭防火墙
+2. 关闭防火墙
 
-    systemctl disable firewalld.service
-    systemctl stop firewalld.service
-
-
-安装数据库
-    rpm -Uvh https://repo.huaweicloud.com/postgresql/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    dnf -qy module disable postgresql
-    dnf install -y postgresql13-server
-    dnf install postgresql13-contrib.x86_64
-    /usr/pgsql-13/bin/postgresql-13-setup initdb 
-
-    修改 /var/lib/pgsql/13/data/pg_hba.conf 文件，信任127.0.0.1 
-
-    # "local" is for Unix domain socket connections only
-    local   all             all                                     trust
-    # IPv4 local connections:
-    host    all             all             127.0.0.1/32            trust
-
-重启数据库，并开机启动
-  systemctl enable postgresql-13
-  systemctl start postgresql-13
+        systemctl disable firewalld.service
+        systemctl stop firewalld.service
 
 
-创建数据库
-   psql -U postgres 
-      create database udphub
+3. 安装数据库
+
+        rpm -Uvh https://repo.huaweicloud.com/postgresql/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        dnf -qy module disable postgresql
+        dnf install -y postgresql13-server
+        dnf install postgresql13-contrib.x86_64
+        /usr/pgsql-13/bin/postgresql-13-setup initdb 
+
+4. 修改 /var/lib/pgsql/13/data/pg_hba.conf 文件，信任127.0.0.1 
+
+        # "local" is for Unix domain socket connections only
+        local   all             all                                     trust
+        # IPv4 local connections:
+        host    all             all             127.0.0.1/32            trust
+
+5. 重启数据库，并开机启动:
+
+        systemctl enable postgresql-13
+        systemctl start postgresql-13
+
+
+6. 创建数据库:
+
+        psql -U postgres 
+        create database udphub
     
-创建相关表
-    psql -U postgres udphub < udphub.sql
+7. 初始化数据库:
 
-启动程序
-    cd /udphub
-    nohup ./udphub &
+        psql -U postgres udphub < udphub.sql
+
+8. 启动程序:
+
+        cd /udphub
+        nohup ./udphub &
 
 
 
 
 
-创建开机启动 服务器
+# 创建开机自动启动
 
-vi /usr/lib/systemd/system/udphub.service
+1.  创建自启动配置文件
 
-[Unit]
-Description=udphub
-Documentation=https://Bi4Qzw.Com
- 
-[Service]
-WorkingDirectory=/udphub/
-ExecStart=/udphub/udphub
-Restart=on-abnormal
-RestartSec=10s
-KillMode=mixed
- 
-[Install]
-WantedBy=multi-user.target
+        vi /usr/lib/systemd/system/udphub.service
 
-2 设置开机自启动 相关命令如下: 
+        [Unit]
+        Description=udphub
+        Documentation=https://Bi4Qzw.Com
+        
+        [Service]
+        WorkingDirectory=/udphub/
+        ExecStart=/udphub/udphub
+        Restart=on-abnormal
+        RestartSec=10s
+        KillMode=mixed
+    
+        [Install]
+        WantedBy=multi-user.target
 
-# 更新配置
-systemctl daemon-reload
-# 启动服务
-systemctl start udphub.service
-# 设置开机启动
-systemctl enable udphub.service
+2. 设置开机自启动 相关命令如下: 
+
+    1. 更新配置:
+
+            systemctl daemon-reload
+    2. 启动服务:
+
+            systemctl start udphub.service
+    3. 设置开机启动:
+
+            systemctl enable udphub.service
  
