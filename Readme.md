@@ -8,19 +8,25 @@
 比如，可以用于组建类似BM（数字DMR）的网络，将各地模拟中继台，手台， 公网台，相互链接
 
 #
-# 服务器列表：
+# 测试用服务器列表：
 
-    http://bi4qzw.allazy.com
-    http://bg6fcs.allazy.com:9998
-    http://bh4aiu.allazy.com:9998
+### web管理后台:
+
+http://ham.bi4qzw.com
+
+http://121.5.149.170:9998
+
+http://bg6fcs.nrllink.net:9998
+
+
+### 服务器语音等控制信号端口：udp 60050 
+#
 
 目前支持 BH4TDV出品的NRL系列盒子，比如NRL2100 2200 2300 3188 2600 等
 
-    https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os23Zo&id=583051536810
+https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os23Zo&id=583051536810
 
-板子连接端口
-udp端口 60050
-
+#
 
 ## 总功能描述（开发中）：
 
