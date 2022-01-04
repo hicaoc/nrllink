@@ -77,6 +77,14 @@ func initAllDevList() {
 			kk.DevMap[dev.ID] = dev
 			kk.DevList = append(kk.DevList, int64(dev.ID))
 
+		} else {
+			dev.GroupID = 0
+
+			if kkk, ok := publicGroupMap[dev.GroupID]; ok {
+				kkk.DevMap[dev.ID] = dev
+				kkk.DevList = append(kkk.DevList, int64(dev.ID))
+			}
+
 		}
 
 	}
