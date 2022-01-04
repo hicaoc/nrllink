@@ -23,7 +23,7 @@ dockers:
   - --label=org.opencontainers.image.licenses=MIT
 nfpms:
 - maintainer: BH4RPN <caoc@live.com>
-  description: Radio of network.
+  description: Radio over network.
   homepage: https://github.com/hicaoc/nrllink
   license: MIT
   formats:
