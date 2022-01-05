@@ -119,7 +119,7 @@ func queryDeviceParm(cpuid string) (dev deviceInfo, err error) {
 
 		t := time.Now()
 		//fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(dev.LastPacketTime) > 5*time.Second {
+		if t.Sub(dev.LastPacketTime) > 15*time.Second {
 			dev.ISOnline = false
 			return *dev, nil
 

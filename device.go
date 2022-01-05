@@ -44,10 +44,11 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 		}
 
 		t := time.Now()
-		if t.Sub(vv.LastPacketTime) > 5*time.Second {
+		if t.Sub(vv.LastPacketTime) > 15*time.Second {
 			vv.ISOnline = false
 		} else {
 			totalstats.OnlineDevNumber++
+			vv.ISOnline = true
 		}
 
 		dev := *vv

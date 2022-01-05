@@ -85,9 +85,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			dev.udpAddr = nrl.UDPAddr
 			dev.LastPacketTime = nrl.timeStamp
-
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
-
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
 			//  没有加入公共组的设备，使用用户内置连接池
@@ -99,8 +97,6 @@ func udpProcess(conn *net.UDPConn) {
 				} else {
 
 					fmt.Println("dev:", dev, nrl)
-					dev.CallSign = nrl.CallSign
-					dev.SSID = nrl.SSID
 
 				}
 
@@ -210,23 +206,26 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, time.Time{}, time.Time{}}
 		}
 		//原样回复心跳
-		conn.WriteToUDP(packet, nrl.UDPAddr)
 
 		//设备端有bug，某些报文没有填充callsign
-		if dev.CallSign != nrl.CallSign || dev.SSID != nrl.SSID {
-			dev.CallSign = nrl.CallSign
-			dev.SSID = nrl.SSID
-			updateDevice(dev)
-		}
+		// if dev.CallSign != nrl.CallSign || dev.SSID != nrl.SSID {
+		// 	dev.CallSign = nrl.CallSign
+		// 	dev.SSID = nrl.SSID
+		// 	updateDevice(dev)
+		// }
+		dev.CallSign = nrl.CallSign
+		dev.SSID = nrl.SSID
+		dev.ISOnline = true
 
-		if !dev.ISOnline {
-			dev.ISOnline = true
+		if dev.DeviceParm == nil {
 			conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
+		} else {
+			conn.WriteToUDP(packet, nrl.UDPAddr)
 		}
 
 	case 3:
 		//控制报文
-		fmt.Println(dev)
+
 		dev.DeviceParm = decodeControlPacket(nrl.DATA)
 
 	case 4:
@@ -285,7 +284,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 		for kk, vv := range gp.connPool.devConnList {
 			//删除超时的会话
 
-			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+			if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
 				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
 				delete(gp.connPool.devConnList, kk)
 				continue
@@ -308,7 +307,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
 		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
-		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
 				k.lastCtlTime = nrl.timeStamp
@@ -323,7 +322,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 		}
 
 		for kk, vv := range gp.connPool.devConnList {
-			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+			if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
 				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
 				delete(gp.connPool.devConnList, kk)
 				continue
