@@ -161,7 +161,7 @@ func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err
 			time.Sleep(200 * time.Millisecond)
 
 			rescode, _ := jsonextra.Marshal(d)
-			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+			return rescode, nil
 
 		}
 
@@ -172,6 +172,87 @@ func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err
 	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
 
 	//fmt.Println(id, query)
+
+}
+
+func changeDeviceMutiByteParm(cpuid string, offset int, str string) (res []byte, err error) {
+
+	if len(str) != 15 {
+		return nil, fmt.Errorf("IP format err")
+
+	}
+
+	if d, ok := devCPUIDMap[cpuid]; ok {
+
+		t := time.Now()
+		// fmt.Println(t.Sub(d.LastPacketTime))
+		if t.Sub(d.LastPacketTime) > 5*time.Second {
+			d.ISOnline = false
+			return nil, errors.New("device be offline")
+
+		} else {
+			for _, v := range str {
+				d.DeviceParm.data[offset] = byte(v)
+				offset++
+			}
+			d.DeviceParm.data[offset] = 0
+
+			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+			globelconn.WriteToUDP(newpacket, d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
+
+			rescode, _ := jsonextra.Marshal(d)
+			return rescode, nil
+
+		}
+
+	}
+
+	return nil, errors.New("device is not found")
+
+}
+
+func changeDeviceIPParm(cpuid string, offset int, ipstr string) (res []byte, err error) {
+
+	ipaddr := net.ParseIP(ipstr)
+
+	if ipaddr == nil {
+		return nil, fmt.Errorf("IP format err")
+	}
+
+	ip := ipaddr.To4()
+
+	if ip == nil {
+		return nil, fmt.Errorf("not support IPv6")
+	}
+
+	if d, ok := devCPUIDMap[cpuid]; ok {
+
+		t := time.Now()
+		// fmt.Println(t.Sub(d.LastPacketTime))
+		if t.Sub(d.LastPacketTime) > 5*time.Second {
+			d.ISOnline = false
+			return nil, errors.New("device be offline")
+
+		} else {
+			for _, v := range ip {
+				d.DeviceParm.data[offset] = v
+				offset++
+			}
+			d.DeviceParm.data[offset] = 0
+
+			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+			globelconn.WriteToUDP(newpacket, d.udpAddr)
+			time.Sleep(200 * time.Millisecond)
+
+			rescode, _ := jsonextra.Marshal(d)
+			return rescode, nil
+
+		}
+
+	}
+
+	return nil, errors.New("device is not found")
 
 }
 
@@ -196,7 +277,7 @@ func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, e
 			time.Sleep(200 * time.Millisecond)
 
 			rescode, _ := jsonextra.Marshal(d)
-			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+			return rescode, nil
 
 		}
 
@@ -241,7 +322,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 			time.Sleep(200 * time.Millisecond)
 
 			rescode, _ := jsonextra.Marshal(d)
-			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+			return rescode, nil
 
 		}
 
@@ -294,7 +375,7 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 			time.Sleep(200 * time.Millisecond)
 
 			rescode, _ := jsonextra.Marshal(d)
-			return []byte(fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)), nil
+			return rescode, nil
 
 		}
 
