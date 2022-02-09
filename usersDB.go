@@ -262,13 +262,8 @@ func getuser(username string) *userinfo {
 		log.Println("getuser by username err :", err, "\n", query)
 	}
 
-	if u, ok := userlist[r.CallSign]; ok {
-		return &u
-	} else {
-
-		r.userinit()
-		userlist[r.CallSign] = *r
-	}
+	r.userinit()
+	userlist[r.CallSign] = *r
 
 	return r
 }
