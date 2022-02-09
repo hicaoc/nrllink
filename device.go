@@ -393,35 +393,37 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 			}
 			r = append(r, res...)
 		case "local_ipaddr":
-			res, err := changeDeviceIPParm(cpuid, 32, v[0])
+
+			ipparm := ipparm{32, req.Form["local_ipaddr"][0], 36, req.Form["gateway"][0], 40, req.Form["netmask"][0], 44, req.Form["dns_ipaddr"][0], 80, req.Form["dest_domainname"][0]}
+			res, err := changeDeviceIPParm(cpuid, ipparm)
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变本地IP失败,IP不正确"}}`))
+				w.Write([]byte(`{"code":20000,"data":{"message":"改变IP失败,IP不正确"}}`))
 				return
 			}
 			r = append(r, res...)
 
-		case "gateway":
-			res, err := changeDeviceIPParm(cpuid, 36, v[0])
-			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变目网关IP失败,IP不正确"}}`))
-				return
-			}
-			r = append(r, res...)
+		// case "gateway":
+		// 	res, err := changeDeviceIPParm(cpuid, 36, v[0])
+		// 	if err != nil {
+		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变目网关IP失败,IP不正确"}}`))
+		// 		return
+		// 	}
+		// 	r = append(r, res...)
 
-		case "netmask":
-			res, err := changeDeviceIPParm(cpuid, 40, v[0])
-			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变本地IP掩码失败,IP不正确"}}`))
-				return
-			}
-			r = append(r, res...)
-		case "dns_ipaddr":
-			res, err := changeDeviceIPParm(cpuid, 44, v[0])
-			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变DNS服务器地址失败,IP不正确"}}`))
-				return
-			}
-			r = append(r, res...)
+		// case "netmask":
+		// 	res, err := changeDeviceIPParm(cpuid, 40, v[0])
+		// 	if err != nil {
+		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变本地IP掩码失败,IP不正确"}}`))
+		// 		return
+		// 	}
+		// 	r = append(r, res...)
+		// case "dns_ipaddr":
+		// 	res, err := changeDeviceIPParm(cpuid, 44, v[0])
+		// 	if err != nil {
+		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变DNS服务器地址失败,IP不正确"}}`))
+		// 		return
+		// 	}
+		// 	r = append(r, res...)
 		case "ssid":
 			res, err := changeDeviceByteParm(cpuid, 64, v[0])
 			if err != nil {
@@ -429,13 +431,13 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				return
 			}
 			r = append(r, res...)
-		case "dest_domainname":
-			res, err := changeDeviceMutiByteParm(cpuid, 80, v[0])
-			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变目标IP失败,IP格式不正确"}}`))
-				return
-			}
-			r = append(r, res...)
+		// case "dest_domainname":
+		// 	res, err := changeDeviceMutiByteParm(cpuid, 80, v[0])
+		// 	if err != nil {
+		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变目标IP失败,IP格式不正确"}}`))
+		// 		return
+		// 	}
+		// 	r = append(r, res...)
 
 		case "one_uv_power":
 			res, err := changeDeviceByteParm(cpuid, 163, v[0])
@@ -459,7 +461,9 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 
 	}
 
-	w.Write(r)
+	w.Write([]byte(`{"code":20000,"data":{"message":"修改成功"}}`))
+
+	//w.Write(r)
 
 	// 第一种方式
 	// username := request.Form["username"][0]

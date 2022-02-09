@@ -175,55 +175,88 @@ func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err
 
 }
 
-func changeDeviceMutiByteParm(cpuid string, offset int, str string) (res []byte, err error) {
+// func changeDeviceMutiByteParm(cpuid string, offset int, str string) (res []byte, err error) {
 
-	if len(str) != 15 {
-		return nil, fmt.Errorf("IP format err")
+// 	if len(str) != 15 {
+// 		return nil, fmt.Errorf("IP format err")
 
-	}
+// 	}
 
-	if d, ok := devCPUIDMap[cpuid]; ok {
+// 	if d, ok := devCPUIDMap[cpuid]; ok {
 
-		t := time.Now()
-		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 5*time.Second {
-			d.ISOnline = false
-			return nil, errors.New("device be offline")
+// 		t := time.Now()
+// 		// fmt.Println(t.Sub(d.LastPacketTime))
+// 		if t.Sub(d.LastPacketTime) > 5*time.Second {
+// 			d.ISOnline = false
+// 			return nil, errors.New("device be offline")
 
-		} else {
-			for _, v := range str {
-				d.DeviceParm.data[offset] = byte(v)
-				offset++
-			}
-			d.DeviceParm.data[offset] = 0
+// 		} else {
+// 			for _, v := range str {
+// 				d.DeviceParm.data[offset] = byte(v)
+// 				offset++
+// 			}
+// 			d.DeviceParm.data[offset] = 0
 
-			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-			globelconn.WriteToUDP(newpacket, d.udpAddr)
-			time.Sleep(200 * time.Millisecond)
+// 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+// 			globelconn.WriteToUDP(newpacket, d.udpAddr)
+// 			time.Sleep(200 * time.Millisecond)
 
-			rescode, _ := jsonextra.Marshal(d)
-			return rescode, nil
+// 			rescode, _ := jsonextra.Marshal(d)
+// 			return rescode, nil
 
-		}
+// 		}
 
-	}
+// 	}
 
-	return nil, errors.New("device is not found")
+// 	return nil, errors.New("device is not found")
 
+// }
+
+type ipparm struct {
+	localIPOffset      int
+	localIPValue       string
+	localNetmaskOffset int
+	localNetmaskValue  string
+	gatewayOffset      int
+	gatewayValue       string
+	dnsOffset          int
+	dnsValue           string
+	destIPOffset       int
+	destIPValue        string
 }
 
-func changeDeviceIPParm(cpuid string, offset int, ipstr string) (res []byte, err error) {
+func checkIP(str string) ([]byte, bool) {
 
-	ipaddr := net.ParseIP(ipstr)
+	ipaddr := net.ParseIP(str)
 
 	if ipaddr == nil {
-		return nil, fmt.Errorf("IP format err")
+		return nil, false
 	}
 
 	ip := ipaddr.To4()
 
 	if ip == nil {
-		return nil, fmt.Errorf("not support IPv6")
+		return nil, false
+	}
+
+	return ip, true
+
+}
+
+func changeDeviceIPParm(cpuid string, ip ipparm) (res []byte, err error) {
+
+	if len(ip.destIPValue) != 15 {
+		return nil, fmt.Errorf("DIP format err")
+
+	}
+
+	lip, lipok := checkIP(ip.localIPValue)
+	netmask, netmaskok := checkIP(ip.localNetmaskValue)
+	gateway, gatewayok := checkIP(ip.gatewayValue)
+	dns, dnsok := checkIP(ip.dnsValue)
+
+	if !(lipok && netmaskok && gatewayok && dnsok) {
+		return nil, errors.New("ip format error")
 	}
 
 	if d, ok := devCPUIDMap[cpuid]; ok {
@@ -235,11 +268,31 @@ func changeDeviceIPParm(cpuid string, offset int, ipstr string) (res []byte, err
 			return nil, errors.New("device be offline")
 
 		} else {
-			for _, v := range ip {
-				d.DeviceParm.data[offset] = v
-				offset++
+			for _, v := range lip {
+				d.DeviceParm.data[ip.localIPOffset] = v
+				ip.localIPOffset++
 			}
-			d.DeviceParm.data[offset] = 0
+
+			for _, v := range netmask {
+				d.DeviceParm.data[ip.localNetmaskOffset] = v
+				ip.localNetmaskOffset++
+			}
+
+			for _, v := range gateway {
+				d.DeviceParm.data[ip.gatewayOffset] = v
+				ip.gatewayOffset++
+			}
+
+			for _, v := range dns {
+				d.DeviceParm.data[ip.dnsOffset] = v
+				ip.dnsOffset++
+			}
+
+			for _, v := range ip.destIPValue {
+				d.DeviceParm.data[ip.destIPOffset] = byte(v)
+				ip.destIPOffset++
+			}
+			d.DeviceParm.data[ip.destIPOffset] = 0
 
 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
 			globelconn.WriteToUDP(newpacket, d.udpAddr)
