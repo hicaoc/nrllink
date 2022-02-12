@@ -630,7 +630,7 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, bool) {
 		return nil, false
 	}
 
-	key := []byte("rolandkey")
+	key := []byte(conf.tokenkey)
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(p[1]))
 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
