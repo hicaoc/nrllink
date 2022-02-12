@@ -69,7 +69,7 @@ var totalstats = totalStats{}
 type totalStats struct {
 	DevNumber       int `json:"dev_number"`
 	OnlineDevNumber int `json:"online_dev_number"`
-	UserNumbert     int `json:"user_number"`
+	UserNumber      int `json:"user_number"`
 	VoiceTime       int `json:"voice_time"`
 	Traffic         int `json:"traffic"`
 	PacketNumber    int `json:"packet_number"`
@@ -81,7 +81,7 @@ type totalStats struct {
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
 
 	totalstats.DevNumber = len(devCPUIDMap)
-	totalstats.UserNumbert = len(userlist)
+	//totalstats.UserNumber = len(userlist)
 
 	rescode, _ := jsonextra.Marshal(totalstats)
 

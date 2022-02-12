@@ -263,7 +263,7 @@ func getuser(username string) *userinfo {
 	}
 
 	r.userinit()
-	userlist[r.CallSign] = *r
+	userlist.Store(r.CallSign, *r)
 
 	return r
 }

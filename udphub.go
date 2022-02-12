@@ -5,12 +5,15 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/json-iterator/go/extra"
 )
 
-var userlist = make(map[string]userinfo, 1000) //key 用户id
+//var userlist = make(map[string]userinfo, 1000) //key 用户id
+
+var userlist sync.Map // callid ,userinfo
 
 var devCPUIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
 
@@ -91,9 +94,9 @@ func udpProcess(conn *net.UDPConn) {
 			//  没有加入公共组的设备，使用用户内置连接池
 			if dev.GroupID > 0 && dev.GroupID < 1000 {
 
-				if u, okok := userlist[dev.CallSign]; okok {
+				if u, okok := userlist.Load(dev.CallSign); okok {
 
-					NRL21parser(nrl, data[:n], dev, conn, u.Groups[dev.GroupID])
+					NRL21parser(nrl, data[:n], dev, conn, u.(*userinfo).Groups[dev.GroupID])
 				} else {
 
 					fmt.Println("dev:", dev, nrl)
