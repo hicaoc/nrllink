@@ -262,8 +262,8 @@ func getuser(username string) *userinfo {
 		log.Println("getuser by username err :", err, "\n", query)
 	}
 
-	r.userinit()
-	userlist.Store(r.CallSign, *r)
+	// r.userinit()
+	// userlist.Store(r.CallSign, *r)
 
 	return r
 }
@@ -471,6 +471,10 @@ func addUser(e *userinfo) error {
 		log.Println("add user failed, ", err, '\n', query)
 		return err
 	}
+
+	e.userinit()
+	userlist.Store(e.CallSign, *e)
+
 	return nil
 
 }
@@ -482,6 +486,8 @@ func deleteUser(e *userinfo) {
 		log.Println("delete user failed, ", err)
 		return
 	}
+
+	userlist.Delete(e.CallSign)
 
 }
 
@@ -531,6 +537,9 @@ func updateUser(e *userinfo) {
 		}
 
 	}
+
+	e.userinit()
+	userlist.Store(e.CallSign, *e)
 
 }
 
