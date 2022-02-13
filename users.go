@@ -493,7 +493,7 @@ func gentokenid(username string, roles []string) string {
 
 	tokenHead := &tokenhead{Alg: "HS256"}
 	tokenPayload := &tokenpayload{
-		Iss:   "roland",
+		Iss:   "nrllink",
 		Exp:   time.Now().Add(24 * time.Hour).Format("20060102"),
 		Name:  username,
 		Roles: roles,
@@ -505,7 +505,7 @@ func gentokenid(username string, roles []string) string {
 	payload, _ := jsonextra.Marshal(tokenPayload)
 	base64payload := base64.StdEncoding.EncodeToString(payload)
 
-	key := []byte("rolandkey")
+	key := []byte(conf.tokenkey)
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(base64payload))
 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
