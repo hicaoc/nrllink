@@ -192,6 +192,50 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	result, _ := ioutil.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &deviceInfo{}
+	err := jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device update err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,数据格式错误"}}`))
+		return
+	}
+
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
+		return
+
+	}
+
+	// if stb.CallSign != u.CallSign {
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
+	// 	return
+	// }
+
+	err = changeDeviceGroup(stb)
+
+	if err != nil {
+		log.Println("device update err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,设备必须先绑定,未绑定设备不支持切换群组"}}`))
+		return
+	}
+	w.Write([]byte(`{"code":20000,"data":{"message":"设备更新成功成功"}}`))
+
+}
+
 func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
@@ -297,110 +341,99 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 
 	}
 
-	var r []byte
-
 	for k, v := range req.Form {
 
 		fmt.Println(k, v)
 
 		switch k {
 		case "dcd_select":
-			res, err := changeDeviceByteParm(cpuid, 0, v[0])
+			_, err := changeDeviceByteParm(cpuid, 0, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备DCD选择失败"}}`))
 				return
 			}
 
-			r = append(r, res...)
-
 		case "ptt_enable":
-			res, err := changeDeviceByteParm(cpuid, 1, v[0])
+			_, err := changeDeviceByteParm(cpuid, 1, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改使能PTT失败"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "ptt_level_reversed":
-			res, err := changeDeviceByteParm(cpuid, 2, v[0])
+			_, err := changeDeviceByteParm(cpuid, 2, v[0])
 
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			r = append(r, res...)
+
 		case "add_tail_voice":
-			res, err := changeDeviceUint16Parm(cpuid, 3, v[0])
+			_, err := changeDeviceUint16Parm(cpuid, 3, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"加尾音失败"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "remove_tail_voice":
-			res, err := changeDeviceUint16Parm(cpuid, 5, v[0])
+			_, err := changeDeviceUint16Parm(cpuid, 5, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"消尾音失败"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "ptt_resistive":
-			res, err := changeDeviceByteParm(cpuid, 7, v[0])
+			_, err := changeDeviceByteParm(cpuid, 7, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			r = append(r, res...)
+			//r = append(r, res...)
 
 		case "monitor_out":
-			res, err := changeDeviceByteParm(cpuid, 8, v[0])
+			_, err := changeDeviceByteParm(cpuid, 8, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "key_func":
-			res, err := changeDeviceByteParm(cpuid, 9, v[0])
+			_, err := changeDeviceByteParm(cpuid, 9, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "realy_status":
-			res, err := changeDeviceByteParm(cpuid, 10, v[0])
+			_, err := changeDeviceByteParm(cpuid, 10, v[0])
 
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			r = append(r, res...)
+
 		case "allow_relay_control":
-			res, err := changeDeviceByteParm(cpuid, 11, v[0])
+			_, err := changeDeviceByteParm(cpuid, 11, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "voice_bitrate":
-			res, err := changeDeviceByteParm(cpuid, 12, v[0])
+			_, err := changeDeviceByteParm(cpuid, 12, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改语音码率失败"}}`))
 				return
 			}
-			r = append(r, res...)
+
 		case "local_ipaddr":
 
 			ipparm := ipparm{32, req.Form["local_ipaddr"][0], 36, req.Form["gateway"][0], 40, req.Form["netmask"][0], 44, req.Form["dns_ipaddr"][0], 80, req.Form["dest_domainname"][0]}
-			res, err := changeDeviceIPParm(cpuid, ipparm)
+			_, err := changeDeviceIPParm(cpuid, ipparm)
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"改变IP失败,IP不正确"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		// case "gateway":
 		// 	res, err := changeDeviceIPParm(cpuid, 36, v[0])
@@ -425,12 +458,12 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		// 	}
 		// 	r = append(r, res...)
 		case "ssid":
-			res, err := changeDeviceByteParm(cpuid, 64, v[0])
+			_, err := changeDeviceByteParm(cpuid, 64, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备SSID失败"}}`))
 				return
 			}
-			r = append(r, res...)
+
 		// case "dest_domainname":
 		// 	res, err := changeDeviceMutiByteParm(cpuid, 80, v[0])
 		// 	if err != nil {
@@ -440,20 +473,19 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		// 	r = append(r, res...)
 
 		case "one_uv_power":
-			res, err := changeDeviceByteParm(cpuid, 163, v[0])
+			_, err := changeDeviceByteParm(cpuid, 163, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"UV电源开关失败"}}`))
 				return
 			}
-			r = append(r, res...)
 
 		case "moto_channel":
-			res, err := changeDeviceByteParm(cpuid, 164, v[0])
+			_, err := changeDeviceByteParm(cpuid, 164, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"改变摩托3188/3688信道失败"}}`))
 				return
 			}
-			r = append(r, res...)
+
 		default:
 			fmt.Println("unknow parm ")
 

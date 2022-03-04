@@ -202,6 +202,8 @@ func updatePublicGroup(pg *group) error {
 
 }
 
+
+
 func deletePublicGroup(pg *group) error {
 
 	_, err := db.Exec(`delete from public_groups  where id=$1`, pg.ID)

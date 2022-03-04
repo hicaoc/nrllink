@@ -40,6 +40,25 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 
 }
 
+func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	// _, ok := checktoken(w, req)
+	// if !ok {
+	// 	return
+	// }
+
+	str := ""
+
+	for _, v := range publicGroupMap {
+		str = str + fmt.Sprintf("%v,%v\n", v.ID, v.Name)
+
+	}
+
+	w.Write([]byte(str))
+
+}
+
 func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 

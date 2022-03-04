@@ -22,7 +22,7 @@ func initAllUserList() {
 
 		user.userinit()
 
-		userlist[user.CallSign] = *user
+		userlist.Store(user.CallSign, *user)
 
 	}
 

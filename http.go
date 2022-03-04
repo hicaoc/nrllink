@@ -81,7 +81,7 @@ type totalStats struct {
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
 
 	totalstats.DevNumber = len(devCPUIDMap)
-	totalstats.UserNumbert = len(userlist)
+	totalstats.UserNumbert = 1000
 
 	rescode, _ := jsonextra.Marshal(totalstats)
 
@@ -134,9 +134,13 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/platform/totalstats", j.httpTotalStats)
 
 	http.HandleFunc("/device/list", j.httpDeviceList)
+
 	http.HandleFunc("/device/mydevlist", j.httpMyDeviceList)
 	// http.HandleFunc("/device/binddevice", j.httpBindDevice)
 	http.HandleFunc("/device/update", j.httpUpdateDevice)
+
+	http.HandleFunc("/device/changegroupnrl", j.httpChangeDeviceGroupNRL)
+
 	http.HandleFunc("/device/query", j.httpQueryDeviceParm)
 	http.HandleFunc("/device/change", j.httpChangeDeviceParm)
 	http.HandleFunc("/device/change1w", j.httpChange1W)
@@ -146,6 +150,8 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/group/create", j.httpAddGroup)
 	http.HandleFunc("/group/update", j.httpUpdateGroup)
 	http.HandleFunc("/group/delete", j.httpDeleteGroup)
+
+	http.HandleFunc("/group/listnrl", j.httpAllGroupListNRL)
 
 	http.HandleFunc("/room/list", j.httpRoomList)
 

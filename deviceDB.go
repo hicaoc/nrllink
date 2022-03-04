@@ -508,3 +508,41 @@ func updateDevice(e *deviceInfo) error {
 	return nil
 
 }
+
+func changeDeviceGroup(e *deviceInfo) error {
+
+	//不更新设备所有者，所有者在绑定的时候一次性生成
+
+	if d, ok := devCPUIDMap[e.CPUID]; ok {
+
+		if d.GroupID != e.GroupID {
+
+			if g, okok := publicGroupMap[e.GroupID]; okok {
+
+				if e.GroupID == 0 || g.Password == "" || e.Password == g.Password {
+
+					err := changeDevGroup(d, e.GroupID)
+					if err != nil {
+						return err
+					}
+					_, err = db.Exec(`update devices set group_id=$1  where id=$11`, e.GroupID, d.ID)
+					if err != nil {
+						log.Println("update device failed, ", err)
+						return err
+					}
+
+				} else {
+					return fmt.Errorf("group pasword err")
+				}
+
+			} else {
+				return fmt.Errorf("group not found")
+			}
+
+		}
+
+	}
+
+	return nil
+
+}
