@@ -43,10 +43,10 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	// _, ok := checktoken(w, req)
-	// if !ok {
-	// 	return
-	// }
+	_, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
 
 	str := ""
 
