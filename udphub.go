@@ -13,7 +13,7 @@ import (
 
 //var userlist = make(map[string]userinfo, 1000) //key 用户id
 
-var userlist sync.Map
+var userlist sync.Map // callid ,userinfo
 
 var devCPUIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
 

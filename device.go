@@ -388,7 +388,6 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
-			//r = append(r, res...)
 
 		case "monitor_out":
 			_, err := changeDeviceByteParm(cpuid, 8, v[0])
@@ -449,14 +448,14 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变本地IP掩码失败,IP不正确"}}`))
 		// 		return
 		// 	}
-		// 	r = append(r, res...)
+
 		// case "dns_ipaddr":
 		// 	res, err := changeDeviceIPParm(cpuid, 44, v[0])
 		// 	if err != nil {
 		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变DNS服务器地址失败,IP不正确"}}`))
 		// 		return
 		// 	}
-		// 	r = append(r, res...)
+
 		case "ssid":
 			_, err := changeDeviceByteParm(cpuid, 64, v[0])
 			if err != nil {

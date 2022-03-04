@@ -11,10 +11,6 @@ import (
 )
 
 type config struct {
-	pfring bool
-	device string
-	nbpf   string
-
 	udpport string
 
 	wwwpath  string
@@ -43,7 +39,7 @@ type config struct {
 
 	weixinAPIURL string //微信URL接口地址
 	wxmsgurl     string //微信模板消息url
-	crmkey       string
+	tokenkey     string
 	AlarmModeID  string //告警通知模板ID
 
 	//points  int
@@ -94,16 +90,6 @@ func (c *config) readconffile() {
 		s := strings.SplitN(strings.TrimSuffix(line, "\n"), "=", 2)
 
 		switch s[0] {
-		case "pfring":
-			if s[1] == "true" {
-				c.pfring = true
-			}
-		case "device":
-			c.device = s[1]
-
-		case "nbpf":
-			c.nbpf = s[1]
-
 		case "udpport":
 			c.udpport = s[1]
 
@@ -159,8 +145,8 @@ func (c *config) readconffile() {
 		// 	c.accessToken = s[1]
 		case "weixinAPIURL":
 			c.weixinAPIURL = s[1]
-		case "crmkey":
-			c.crmkey = s[1]
+		case "tokenkey":
+			c.tokenkey = s[1]
 
 		}
 
