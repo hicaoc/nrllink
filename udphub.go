@@ -23,6 +23,7 @@ var globelconn *net.UDPConn
 
 type connPool struct {
 	UDPAddr       *net.UDPAddr
+	dev           *deviceInfo
 	lastTime      time.Time
 	lastVoiceTime time.Time
 	lastCtlTime   time.Time
@@ -176,7 +177,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//fmt.Println("recived G.711 voice ")
 		// fmt.Println(connpool.allowDEV, n.CPUID, n.CallSign)
 
-		if dev.Status == 1 {
+		if (dev.Status & 1) == 1 {
 
 			return
 		}
@@ -195,7 +196,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
+			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
 		}
 
 		forwardVoice(nrl, packet, dev, conn, gp)
@@ -206,7 +207,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			kk.lastTime = nrl.timeStamp
 
 		} else {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, time.Time{}, time.Time{}}
+			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, time.Time{}, time.Time{}}
 		}
 		//原样回复心跳
 
@@ -238,7 +239,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 
 	case 6:
-		if dev.Status == 1 {
+		if (dev.Status & 1) == 1 {
 
 			return
 		}
@@ -257,7 +258,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
+			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
 		}
 
 		forwardCtl(nrl, packet, dev, conn, gp)
@@ -293,7 +294,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 				continue
 			}
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != kk {
+			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
 				conn.WriteToUDP(packet, vv.UDPAddr)
 			} else {
@@ -331,7 +332,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 				continue
 			}
 
-			if nrl.UDPAddrStr != kk {
+			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				conn.WriteToUDP(packet, vv.UDPAddr)
 			} else {
 				//更新自己连接池的上次报文接收时间
@@ -345,7 +346,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 
 }
 
-func forwardMsg(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.UDPConn, connpool *currentConnPool) {
+func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, connpool *currentConnPool) {
 
 	clientAddrStr := n.UDPAddr.String()
 
@@ -356,7 +357,7 @@ func forwardMsg(n *NRL21packet, packet []byte, devinfo *deviceInfo, conn *net.UD
 		// }
 
 	} else {
-		connpool.devConnList[clientAddrStr] = &connPool{n.UDPAddr, n.timeStamp, time.Time{}, time.Time{}}
+		connpool.devConnList[clientAddrStr] = &connPool{n.UDPAddr, dev, n.timeStamp, time.Time{}, time.Time{}}
 
 	}
 
@@ -393,7 +394,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 				continue
 			}
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != kk {
+			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
 				conn.WriteToUDP(packet, vv.UDPAddr)
 			} else {
@@ -431,7 +432,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 				continue
 			}
 
-			if nrl.UDPAddrStr != kk {
+			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				conn.WriteToUDP(packet, vv.UDPAddr)
 			} else {
 				//更新自己连接池的上次报文接收时间

@@ -26,7 +26,7 @@ type deviceInfo struct {
 	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者呼号
 	GroupID         int    `json:"group_id" db:"group_id"`             //内置群租编号
 	GroupPassword   string `json:"group_password" db:"group_password"` //加入组的密码
-	Status          int    `json:"status" db:"status"`                 //状态  0 未知   1 正常 2 拉黑
+	Status          int    `json:"status" db:"status"`                 //状态  0 正常   1 禁用接收  2 禁用发射  3 禁止发射和接收
 	RFType          int    `json:"rf_type" db:"rf_type"`               //连接的射频设备类型：  0:无连接， 1,内置1W模块，2，内置2W模块，3，外接moto3188，4,moto3688, 5，外接yaesu，6，外接，icom，7，外接其它
 	ISCerted        bool   `json:"is_certed" db:"is_certed"`           //是否认证过
 	Traffic         int    `json:"traffic"`                            //流量消耗
