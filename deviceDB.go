@@ -461,8 +461,6 @@ func addDevice(dev *deviceInfo) error {
 
 func updateDevice(e *deviceInfo) error {
 
-	//不更新设备所有者，所有者在绑定的时候一次性生成
-
 	if d, ok := devCPUIDMap[e.CPUID]; ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
@@ -489,8 +487,15 @@ func updateDevice(e *deviceInfo) error {
 					return fmt.Errorf("group pasword err")
 				}
 
+			} else if e.GroupID < 1000 && e.GroupID != 0 {
+				err := changeDevGroup(d, e.GroupID)
+				if err != nil {
+					return err
+				}
+
 			} else {
 				return fmt.Errorf("group not found")
+
 			}
 
 		}
@@ -510,8 +515,6 @@ func updateDevice(e *deviceInfo) error {
 }
 
 func changeDeviceGroup(e *deviceInfo) error {
-
-	//不更新设备所有者，所有者在绑定的时候一次性生成
 
 	if d, ok := devCPUIDMap[e.CPUID]; ok {
 
@@ -535,8 +538,15 @@ func changeDeviceGroup(e *deviceInfo) error {
 					return fmt.Errorf("group pasword err")
 				}
 
+			} else if e.GroupID < 1000 && e.GroupID != 0 {
+				err := changeDevGroup(d, e.GroupID)
+				if err != nil {
+					return err
+				}
+
 			} else {
 				return fmt.Errorf("group not found")
+
 			}
 
 		}

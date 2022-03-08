@@ -185,7 +185,7 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,设备必须先绑定,未绑定设备不支持切换群组"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误"}}`))
 		return
 	}
 	w.Write([]byte(`{"code":20000,"data":{"message":"设备更新成功成功"}}`))
@@ -229,7 +229,7 @@ func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Requ
 
 	if err != nil {
 		log.Println("device update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,设备必须先绑定,未绑定设备不支持切换群组"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误"}}`))
 		return
 	}
 	w.Write([]byte(`{"code":20000,"data":{"message":"设备更新成功成功"}}`))

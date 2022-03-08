@@ -120,6 +120,8 @@ func changeDevGroup(dev *deviceInfo, groupid int) (err error) {
 		}
 	} else {
 
+		//私有房间
+
 		dev.GroupID = groupid
 
 	}
@@ -201,8 +203,6 @@ func updatePublicGroup(pg *group) error {
 	return nil
 
 }
-
-
 
 func deletePublicGroup(pg *group) error {
 

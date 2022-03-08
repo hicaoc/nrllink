@@ -97,7 +97,7 @@ func udpProcess(conn *net.UDPConn) {
 
 				if u, okok := userlist.Load(dev.CallSign); okok {
 
-					NRL21parser(nrl, data[:n], dev, conn, u.(*userinfo).Groups[dev.GroupID])
+					NRL21parser(nrl, data[:n], dev, conn, u.(userinfo).Groups[dev.GroupID])
 				} else {
 
 					fmt.Println("dev:", dev, nrl)
