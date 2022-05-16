@@ -21,6 +21,7 @@ type config struct {
 	platformName  string
 	NameShorthand string
 	logourl       string
+	icp           string
 	serversslcrt  string
 	serversslkey  string
 
@@ -108,6 +109,8 @@ func (c *config) readconffile() {
 			c.NameShorthand = s[1]
 		case "logourl":
 			c.logourl = s[1]
+		case "icp":
+			c.icp = s[1]
 
 		case "serversslcrt":
 			c.serversslcrt = s[1]

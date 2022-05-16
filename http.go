@@ -60,6 +60,7 @@ type platforminfo struct {
 	Name     string `json:"name"`
 	LogoURL  string `json:"logourl"`
 	Version  string `json:"version"`
+	ICP      string `json:"icp"`
 	Mail     string `json:"mail"`
 	Callsign string `json:"callsign"`
 }
@@ -97,6 +98,7 @@ func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 		Name:     conf.platformName,
 		LogoURL:  conf.logourl,
 		Version:  "v1.0.0",
+		ICP:      conf.icp,
 		Mail:     "caoc@live.com",
 		Callsign: "BH4RPN",
 	}
