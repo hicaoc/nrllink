@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -203,7 +202,7 @@ func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 	packet = append(packet, []byte{0x00, 0x00}...)        //crc   46-47
 	packet = append(packet, subtype)                      // 查询
 
-	log.Println(len(packet), fmt.Sprintf("CPUID:%v Callsign:%v-%v %02X", dev.CPUID, dev.CallSign, dev.SSID, packet))
+	//log.Println(len(packet), fmt.Sprintf("CPUID:%v Callsign:%v-%v %02X", dev.CPUID, dev.CallSign, dev.SSID, packet))
 
 	//fmt.Println(string(packet))
 

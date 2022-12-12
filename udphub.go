@@ -88,6 +88,8 @@ func udpProcess(conn *net.UDPConn) {
 		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
 
 			dev.udpAddr = nrl.UDPAddr
+			//设备呼号有变更，更新下
+			dev.CallSign = nrl.CallSign
 			dev.LastPacketTime = nrl.timeStamp
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
@@ -115,9 +117,9 @@ func udpProcess(conn *net.UDPConn) {
 
 		} else {
 
-			//设备不存在，加入设备,并加入加入缺省0公共群组
+			//设备不存在，加入设备,并加入加入缺省0公共群组,不保存呼号callsign
 
-			addDevice(&deviceInfo{CallSign: nrl.CallSign, SSID: nrl.SSID, CPUID: nrl.CPUID, ChanName: make([]string, 8)})
+			addDevice(&deviceInfo{SSID: nrl.SSID, CPUID: nrl.CPUID, ChanName: make([]string, 8)})
 
 			d := getDevice(nrl.CPUID)
 
@@ -370,7 +372,7 @@ func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPCon
 
 }
 
-//forwardCtl forwardCtl
+// forwardCtl forwardCtl
 func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
 
 	switch len(gp.connPool.devConnList) {
