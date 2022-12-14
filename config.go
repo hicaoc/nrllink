@@ -16,6 +16,7 @@ type config struct {
 	System struct {
 		Port    string `yaml:"Port" json:"port"`
 		Logpath string `yaml:"LogPath" json:"log_path"`
+		DBfile  string `yaml:"DBfile" json:"dbfile"`
 	} `yaml:"System" json:"system"`
 
 	Web struct {
@@ -117,7 +118,7 @@ func getDB() *sql.DB {
 
 	var err error
 
-	db, err = sql.Open("sqlite3", "./udphub.sqlite3")
+	db, err = sql.Open("sqlite3", conf.System.DBfile)
 
 	if err != nil {
 		log.Fatal(err)

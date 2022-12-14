@@ -1,3 +1,4 @@
-FROM scratch
-COPY nrllink /usr/bin/nrllink
-ENTRYPOINT ["/usr/bin/nrllink"]
+FROM ubuntu
+#FROM scratch
+COPY nrllink /nrllink/
+ENTRYPOINT ["/nrllink/udphub"]

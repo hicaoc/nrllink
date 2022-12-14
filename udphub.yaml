@@ -1,8 +1,9 @@
 System:
     Port: "60050"
     LogPath: ""
+    DBfile: /nrllink/udphub.sqlite3
 Web:
-    Path: /udphub/www
+    Path: /nrllink/www
     Port: "9998"
     Token_Key: nrl1234
     ICP: 皖ICP备2022007119号
