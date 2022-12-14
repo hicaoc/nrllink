@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -25,7 +25,8 @@ func getRoutes() *routes {
 
 	query := "SELECT * from routes "
 
-	err := db.Get(r, query)
+	row := db.QueryRow(query)
+	err := row.Scan(r)
 	if err != nil {
 		log.Println("query routes err:", err, r)
 	}
@@ -39,7 +40,8 @@ func setRoutes(route string) {
 
 	query := fmt.Sprintf("update  routes  set routes=%v", route)
 
-	err := db.Get(r, query)
+	row := db.QueryRow(query)
+	err := row.Scan(r)
 	if err != nil {
 		log.Println("save routes err:", err, r)
 	}
@@ -81,7 +83,7 @@ func (j *jsonapi) httpSetRoutes(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	// req.Body.Close()
 

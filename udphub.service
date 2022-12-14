@@ -1,0 +1,14 @@
+[Unit]
+Description=nrllink
+Documentation=https://bg6fcs.nrllink.net
+
+
+[Service]
+WorkingDirectory=/nrllink
+ExecStart=/nrllink/udphub
+Restart=always
+RestartSec=1s
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

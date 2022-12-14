@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -34,7 +34,7 @@ func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 	rescode, _ := jsonextra.Marshal(ServersMap)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(ServersMap), rescode)
+		0, rescode)
 
 	w.Write([]byte(respone))
 
@@ -54,7 +54,7 @@ func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -95,7 +95,7 @@ func (j *jsonapi) httpAddServer(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -138,7 +138,7 @@ func (j *jsonapi) httpDeleteServer(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
