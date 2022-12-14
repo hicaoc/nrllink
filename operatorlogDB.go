@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-//OperatorLog 操作日记
+// OperatorLog 操作日记
 type OperatorLog struct {
 	ID         int    `db:"id" json:"id"`
 	Timestamp  string `db:"timestamp" json:"timestamp"`
@@ -16,18 +16,18 @@ type OperatorLog struct {
 	Note       string `db:"note" json:"note"`
 }
 
-func getOperatorLog(s string, p string, emp *userinfo) ([]OperatorLog, int) {
+func getOperatorLog(s string, p string, emp *userinfo) ([]*OperatorLog, int) {
 
 	// if checkrole(emp, []string{"admin"}) == true {
 	// 	schname = "public"
 	// }
 
-	loglist := []OperatorLog{}
+	loglist := []*OperatorLog{}
 
-	query := fmt.Sprintf(`SELECT id, to_char(timestamp,'YYYY-MM-DD HH24:MI:SS') as timestamp,content,event_type,operator,operator_id 
+	query := fmt.Sprintf(`SELECT id,timestamp,content,event_type,operator,operator_id 
 	FROM operator_log %v ORDER BY timestamp DESC %v`, s, p)
 
-	err := db.Select(&loglist, query)
+	rows, err := db.Query(query)
 
 	if err != nil {
 		log.Println("查询操作日记记录错误: ", err)
@@ -35,54 +35,36 @@ func getOperatorLog(s string, p string, emp *userinfo) ([]OperatorLog, int) {
 
 	}
 
-	t := &total{}
+	for rows.Next() {
+
+		l := &OperatorLog{}
+
+		err = rows.Scan(&l.ID, &l.Timestamp, &l.Content, &l.EventType, &l.Operator, &l.OperatorID)
+		if err != nil {
+			log.Println("select operator_log err:", err, query)
+			continue
+		}
+		loglist = append(loglist, l)
+
+	}
+
+	var t int
 	q := fmt.Sprintf("SELECT count(*) as total from operator_log %v ", s)
-	err2 := db.Get(t, q)
-	if err2 != nil {
+	row := db.QueryRow(q)
+	err = row.Scan(&t)
+	if err != nil {
 		log.Println(" 查询操作日记记录total错误 err:", err, t)
 		return nil, 0
 	}
 
 	//fmt.Println(emp)
-	return loglist, t.Total
+	return loglist, t
 
 }
 
-// func getOperatorLogByAdmin(s string, p string, emp *employee) ([]OperatorLog, int) {
-
-// 	// if checkrole(emp, []string{"admin"}) == true {
-// 	// 	schname = "public"
-// 	// }
-
-// 	loglist := []OperatorLog{}
-
-// 	query := fmt.Sprintf(`SELECT id, to_char(timestamp,'YYYY-MM-DD HH24:MI:SS') as timestamp,content,event_type,operator,operator_id
-// 	FROM operator_log %v ORDER BY timestamp DESC %v`, s, p)
-
-// 	err := db.Select(&loglist, query)
-
-// 	if err != nil {
-// 		log.Println("查询系统管理员操作日记记录错误: ", err)
-// 		return nil, 0
-
-// 	}
-
-// 	t := &total{}
-// 	q := fmt.Sprintf("SELECT count(*) as total from operator_log %v ", s)
-// 	err2 := db.Get(t, q)
-// 	if err2 != nil {
-// 		log.Println(" 查询系统管理员操作日记记录total错误 err:", err, t)
-// 		return nil, 0
-// 	}
-
-// 	//fmt.Println(emp)
-// 	return loglist, t.Total
-
-// }
-
 func addOperatorLog(Content string, EventType string, emp *userinfo) {
 
-	query := "INSERT INTO operator_log (timestamp,content,event_type,operator,operator_id) VALUES (now(),$1,$2,$3,$4)"
+	query := "INSERT INTO operator_log (timestamp,content,event_type,operator,operator_id) VALUES (CURRENT_TIMESTAMP,?,?,?,?)"
 
 	//fmt.Println(query)
 

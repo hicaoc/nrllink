@@ -1,0 +1,22 @@
+System:
+    Port: "60050"
+    LogPath: ""
+Web:
+    Path: /udphub/www
+    Port: "9998"
+    Token_Key: nrl1234
+    ICP: 皖ICP备2022007119号
+    SSLCrt: ""
+    SSLKey: ""
+SystemInfo:
+    Name: NRL无线电网络互联系统
+    NameShorthand: 火链
+    LogoURL: http://ham.bi4qzw.com/logo.svg
+WeiXin:
+    PhoneCodeURL: ""
+    AvatarURL: https://ham.bi4qzw.com/images/logo.png
+    ServerURL: ""
+    WeixinAPIURL: ""
+    WxMsgURL: ""
+    AlarmModeID: ""
+

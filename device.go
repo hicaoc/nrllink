@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -16,7 +16,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -80,7 +80,7 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -119,7 +119,7 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 // 		return
 // 	}
 
-// 	result, _ := ioutil.ReadAll(req.Body)
+// 	result, _ := io.ReadAll(req.Body)
 
 // 	req.Body.Close()
 
@@ -156,7 +156,7 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -200,7 +200,7 @@ func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -244,7 +244,7 @@ func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -274,7 +274,7 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -500,7 +500,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 	// username := request.Form["username"][0]
 	// password := request.Form["password"][0]
 
-	// result, _ := ioutil.ReadAll(req.Body)
+	// result, _ := io.ReadAll(req.Body)
 
 	// req.Body.Close()
 
@@ -544,7 +544,7 @@ func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -587,7 +587,7 @@ func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 

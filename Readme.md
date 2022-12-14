@@ -3,6 +3,8 @@
 
 ## 服务器端功能描述
 
+2022-12-24日增加 无独立数据库简化版本，直接运行，方便集成docker，op等系统
+
 本系统可用于讲任意模式的设备进行各种形式的互联， 通过NRL硬件盒子将设备的音频重新编码后，通过网络转发。
 
 比如，可以用于组建类似BM（数字DMR）的网络，将各地模拟中继台，手台， 公网台，相互链接
@@ -62,48 +64,19 @@ https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os2
 
 1. 解压压缩包到 / 目录下 
 
-         tar -zxf udphub.tgz 
+         tar -zxf nrllink.tgz 
 
 2. 关闭防火墙
 
         systemctl disable firewalld.service
         systemctl stop firewalld.service
 
+3. 启动程序
 
-3. 安装数据库
-
-        rpm -Uvh https://repo.huaweicloud.com/postgresql/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-        dnf -qy module disable postgresql
-        dnf install -y postgresql13-server
-        dnf install postgresql13-contrib.x86_64
-        /usr/pgsql-13/bin/postgresql-13-setup initdb 
-
-4. 修改 /var/lib/pgsql/13/data/pg_hba.conf 文件，信任127.0.0.1 
-
-        # "local" is for Unix domain socket connections only
-        local   all             all                                     trust
-        # IPv4 local connections:
-        host    all             all             127.0.0.1/32            trust
-
-5. 重启数据库，并开机启动:
-
-        systemctl enable postgresql-13
-        systemctl start postgresql-13
+        cd /nrllink
+        nohup ./nrllink &
 
 
-6. 创建数据库:
-
-        psql -U postgres 
-        create database udphub
-    
-7. 初始化数据库:
-
-        psql -U postgres udphub < udphub.sql
-
-8. 启动程序:
-
-        cd /udphub
-        nohup ./udphub &
 
 
 
@@ -113,21 +86,8 @@ https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os2
 
 1.  创建自启动配置文件
 
-        vi /usr/lib/systemd/system/udphub.service
-
-        [Unit]
-        Description=udphub
-        Documentation=https://Bi4Qzw.Com
-        
-        [Service]
-        WorkingDirectory=/udphub/
-        ExecStart=/udphub/udphub
-        Restart=on-abnormal
-        RestartSec=10s
-        KillMode=mixed
-    
-        [Install]
-        WantedBy=multi-user.target
+        复制  nrllink.service  到 /usr/lib/systemd/system目录
+ 
 
 2. 设置开机自启动 相关命令如下: 
 
@@ -136,8 +96,8 @@ https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os2
             systemctl daemon-reload
     2. 启动服务:
 
-            systemctl start udphub.service
+            systemctl start nrllink.service
     3. 设置开机启动:
 
-            systemctl enable udphub.service
+            systemctl enable nrllink.service
  

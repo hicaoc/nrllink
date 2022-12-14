@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -28,7 +28,7 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 

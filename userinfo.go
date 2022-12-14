@@ -2,11 +2,12 @@ package main
 
 import (
 	"log"
+	"strings"
 )
 
 func initAllUserList() {
 
-	rows, err := db.Queryx("SELECT * from  users where status=1")
+	rows, err := db.Query("SELECT * from  users where status=1")
 
 	if err != nil {
 		log.Println("query all user list  err:", err)
@@ -15,10 +16,17 @@ func initAllUserList() {
 	for rows.Next() {
 		user := &userinfo{}
 
-		err := rows.StructScan(user)
+		var roles string
+
+		err := rows.Scan(&user.ID, &user.Name, &user.CallSign, &user.Gird, &user.Phone, &user.Password,
+			&user.Birthday, &user.Sex, &user.Avatar, &user.Address, &roles, &user.Introduction, &user.AlarmMsg,
+			&user.Status, &user.UpdateTime, &user.LastLoginTime, &user.LoginErrTimes, &user.CreateTime, &user.OpenID, &user.NickName, &user.PID, &user.LastLoginIP)
 		if err != nil {
-			log.Println("query  all device rows err:", err)
+			log.Println("query  all user rows err:", err)
+			continue
 		}
+
+		user.Roles = strings.Split(roles, ",")
 
 		user.userinit()
 

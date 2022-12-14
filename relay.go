@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func (j *jsonapi) httpGetRelayList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -51,7 +51,7 @@ func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -92,7 +92,7 @@ func (j *jsonapi) httpAddrelay(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -134,7 +134,7 @@ func (j *jsonapi) httpDeleterelay(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 

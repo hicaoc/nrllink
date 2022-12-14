@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -67,7 +67,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 		return
 
 	}
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -106,7 +106,7 @@ func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -155,7 +155,7 @@ func (j *jsonapi) httpUserListbyRole(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"根据角色查询员工错误"}}`))
 		return
 	}
-	//result, _ := ioutil.ReadAll(req.Body)
+	//result, _ := io.ReadAll(req.Body)
 
 	// req.Body.Close()
 
@@ -217,7 +217,7 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -252,7 +252,7 @@ func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -306,7 +306,7 @@ func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -346,7 +346,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -392,8 +392,8 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 	}
 
 	type responseinfo struct {
-		Code int    `json:"code"`
-		Data []role `json:"data"`
+		Code int     `json:"code"`
+		Data []*role `json:"data"`
 	}
 
 	r := responseinfo{Code: 20000, Data: getRoles(query)}
@@ -421,7 +421,7 @@ func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 
 	key := strings.TrimSpace(req.Form.Get("key"))
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	//	fmt.Println("role result:", req.Method, key, string(result))
 
@@ -505,7 +505,7 @@ func gentokenid(username string, roles []string) string {
 	payload, _ := jsonextra.Marshal(tokenPayload)
 	base64payload := base64.StdEncoding.EncodeToString(payload)
 
-	key := []byte(conf.tokenkey)
+	key := []byte(conf.Web.TokenKey)
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(base64payload))
 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
@@ -518,7 +518,7 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 
 	sethttphead(w)
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 	//fmt.Println("adminlogin result:", string(result))
 	req.Body.Close()
 	stb := &loginreq{}
@@ -599,7 +599,7 @@ func (j *jsonapi) httpoplogout(w http.ResponseWriter, req *http.Request) {
 
 	sethttphead(w)
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 	//fmt.Println("adminlogin result:", string(result))
 	req.Body.Close()
 
@@ -630,7 +630,7 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, bool) {
 		return nil, false
 	}
 
-	key := []byte(conf.tokenkey)
+	key := []byte(conf.Web.TokenKey)
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(p[1]))
 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))

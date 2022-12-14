@@ -141,7 +141,7 @@ func udpProcess(conn *net.UDPConn) {
 }
 
 func udpServer() {
-	udpAddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:"+conf.udpport)
+	udpAddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:"+conf.System.Port)
 	if err != nil {
 		fmt.Println(" udp addr or port err:" + err.Error())
 		os.Exit(1)
@@ -158,7 +158,7 @@ func udpServer() {
 
 	globelconn = conn
 
-	log.Println("data parse server started on udp :", udpAddr, conf.udpport)
+	log.Println("data parse server started on udp :", udpAddr, conf.System.Port)
 
 	for {
 		limitChan <- true

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -73,7 +73,7 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -114,7 +114,7 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
@@ -157,7 +157,7 @@ func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	result, _ := ioutil.ReadAll(req.Body)
+	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 

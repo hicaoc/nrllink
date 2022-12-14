@@ -3,29 +3,29 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
-
-	"github.com/lib/pq"
 )
 
 var publicGroupMap = make(map[int]*group, 1000) //key 房间号
 
 type group struct {
-	ID         int           `json:"id" db:"id"`
-	Name       string        `json:"name" db:"name"`
-	Type       int           `json:"type" db:"type"`
-	AllowCPUID string        `json:"allow_cpuid" db:"allow_cpuid"`
-	DevList    pq.Int64Array `json:"devlist" db:"devlist"`
+	ID         int    `json:"id" db:"id"`
+	Name       string `json:"name" db:"name"`
+	Type       int    `json:"type" db:"type"`
+	AllowCPUID string `json:"allow_cpuid" db:"allow_cpuid"`
+	DevList    []int  `json:"devlist" db:"devlist"`
 	//KeepTime     int           `json:"keep_time" db:"keep_time"`
-	Password     string    `json:"password" db:"password"`
-	Status       int       `json:"status" db:"status"`
-	OwerID       int       `json:"ower_id" db:"ower_id"`
-	OwerCallsign string    `json:"callsign" db:"callsign"`
-	MasterServer int       `json:"master_server" db:"master_server"`
-	SlaveServer  int       `json:"slave_server" db:"slave_server"`
-	CreateTime   time.Time `json:"create_time" db:"create_time"`
-	UpdateTime   time.Time `json:"update_time" db:"update_time"`
-	Note         string    `json:"note" db:"note"`
+	Password     string `json:"password" db:"password"`
+	Status       int    `json:"status" db:"status"`
+	OwerID       int    `json:"ower_id" db:"ower_id"`
+	OwerCallsign string `json:"callsign" db:"callsign"`
+	MasterServer int    `json:"master_server" db:"master_server"`
+	SlaveServer  int    `json:"slave_server" db:"slave_server"`
+	CreateTime   string `json:"create_time" db:"create_time"`
+	UpdateTime   string `json:"update_time" db:"update_time"`
+	Note         string `json:"note" db:"note"`
 	connPool     *currentConnPool
 	DevMap       map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
 }
@@ -33,6 +33,31 @@ type group struct {
 func (p *group) String() string {
 
 	return fmt.Sprintf("id:%v,name:%v,type:%v,status:%v", p.ID, p.Name, p.Type, p.Status)
+
+}
+
+func convertStr2IntArray(str string) []int {
+	s := strings.Split(str, ",")
+
+	res := make([]int, len(s))
+	for i, v := range s {
+
+		res[i], _ = strconv.Atoi(v)
+
+	}
+	return res
+
+}
+
+func convertIntArray2Str(gp []int) string {
+
+	res := make([]string, len(gp))
+	for i, v := range gp {
+
+		res[i] = strconv.Itoa(v)
+
+	}
+	return strings.Join(res, ",")
 
 }
 
@@ -44,24 +69,41 @@ func initPublicGroup() {
 		OwerCallsign: "default",
 		connPool:     &currentConnPool{devConnList: make(map[string]*connPool)},
 		DevMap:       make(map[int]*deviceInfo, 10),
-		CreateTime:   time.Now(),
-		UpdateTime:   time.Now(),
+		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
+		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	publicGroupMap[0] = pg0
 
-	rows, err := db.Queryx("SELECT * from  public_groups")
+	rows, err := db.Query("SELECT * from  public_groups")
 
 	if err != nil {
 		log.Println("query all public group list  err:", err)
 	}
 
+	var devlist string
+
 	for rows.Next() {
 		pg := &group{}
-		err := rows.StructScan(pg)
+		err := rows.Scan(&pg.ID,
+			&pg.Name,
+			&pg.Type,
+			&pg.OwerCallsign,
+			&pg.Password,
+			&pg.AllowCPUID,
+			&pg.OwerID,
+			&devlist,
+			&pg.MasterServer,
+			&pg.SlaveServer,
+			&pg.Status,
+			&pg.CreateTime,
+			&pg.UpdateTime,
+			&pg.Note)
 		if err != nil {
 			log.Println("query  all public group rows err:", err)
 		}
+
+		pg.DevList = convertStr2IntArray(devlist)
 
 		pg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
 		pg.DevMap = make(map[int]*deviceInfo, 10)
@@ -73,22 +115,39 @@ func initPublicGroup() {
 
 		publicGroupMap[pg.ID] = pg
 
+		fmt.Println("pg:", pg)
+
 	}
+
+	fmt.Println("publicGroupMap:", publicGroupMap)
 
 }
 
-func getGroup(name string) (gp *group) {
-	gp = &group{}
+func getGroup(name string) (pg *group) {
+	pg = &group{}
+	var devlist string
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
-
-	//fmt.Println(id, query)
-	err := db.Get(gp, `select * FROM public_groups  where name=$1`, name)
+	row := db.QueryRow(`select * FROM public_groups  where name=?`, name)
+	err := row.Scan(&pg.ID,
+		&pg.Name,
+		&pg.Type,
+		&pg.OwerCallsign,
+		&pg.Password,
+		&pg.AllowCPUID,
+		&pg.OwerID,
+		&devlist,
+		&pg.MasterServer,
+		&pg.SlaveServer,
+		&pg.Status,
+		&pg.CreateTime,
+		&pg.UpdateTime,
+		&pg.Note)
 	if err != nil {
 		log.Println("get group by name err:", err, name)
 		return nil
 	}
-	return gp
+	pg.DevList = convertStr2IntArray(devlist)
+	return pg
 
 }
 
@@ -133,11 +192,12 @@ func changeDevGroup(dev *deviceInfo, groupid int) (err error) {
 func addPublicGroup(pg *group) error {
 
 	//	fmt.Println("user:", e)
+	var devllist = convertIntArray2Str(pg.DevList)
 	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,password,devlist,
 		master_server,slave_server,status,note,create_time,update_time	) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())`
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
-	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.Password, pg.DevList,
+	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
 		pg.MasterServer, pg.SlaveServer, pg.Status, pg.Note)
 
 	if err != nil {
@@ -166,8 +226,8 @@ func addPublicGroup(pg *group) error {
 
 func updatePublicGroup(pg *group) error {
 
-	_, err := db.Exec(`update public_groups set name=$1, type=$2, allow_cpuid=$3, password=$4, status=$5,
-	master_server=$6, slave_server=$7, note=$8,  update_time=now()  where id=$9`,
+	_, err := db.Exec(`update public_groups set name=?, type=?, allow_cpuid=?, password=?, status=?,
+	master_server=?, slave_server=?, note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,
 		pg.Name, pg.Type, pg.AllowCPUID, pg.Password, pg.Status, pg.MasterServer, pg.SlaveServer, pg.Note, pg.ID)
 
 	if err != nil {
@@ -183,7 +243,7 @@ func updatePublicGroup(pg *group) error {
 		p.SlaveServer = pg.SlaveServer
 		p.Status = pg.Status
 		p.Note = pg.Note
-		p.UpdateTime = time.Now()
+		p.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 		p.AllowCPUID = pg.AllowCPUID
 		p.connPool.allowCPUID = pg.AllowCPUID
 		p.Password = pg.Password
@@ -194,10 +254,6 @@ func updatePublicGroup(pg *group) error {
 			p.connPool.allowCPUID = ""
 		}
 
-		// if p.Password != "" {
-		// 	db.Exec(`update public_groups set password=$1 where id=$2`, pg.Password, pg.ID)
-		// }
-
 	}
 
 	return nil
@@ -206,7 +262,7 @@ func updatePublicGroup(pg *group) error {
 
 func deletePublicGroup(pg *group) error {
 
-	_, err := db.Exec(`delete from public_groups  where id=$1`, pg.ID)
+	_, err := db.Exec(`delete from public_groups  where id=?`, pg.ID)
 	if err != nil {
 		log.Println("delete public group failed, ", err)
 		return err

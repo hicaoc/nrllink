@@ -1,47 +1,52 @@
 package main
 
 import (
-	"bufio"
-	"io"
+	"database/sql"
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
+	yaml "gopkg.in/yaml.v3"
 )
 
 type config struct {
-	udpport string
+	System struct {
+		Port    string `yaml:"Port" json:"port"`
+		Logpath string `yaml:"LogPath" json:"log_path"`
+	} `yaml:"System" json:"system"`
 
-	wwwpath  string
-	wwwport  string
-	logpath  string
-	topnpath string
+	Web struct {
+		Path     string `yaml:"Path" json:"path"`
+		Port     string `yaml:"Port" json:"port"`
+		TokenKey string `yaml:"Token_Key" json:"token_key"`
+		ICP      string `yaml:"ICP" json:"icp"`
+		SSLCrt   string `yaml:"SSLCrt" json:"ssl_crt"`
+		SSLKey   string `yaml:"SSLKey" json:"ssl_key"`
+	} `yaml:"Web" json:"web" `
 
-	platformName  string
-	NameShorthand string
-	logourl       string
-	icp           string
-	serversslcrt  string
-	serversslkey  string
+	SystemInfo struct {
+		PlatformName  string `yaml:"Name" json:"name"`
+		NameShorthand string `yaml:"NameShorthand" json:"nameshorthand"`
+		LogoURL       string `yaml:"LogoURL" json:"logo_url"`
+	} `yaml:"SystemInfo" json:"systeminfo"`
 
-	//weixinmsg  bool
-	dbhost     string
-	dbport     int
-	dbuser     string
-	dbpassword string
-	dbname     string
-	// signmsgurl     string
-	// rechargemsgurl string
-	phonecodeurl string
-	avatarurl    string
-	// accessToken  string
-	serverurl string //本机api url地址
+	WeiXin struct {
+		// signmsgurl     string
+		// rechargemsgurl string
+		PhoneCodeURL string `yaml:"PhoneCodeURL" json:"phone_code_url"`
+		AvatarURL    string `yaml:"AvatarURL" json:"avatar_url"`
+		// accessToken  string
+		ServerURL string `yaml:"ServerURL" json:"server_url"` //本机api url地址
 
-	weixinAPIURL string //微信URL接口地址
-	wxmsgurl     string //微信模板消息url
-	tokenkey     string
-	AlarmModeID  string //告警通知模板ID
+		WeixinAPIURL string `yaml:"WeixinAPIURL" json:"weixin_api_url"` //微信URL接口地址
+		Wxmsgurl     string `yaml:"WxMsgURL" json:"wx_msg_url"`         //微信模板消息url
+
+		AlarmModeID string `yaml:"AlarmModeID" json:"alarm_mode_id"` //告警通知模板ID
+
+	} `yaml:"WeiXin" json:"weixin"`
 
 	//points  int
 }
@@ -50,118 +55,74 @@ var conf = &config{}
 
 func (c *config) init() {
 
-	conf.readconffile()
-
-	//	go c.cronread()
-
-}
-
-func (c *config) readconffile() {
-
-	log.Println("read config file udphub.conf ......")
-
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	f, err := os.Open(dir + "/udphub.conf")
-	if err != nil {
-		log.Println("open gameparser.conf file err:", err)
-		// 		fmt.Println(`
-		// 			wwwpath ./www/
-		// 			wwwport 9001
-		// 			logpath ./log/
-		// `)
+		log.Printf("get config filepath err #%v ", err)
 		os.Exit(1)
 	}
-	defer f.Close()
 
-	rd := bufio.NewReader(f)
+	confpath := dir + "/udphub.yaml"
 
-	for {
+	cc := flag.String("c", confpath, "config file path and name")
+	oo := flag.String("o", "", "print config content to stdout and exit , yaml or json format")
 
-		line, err := rd.ReadString('\n')
+	flag.Parse()
 
-		if err != nil || io.EOF == err {
-
-			break
-		}
-
-		s := strings.SplitN(strings.TrimSuffix(line, "\n"), "=", 2)
-
-		switch s[0] {
-		case "udpport":
-			c.udpport = s[1]
-
-		case "wwwpath":
-			c.wwwpath = s[1]
-		case "wwwport":
-			c.wwwport = s[1]
-		case "logpath":
-			c.logpath = s[1]
-		case "topnpath":
-			c.topnpath = s[1]
-
-		case "platformname":
-			c.platformName = s[1]
-		case "nameshorthand":
-			c.NameShorthand = s[1]
-		case "logourl":
-			c.logourl = s[1]
-		case "icp":
-			c.icp = s[1]
-
-		case "serversslcrt":
-			c.serversslcrt = s[1]
-		case "serversslkey":
-			c.serversslkey = s[1]
-		case "dbhost":
-			c.dbhost = s[1]
-		case "dbport":
-			port, err := strconv.Atoi(s[1])
-			if err != nil {
-				log.Println("read conf err ,dbport err")
-				os.Exit(1)
-			}
-			c.dbport = port
-		case "dbuser":
-			c.dbuser = s[1]
-		case "dbpassword":
-			c.dbpassword = s[1]
-		case "dbname":
-			c.dbname = s[1]
-			// case "signmsgurl":
-			// 	c.signmsgurl = s[1]
-			// case "rechargemsgurl":
-			// 	c.rechargemsgurl = s[1]
-		case "avatarurl":
-			c.avatarurl = s[1]
-		case "phonecodeurl":
-			c.phonecodeurl = s[1]
-		case "serverurl":
-			c.serverurl = s[1]
-		case "wxmsgurl":
-			c.wxmsgurl = s[1]
-
-		// case "accessToken":
-		// 	c.accessToken = s[1]
-		case "weixinAPIURL":
-			c.weixinAPIURL = s[1]
-		case "tokenkey":
-			c.tokenkey = s[1]
-
-		}
-
+	if *cc != "" {
+		confpath = *cc
 	}
 
-	log.Println("read conf file ok ", c)
+	yamlFile, err := os.ReadFile(confpath)
+
+	if err != nil {
+		log.Printf("udphub.yaml open err #%v ", err)
+		os.Exit(1)
+
+	}
+	err = yaml.Unmarshal(yamlFile, conf)
+
+	if err != nil {
+		log.Fatalf("Unmarshal: %v \n %s", err, yamlFile)
+	}
+
+	// c.Parm.iDCfilterIPMap = make(map[uint32]bool, 0)
+	// for _, v := range c.Parm.IDCfilterIP {
+	// 	c.Parm.iDCfilterIPMap[ipstrToUInt32(v)] = true
+	// }
+
+	if *oo != "" {
+		if *oo == "json" {
+			j, _ := jsonextra.MarshalIndent(conf, "", "    ")
+			fmt.Println(string(j))
+		} else if *oo == "yaml" {
+			j, _ := yaml.Marshal(conf)
+			fmt.Println(string(j))
+
+		}
+		os.Exit(0)
+	}
 
 }
 
-//Exist 判断文件存在
+// Exist 判断文件存在
 func Exist(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
 	// || os.IsExist(err)
+}
+
+var db *sql.DB
+
+func getDB() *sql.DB {
+
+	var err error
+
+	db, err = sql.Open("sqlite3", "./udphub.sqlite3")
+
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+
+	return db
 }

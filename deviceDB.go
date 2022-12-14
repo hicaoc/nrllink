@@ -32,9 +32,9 @@ type deviceInfo struct {
 	Traffic         int    `json:"traffic"`                            //流量消耗
 
 	udpAddr    *net.UDPAddr
-	CreateTime time.Time      `json:"create_time" db:"create_time"` //加入时间
-	UpdateTime time.Time      `json:"update_time" db:"update_time"` //信息更新时间
-	OnlineTime time.Time      `json:"online_time" db:"online_time"` //设备上线时间
+	CreateTime string         `json:"create_time" db:"create_time"` //加入时间
+	UpdateTime string         `json:"update_time" db:"update_time"` //信息更新时间
+	OnlineTime string         `json:"online_time" db:"online_time"` //设备上线时间
 	ISOnline   bool           `json:"is_online" `                   //当前是否在线
 	ChanName   pq.StringArray `json:"chan_name" db:"chan_name"`     //射频信道名称
 
@@ -56,7 +56,10 @@ type deviceInfo struct {
 
 func initAllDevList() {
 
-	rows, err := db.Queryx("SELECT * from  devices")
+	rows, err := db.Query(`SELECT id,name,cpuid,password,gird,dev_type,dev_model,
+		group_id,status,is_certed,chan_name,
+		create_time,update_time,online_time,note,rf_type  
+	 from  devices`)
 
 	if err != nil {
 		log.Println("query all device list  err:", err)
@@ -65,7 +68,9 @@ func initAllDevList() {
 	for rows.Next() {
 
 		dev := &deviceInfo{}
-		err := rows.StructScan(dev)
+		err := rows.Scan(&dev.ID, &dev.Name, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+			&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+			&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 		if err != nil {
 			log.Println("query  all device rows err:", err)
 		}
@@ -75,14 +80,14 @@ func initAllDevList() {
 		if kk, ok := publicGroupMap[dev.GroupID]; ok {
 
 			kk.DevMap[dev.ID] = dev
-			kk.DevList = append(kk.DevList, int64(dev.ID))
+			kk.DevList = append(kk.DevList, dev.ID)
 
 		} else {
 			dev.GroupID = 0
 
 			if kkk, ok := publicGroupMap[dev.GroupID]; ok {
 				kkk.DevMap[dev.ID] = dev
-				kkk.DevList = append(kkk.DevList, int64(dev.ID))
+				kkk.DevList = append(kkk.DevList, dev.ID)
 			}
 
 		}
@@ -99,13 +104,19 @@ func (d *deviceInfo) String() string {
 func getDevice(cpuid string) (dev *deviceInfo) {
 	dev = &deviceInfo{}
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
+	row := db.QueryRow(`select id,name,cpuid,password,gird,dev_type,dev_model,
+	group_id,status,is_certed,chan_name,
+	create_time,update_time,online_time,note,rf_type  
+ from  devices   where cpuid=?`, cpuid)
 
-	//fmt.Println(id, query)
-	err := db.Get(dev, `select * FROM devices  where cpuid=$1`, cpuid)
+	err := row.Scan(&dev.ID, &dev.Name, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
+
 	if err != nil {
-		log.Println("get dev by CPUID err:", err, dev, cpuid)
+		log.Println("query one device rows err:", err)
 	}
+
 	return dev
 
 }
@@ -136,10 +147,6 @@ func queryDeviceParm(cpuid string) (dev deviceInfo, err error) {
 
 	return dev, fmt.Errorf("dev not found with cpuid %v ", cpuid)
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
-
-	//fmt.Println(id, query)
-
 }
 
 func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err error) {
@@ -169,48 +176,7 @@ func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err
 
 	return nil, errors.New("device is not found")
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
-
-	//fmt.Println(id, query)
-
 }
-
-// func changeDeviceMutiByteParm(cpuid string, offset int, str string) (res []byte, err error) {
-
-// 	if len(str) != 15 {
-// 		return nil, fmt.Errorf("IP format err")
-
-// 	}
-
-// 	if d, ok := devCPUIDMap[cpuid]; ok {
-
-// 		t := time.Now()
-// 		// fmt.Println(t.Sub(d.LastPacketTime))
-// 		if t.Sub(d.LastPacketTime) > 5*time.Second {
-// 			d.ISOnline = false
-// 			return nil, errors.New("device be offline")
-
-// 		} else {
-// 			for _, v := range str {
-// 				d.DeviceParm.data[offset] = byte(v)
-// 				offset++
-// 			}
-// 			d.DeviceParm.data[offset] = 0
-
-// 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-// 			globelconn.WriteToUDP(newpacket, d.udpAddr)
-// 			time.Sleep(200 * time.Millisecond)
-
-// 			rescode, _ := jsonextra.Marshal(d)
-// 			return rescode, nil
-
-// 		}
-
-// 	}
-
-// 	return nil, errors.New("device is not found")
-
-// }
 
 type ipparm struct {
 	localIPOffset      int
@@ -338,10 +304,6 @@ func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, e
 
 	return nil, errors.New("device is not found")
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
-
-	//fmt.Println(id, query)
-
 }
 
 func changeDevice1W(ctr *control) (res []byte, err error) {
@@ -382,10 +344,6 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 	}
 
 	return nil, errors.New("device is not found")
-
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
-
-	//fmt.Println(id, query)
 
 }
 
@@ -436,17 +394,13 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 	return nil, errors.New("device is not found")
 
-	//query := "SELECT  id,name,phone,to_char(birthday,'YYYY-MM-DD') as birthday,to_char(job_time,'YYYY-MM-DD') as job_time,sex,position,avatar,roles,update_time FROM user where id=$1"
-
-	//fmt.Println(id, query)
-
 }
 
 func addDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO devices (	name,gird,cpuid,chan_name,note,password,rf_type,online_time,create_time,update_time)
-		 VALUES ('','',$1,$2,'','',0,now(),now(),now())`
+	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,cpuid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
+		 VALUES ('','',0,0,0,0,?,?,'','',0,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
 	_, err := db.Exec(query, dev.CPUID, dev.ChanName)
 
@@ -484,6 +438,7 @@ func updateDevice(e *deviceInfo) error {
 					}
 
 				} else {
+					fmt.Println("group password:", e.Password, []byte(g.Password), len(e.Password), len(g.Password), g)
 					return fmt.Errorf("group pasword err")
 				}
 
@@ -502,8 +457,8 @@ func updateDevice(e *deviceInfo) error {
 
 	}
 
-	_, err := db.Exec(`update devices set name=$1, gird=$2, dev_type=$3, dev_model=$4, 	group_id=$5,status=$6,
-	chan_name=$7,	rf_type=$8,	 note=$9,password=$10,update_time=now()  where id=$11`,
+	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,
+	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
 		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
@@ -528,7 +483,7 @@ func changeDeviceGroup(e *deviceInfo) error {
 					if err != nil {
 						return err
 					}
-					_, err = db.Exec(`update devices set group_id=$1  where id=$11`, e.GroupID, d.ID)
+					_, err = db.Exec(`update devices set group_id=? where id=? `, e.GroupID, d.ID)
 					if err != nil {
 						log.Println("update device failed, ", err)
 						return err

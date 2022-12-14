@@ -4,44 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 
-	"github.com/jmoiron/sqlx"
+	// _ "net/http/pprof"
+	// "github.com/jmoiron/sqlx"
+
 	jsoniter "github.com/json-iterator/go"
+
 	"golang.org/x/net/websocket"
 )
 
 var jsonextra = jsoniter.ConfigCompatibleWithStandardLibrary
-
-var db *sqlx.DB
-
-func getDB() *sqlx.DB {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", conf.dbhost, conf.dbport, conf.dbuser, conf.dbpassword, conf.dbname)
-	dbdb, err := sqlx.Connect("postgres", psqlInfo)
-
-	//dbdb, err := sqlx.Connect("postgres", "host=172.16.100.3 port=5432 user=postgres password='' dbname=edpi sslmode=disable")
-
-	if err != nil {
-		log.Fatal(err)
-		return nil
-	}
-
-	type dd struct {
-		CurrentDB string `db:"current_database"`
-	}
-
-	ddd := []dd{}
-
-	err = dbdb.Select(&ddd, "select current_database()")
-
-	// err = dbdb.Ping()
-	if err != nil {
-		log.Fatal(err)
-		return nil
-	}
-	log.Println("successfull connected database !", ddd, conf.dbname)
-	return dbdb
-}
 
 type jsonapi struct {
 }
@@ -95,10 +67,10 @@ func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 
 	p := platforminfo{
-		Name:     conf.platformName,
-		LogoURL:  conf.logourl,
+		Name:     conf.SystemInfo.PlatformName,
+		LogoURL:  conf.SystemInfo.LogoURL,
 		Version:  "v1.0.0",
-		ICP:      conf.icp,
+		ICP:      conf.Web.ICP,
 		Mail:     "caoc@live.com",
 		Callsign: "BH4RPN",
 	}
@@ -199,15 +171,15 @@ func (j *jsonapi) msghttp() {
 
 	http.Handle("/ws", websocket.Handler(upper))
 
-	http.Handle("/", http.FileServer(http.Dir(conf.wwwpath)))
+	http.Handle("/", http.FileServer(http.Dir(conf.Web.Path)))
 
-	err := http.ListenAndServe(":"+conf.wwwport, nil)
+	err := http.ListenAndServe(":"+conf.Web.Port, nil)
 	//err := http.ListenAndServeTLS(":"+conf.wwwport, "server.crt", "server.key", nil)
 
 	if err != nil {
 		log.Println("http server start err :", err)
 	} else {
-		log.Println("http server on port ", conf.wwwport)
+		log.Println("http server on port ", conf.Web.Port)
 	}
 
 }
@@ -222,15 +194,14 @@ func (j *jsonapi) msghttp() {
 // }
 
 type query struct {
-	ID            string   `json:"id"`
-	User          string   `json:"user"`
-	IPgroupID     string   `json:"ipgroup_id"`
-	BelongName    string   `json:"belong_name"`
-	CountryName   string   `json:"country_name"`
-	RegionName    string   `json:"region_name"`
-	ISPDomain     string   `json:"isp_domain"`
-	AppID         string   `json:"appid"`
-	BasID         string   `json:"basid"`
+	ID   string `json:"id"`
+	User string `json:"user"`
+
+	CountryName string `json:"country_name"`
+	RegionName  string `json:"region_name"`
+	ISPDomain   string `json:"isp_domain"`
+	AppID       string `json:"appid"`
+
 	AreaID        string   `json:"areaid"`
 	QueryType     string   `json:"querytype"`
 	PhoneDistinct bool     `json:"phone_distinct"`
@@ -316,14 +287,6 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 			s = s + " and  areaid=" + q.AreaID
 		} else {
 			s = " areaid=" + q.AreaID
-		}
-	}
-
-	if q.IPgroupID != "" {
-		if s != "" {
-			s = s + " and  ipgroup_id=" + q.IPgroupID
-		} else {
-			s = " ipgroup_id=" + q.IPgroupID
 		}
 	}
 
@@ -413,10 +376,10 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 	if q.Month != "" {
 
 		if s != "" {
-			s = s + "  and to_char(timestamp, 'YYYY-MM-01') =  '" + q.Month + "' "
+			s = s + "  and  timestamp =  '" + q.Month + "' "
 
 		} else {
-			s = "  to_char(timestamp, 'YYYY-MM-01') =  '" + q.Month + "' "
+			s = "  timestamp =  '" + q.Month + "' "
 		}
 	}
 
@@ -530,10 +493,6 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 	//	fmt.Println(s, p)
 	return s, p, sort
 
-}
-
-type total struct {
-	Total int `json:"total" db:"total"`
 }
 
 // func array2strings(status []int) (s string) {

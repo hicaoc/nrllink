@@ -25,34 +25,45 @@ func (p *relay) String() string {
 
 }
 
-func selectrelay(w string, p string, sort string) ([]relay, int) {
+func selectrelay(w string, p string, sort string) ([]*relay, int) {
 
-	emp := []relay{}
+	emp := []*relay{}
 
 	query := fmt.Sprintf(`SELECT  id,name,up_freq,down_freq,send_ctss,recive_ctss,ower_callsign,status,note,
-    to_char(create_time,'YYYY-MM-DD HH24:MI:SS') as create_time,to_char(update_time,'YYYY-MM-DD HH24:MI:SS') as update_time
+    create_time, update_time
     FROM relay  %v   ORDER by id asc %v  `, w, p)
 
 	//fmt.Println(query)
 
-	err := db.Select(&emp, query)
-
+	rows, err := db.Query(query)
 	if err != nil {
 		log.Println("查询频点列表错误: ", err, "\n", query)
 		return nil, 0
 
 	}
 
-	t := &total{}
+	for rows.Next() {
+		r := &relay{}
+		err = rows.Scan(&r.ID, &r.Name, &r.UPFreq, &r.DownFreq, &r.SendCTSS, &r.ReciveCTSS, &r.OwerCallsign, &r.Status, &r.Note, &r.CreateTime, &r.UpdateTime)
+		if err != nil {
+			log.Println("select relay err:", err, query)
+			continue
+		}
+		emp = append(emp, r)
+	}
+
+	var t int
 	q := fmt.Sprintf(`SELECT count(*) as total FROM relay  %v  `, w)
 	//fmt.Println(q)
-	err2 := db.Get(t, q)
-	if err2 != nil {
+	row := db.QueryRow(q)
+	err = row.Scan(&t)
+	if err != nil {
 		log.Println(" 查询频点列表total错误 err:", err, t)
 		return nil, 0
 	}
+
 	//fmt.Println(emp)
-	return emp, t.Total
+	return emp, t
 	//fmt.Println(emp)
 
 }
@@ -61,7 +72,7 @@ func addrelay(s *relay) error {
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO relay (name,up_freq,down_freq,send_ctss,recive_ctss,ower_callsign,status,note,create_time,update_time) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),now()) `
+	VALUES (?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) `
 
 	resault, err := db.Exec(query,
 		s.Name, s.UPFreq, s.DownFreq, s.SendCTSS, s.ReciveCTSS, s.OwerCallsign, s.Status, s.Note)
@@ -79,7 +90,7 @@ func addrelay(s *relay) error {
 
 func updaterelay(s *relay) error {
 
-	_, err := db.Exec(`update relay set name=$1,up_freq=$2,down_freq=$3,send_ctss=$4,recive_ctss=$5,status=$6,note=$7,update_time=now() where id=$8`,
+	_, err := db.Exec(`update relay set name=?,up_freq=?,down_freq=?,send_ctss=?,recive_ctss=?,status=?,note=?,update_time=CURRENT_TIMESTAMP where id=?`,
 		s.Name, s.UPFreq, s.DownFreq, s.SendCTSS, s.ReciveCTSS, s.Status, s.Note, s.ID)
 	if err != nil {
 		log.Println("update relay failed, ", err)
@@ -92,7 +103,7 @@ func updaterelay(s *relay) error {
 
 func deleterelay(s *relay) error {
 
-	_, err := db.Exec(`delete from relay  where id=$1`, s.ID)
+	_, err := db.Exec(`delete from relay  where id=?`, s.ID)
 	if err != nil {
 		log.Println("delete relay failed, ", err)
 		return err

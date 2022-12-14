@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
-
-	"github.com/lib/pq"
+	"sync"
 )
 
-var ServersMap = make(map[int]*Server, 1000) //key 房间号
+//var ServersMap = make(map[int]*Server, 1000) //key 房间号
+
+var ServersMap sync.Map
 
 type Server struct {
 	ID           int                 `json:"id" db:"id"`
@@ -25,14 +25,14 @@ type Server struct {
 	UDPPort      string              `json:"udp_port" db:"udp_port"`       //服务端口
 	DNSName      string              `json:"dns_name" db:"dns_name"`       //域名
 	ServerType   int                 `json:"server_type" db:"server_type"` //服务器类型： 物理机，虚拟机，树莓派等
-	GroupList    pq.Int64Array       `json:"group_list" db:"group_list"`   //服务器负责的群组列表
+	GroupList    []int               `json:"group_list" `                  //服务器负责的群组列表
 	DevMap       map[int]*deviceInfo `json:"devmap" `                      //key: 设备列表
 	ISOnline     bool                `json:"is_online"`                    //服务器是否在线
 	Status       int                 `json:"status" db:"status"`
 	OwerID       int                 `json:"ower_id" db:"ower_id"`             //谁的服务器
 	OwerCallsign string              `json:"ower_callsign" db:"ower_callsign"` //服务器所有者呼号
-	CreateTime   time.Time           `json:"create_time" db:"create_time"`
-	UpdateTime   time.Time           `json:"update_time" db:"update_time"`
+	CreateTime   string              `json:"create_time" db:"create_time"`
+	UpdateTime   string              `json:"update_time" db:"update_time"`
 	Note         string              `json:"note" db:"note"`
 }
 
@@ -44,20 +44,32 @@ func (p *Server) String() string {
 
 func initServers() {
 
-	rows, err := db.Queryx("SELECT * from  servers")
+	query := `SELECT id,name,join_key,cpu_type,mem_size,
+	input_rate,output_rate,netcard,ip_type,ip_addr,
+	udp_port,dns_name,server_type,group_list,
+	status,ower_id,ower_callsign,create_time,update_time 
+	from servers`
+
+	rows, err := db.Query(query)
 
 	if err != nil {
 		log.Println("query all server list  err:", err)
 	}
 
 	for rows.Next() {
+		var grouplist string
 		pg := &Server{DevMap: make(map[int]*deviceInfo, 10)}
-		err := rows.StructScan(pg)
+		err := rows.Scan(&pg.ID, &pg.Name, &pg.JoinKey, &pg.CpuType, &pg.MemSize,
+			&pg.InputRate, &pg.OuputRate, &pg.NetCard, &pg.IPType, &pg.IPAddr,
+			&pg.UDPPort, &pg.DNSName, &pg.ServerType, &grouplist,
+			&pg.Status, &pg.OwerID, &pg.OwerCallsign, &pg.CreateTime, &pg.UpdateTime)
 		if err != nil {
 			log.Println("query  server rows err:", err)
 		}
 
-		ServersMap[pg.ID] = pg
+		pg.GroupList = convertStr2IntArray(grouplist)
+
+		ServersMap.Store(pg.ID, pg)
 
 	}
 
@@ -118,12 +130,14 @@ func addServers(s *Server) error {
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO servers (name,join_key,cpu_type,mem_size,input_rate,output_rate,netcard,
-		ip_type,ip_addr,dns_name,server_type,group_list,ower_id,ower_callsign,status,note,create_time,update_time) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,now(),now()) `
+		ip_type,ip_addr,udp_port,dns_name,server_type,group_list,ower_id,ower_callsign,status,note,create_time,update_time) 
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) `
+
+	grouplist := convertIntArray2Str(s.GroupList)
 
 	resault, err := db.Exec(query,
 		s.Name, s.JoinKey, s.CpuType, s.MemSize, s.InputRate, s.OuputRate, s.NetCard,
-		s.IPType, s.IPAddr, s.DNSName, s.ServerType, s.GroupList, s.OwerID, s.OwerCallsign, s.Status, s.Note)
+		s.IPType, s.IPAddr, s.UDPPort, s.DNSName, s.ServerType, grouplist, s.OwerID, s.OwerCallsign, s.Status, s.Note)
 
 	if err != nil {
 		log.Println("add server failed, ", err, '\n', query)
@@ -132,16 +146,20 @@ func addServers(s *Server) error {
 		fmt.Println("resault:", resault)
 	}
 
+	initServers()
+
 	return nil
 
 }
 
 func updateServer(s *Server) error {
 
-	_, err := db.Exec(`update servers set name=$1,cpu_type=$2,mem_size=$3,input_rate=$4,output_rate=$5,netcard=$6,
-	ip_type=$7,ip_addr=$8,dns_name=$9,server_type=$10,group_list=$11,ower_id=$12,ower_callsign=$13,status=$14,note=$15,join_key=$16,update_time=now() where id=$17`,
+	grouplist := convertIntArray2Str(s.GroupList)
+
+	_, err := db.Exec(`update servers set name=?,cpu_type=?,mem_size=?,input_rate=?,output_rate=?,netcard=?,
+	ip_type=?,ip_addr=?,udp_port=?,dns_name=?,server_type=?,group_list=?,ower_id=?,ower_callsign=?,status=?,note=?,join_key=?,update_time=CURRENT_TIMESTAMP where id=?`,
 		s.Name, s.CpuType, s.MemSize, s.InputRate, s.OuputRate, s.NetCard,
-		s.IPType, s.IPAddr, s.DNSName, s.ServerType, s.GroupList, s.OwerID, s.OwerCallsign, s.Status, s.Note, s.JoinKey, s.ID)
+		s.IPType, s.IPAddr, s.UDPPort, s.DNSName, s.ServerType, grouplist, s.OwerID, s.OwerCallsign, s.Status, s.Note, s.JoinKey, s.ID)
 	if err != nil {
 		log.Println("update server failed, ", err)
 		return err
@@ -155,7 +173,7 @@ func updateServer(s *Server) error {
 
 func deleteServer(s *Server) error {
 
-	_, err := db.Exec(`delete from servers  where id=$1`, s.ID)
+	_, err := db.Exec(`delete from servers  where id=?`, s.ID)
 	if err != nil {
 		log.Println("delete server failed, ", err)
 		return err
