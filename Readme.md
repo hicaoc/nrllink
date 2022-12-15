@@ -58,23 +58,37 @@ https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os2
 8. 可以修改设备的安全KEY
 9. 可以查看设备状态，电压，温度等
 10. 
+
+
+## docker 安装
+
+
+下载镜像
+```docker pull hicaoc/nrllink:latest```
+
+启动镜像
+映射本地目录，持久化配置文件和数据库文件
+映射容器tcp端口 80 用于web管理
+映射容器udp端口60050 用户设备连接
+```docker run -d -p 80:80 -p 60050:60050/udp -v /data:/nrllink/data -v /conf:/nrllink/conf hicaoc/nrllink:latest```
     
 
 ## centos 8 下安装方法：
 
 1. 解压压缩包到 / 目录下 
-
+```
          tar -zxf nrllink.tgz 
-
+```
 2. 关闭防火墙
-
+```
         systemctl disable firewalld.service
         systemctl stop firewalld.service
-
+```
 3. 启动程序
-
+```
         cd /nrllink
         nohup ./nrllink &
+```
 
 
 
