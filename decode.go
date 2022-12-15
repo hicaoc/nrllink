@@ -22,6 +22,7 @@ type NRL21packet struct {
 	Count      uint16       //报文计数器2节
 	CallSign   string       //所有者呼号 6字节
 	SSID       byte         //所有者呼号 1字节
+	DevMode    byte         //设备型号
 	DATA       []byte       //上层数据内容
 }
 
@@ -45,6 +46,7 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.Count = binary.BigEndian.Uint16(d[21:23])
 	n.CallSign = string(bytes.TrimRight(d[24:30], string([]byte{13, 0})))
 	n.SSID = d[30]
+	n.DevMode = d[31]
 	n.DATA = d[48:]
 
 	return nil

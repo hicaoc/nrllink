@@ -194,8 +194,9 @@ func (j *jsonapi) msghttp() {
 // }
 
 type query struct {
-	ID   string `json:"id"`
-	User string `json:"user"`
+	ID       string `json:"id"`
+	User     string `json:"user"`
+	Callsign string `json:"callsign"`
 
 	CountryName string `json:"country_name"`
 	RegionName  string `json:"region_name"`
@@ -314,11 +315,19 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 		}
 	}
 
+	if q.Callsign != "" {
+		if s != "" {
+			s = s + " and callsign='" + q.Callsign + "'"
+		} else {
+			s = " callsign='" + q.Callsign + "'"
+		}
+	}
+
 	if q.Role != "" {
 		if s != "" {
-			s = s + " and " + subquery + "roles @> '{" + q.Role + "}'"
+			s = s + " and " + subquery + "roles like '%" + q.Role + "%'"
 		} else {
-			s = " " + subquery + "roles @> '{" + q.Role + "}'"
+			s = " " + subquery + "roles like '%" + q.Role + "%'"
 		}
 	}
 
@@ -435,17 +444,17 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 
 	if q.NamePhone != "" {
 		if s != "" {
-			s = s + " and (" + subquery + "name ilike '%" + q.NamePhone + "%' or " + subquery + "phone ilike '%" + q.NamePhone + "%')"
+			s = s + " and (" + subquery + "name like '%" + q.NamePhone + "%' or " + subquery + "phone like '%" + q.NamePhone + "%')"
 		} else {
-			s = " (" + subquery + "name ilike '%" + q.NamePhone + "%' or " + subquery + "phone ilike '%" + q.NamePhone + "%')"
+			s = " (" + subquery + "name like '%" + q.NamePhone + "%' or " + subquery + "phone like '%" + q.NamePhone + "%')"
 		}
 	}
 
 	if q.EventType != "" {
 		if s != "" {
-			s = s + " and (" + subquery + "event_type ilike '%" + q.EventType + "%' )"
+			s = s + " and (" + subquery + "event_type like '%" + q.EventType + "%' )"
 		} else {
-			s = " (" + subquery + "event_type ilike '%" + q.EventType + "%' )"
+			s = " (" + subquery + "event_type like '%" + q.EventType + "%' )"
 		}
 	}
 

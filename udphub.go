@@ -223,6 +223,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.SSID = nrl.SSID
 		dev.ISOnline = true
 
+		dev.DevModel = int(nrl.DevMode)
+
 		if dev.DeviceParm == nil {
 			conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
 		} else {
