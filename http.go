@@ -404,41 +404,41 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 
 	if q.Name != "" {
 		if s != "" {
-			s = s + " and (name ilike '%" + q.Name + "%' )"
+			s = s + " and (name like '%" + q.Name + "%' )"
 		} else {
-			s = " (name ilike '%" + q.Name + "%')"
+			s = " (name like '%" + q.Name + "%')"
 		}
 	}
 
 	if q.CountryName != "" {
 		if s != "" {
-			s = s + " and (country_name ilike '%" + q.CountryName + "%' )"
+			s = s + " and (country_name like '%" + q.CountryName + "%' )"
 		} else {
-			s = " (country_name ilike '%" + q.CountryName + "%')"
+			s = " (country_name like '%" + q.CountryName + "%')"
 		}
 	}
 
 	if q.RegionName != "" {
 		if s != "" {
-			s = s + " and (region_name ilike '%" + q.RegionName + "%' )"
+			s = s + " and (region_name like '%" + q.RegionName + "%' )"
 		} else {
-			s = " (region_name ilike '%" + q.RegionName + "%')"
+			s = " (region_name like '%" + q.RegionName + "%')"
 		}
 	}
 
 	if q.ISPDomain != "" {
 		if s != "" {
-			s = s + " and (isp_domain ilike '%" + q.ISPDomain + "%' )"
+			s = s + " and (isp_domain like '%" + q.ISPDomain + "%' )"
 		} else {
-			s = " (isp_domain ilike '%" + q.ISPDomain + "%')"
+			s = " (isp_domain like '%" + q.ISPDomain + "%')"
 		}
 	}
 
 	if q.IP != "" {
 		if s != "" {
-			s = s + " and (cidrip ilike '%" + q.IP + "%' )"
+			s = s + " and (cidrip like '%" + q.IP + "%' )"
 		} else {
-			s = " (cidrip ilike '%" + q.IP + "%')"
+			s = " (cidrip like '%" + q.IP + "%')"
 		}
 	}
 

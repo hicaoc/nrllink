@@ -122,7 +122,7 @@ func getDB() *sql.DB {
 
 	if err != nil {
 		log.Fatal(err)
-		return nil
+		os.Exit(1)
 	}
 
 	return db
