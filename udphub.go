@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
@@ -78,7 +79,7 @@ func udpProcess(conn *net.UDPConn) {
 
 		if err != nil {
 
-			log.Println("decode err:", data[:n])
+			log.Printf("from %v, decode err % X:", remoteaddr, data[:n])
 			continue
 			//break
 			// <-limitChan
@@ -223,7 +224,10 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.SSID = nrl.SSID
 		dev.ISOnline = true
 
-		dev.DevModel = int(nrl.DevMode)
+		//如果设备没有携带型号，则使用用户指定的型号，不更新
+		if dev.DevModel != 0 {
+			dev.DevModel = nrl.DevMode
+		}
 
 		if dev.DeviceParm == nil {
 			conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
@@ -266,6 +270,21 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 		forwardCtl(nrl, packet, dev, conn, gp)
+
+	case 7:
+
+		t := packet[48]
+
+		switch t {
+
+		case 1: //切换组指令
+
+			groupid := int(binary.BigEndian.Uint32(packet[48:52]))
+
+			fmt.Printf("dev:%v-%v change group: % X", dev.CallSign,dev.SSID, packet[48:])
+			changeDevGroup(dev, groupid)
+
+		}
 
 	default:
 		fmt.Println("unknow data:", nrl)

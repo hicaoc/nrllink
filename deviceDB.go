@@ -19,7 +19,7 @@ type deviceInfo struct {
 	Password        string `json:"password" db:"password"`   //设备接入密码
 	Gird            string `json:"gird" db:"gird"`           //设备位置
 	DevType         int    `json:"dev_type" db:"dev_type"`   //设备型号
-	DevModel        int    `json:"dev_model" db:"dev_model"` //设备型号
+	DevModel        byte   `json:"dev_model" db:"dev_model"` //设备型号
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
 	CallSign        string `json:"callsign"`                           //所有者呼号
