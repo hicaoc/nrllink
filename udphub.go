@@ -225,7 +225,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.ISOnline = true
 
 		//如果设备没有携带型号，则使用用户指定的型号，不更新
-		if dev.DevModel != 0 {
+		if nrl.DevMode != 0 {
 			dev.DevModel = nrl.DevMode
 		}
 
@@ -279,10 +279,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		case 1: //切换组指令
 
-			groupid := int(binary.BigEndian.Uint32(packet[48:52]))
+			groupid := int(binary.BigEndian.Uint32(packet[49:53]))
 
-			fmt.Printf("dev:%v-%v change group: % X", dev.CallSign,dev.SSID, packet[48:])
+			fmt.Printf("dev:%v-%v change group to %v to %v, data:  % X \n", dev.CallSign, dev.SSID, dev.GroupID, groupid, packet)
 			changeDevGroup(dev, groupid)
+
+			conn.WriteToUDP(packet, nrl.UDPAddr)
 
 		}
 
