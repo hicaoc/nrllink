@@ -236,17 +236,17 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 	case 3:
-		//控制报文
+		//读取设备的配置参数
 
 		dev.DeviceParm = decodeControlPacket(nrl.DATA)
 
 	case 4:
 
-	case 5:
+	case 5: //语音通道
 
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 
-	case 6:
+	case 6: //设备到设备控制通道
 		if (dev.Status & 1) == 1 {
 
 			return
@@ -271,7 +271,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		forwardCtl(nrl, packet, dev, conn, gp)
 
-	case 7:
+	case 7: //设备端操作指令
 
 		t := packet[48]
 
@@ -289,7 +289,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 
 	default:
-		fmt.Println("unknow data:", nrl)
+		fmt.Println("unknow data:", nrl.Type, nrl)
 		//conn.WriteToUDP(packet, n.Addr)
 
 	}
@@ -371,6 +371,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 
 }
 
+// 文本消息转发
 func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, connpool *currentConnPool) {
 
 	clientAddrStr := n.UDPAddr.String()

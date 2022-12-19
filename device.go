@@ -343,7 +343,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 
 	for k, v := range req.Form {
 
-		fmt.Println(k, v)
+		//fmt.Println(k, v)
 
 		switch k {
 		case "dcd_select":
@@ -486,7 +486,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 			}
 
 		default:
-			fmt.Println("unknow parm ")
+			fmt.Println("unknow parm: ", k, v)
 
 		}
 

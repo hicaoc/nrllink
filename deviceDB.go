@@ -130,14 +130,11 @@ func queryDeviceParm(cpuid string) (dev deviceInfo, err error) {
 
 	if dev, ok := devCPUIDMap[cpuid]; ok {
 
-		fmt.Println(dev)
-		fmt.Println(dev.CPUID, dev.CallSign, dev.CreateTime, dev.ID, dev.ISOnline)
-
 		t := time.Now()
 		//fmt.Println(t.Sub(d.LastPacketTime))
 		if t.Sub(dev.LastPacketTime) > 15*time.Second {
 			dev.ISOnline = false
-			return *dev, nil
+			return *dev, fmt.Errorf("dev offline: %v-%v %v ", dev.CPUID, dev.SSID, cpuid)
 
 		} else {
 
