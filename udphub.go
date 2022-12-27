@@ -91,6 +91,7 @@ func udpProcess(conn *net.UDPConn) {
 			dev.udpAddr = nrl.UDPAddr
 			//设备呼号有变更，更新下
 			dev.CallSign = nrl.CallSign
+			dev.SSID = nrl.SSID
 			dev.LastPacketTime = nrl.timeStamp
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
@@ -220,8 +221,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		// 	dev.SSID = nrl.SSID
 		// 	updateDevice(dev)
 		// }
-		dev.CallSign = nrl.CallSign
-		dev.SSID = nrl.SSID
+		// dev.CallSign = nrl.CallSign
+		// dev.SSID = nrl.SSID
 		dev.ISOnline = true
 
 		//如果设备没有携带型号，则使用用户指定的型号，不更新

@@ -119,7 +119,7 @@ func initPublicGroup() {
 
 	}
 
-	fmt.Println("publicGroupMap:", publicGroupMap)
+	//fmt.Println("publicGroupMap:", publicGroupMap)
 
 }
 

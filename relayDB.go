@@ -31,7 +31,7 @@ func selectrelay(w string, p string, sort string) ([]*relay, int) {
 
 	query := fmt.Sprintf(`SELECT  id,name,up_freq,down_freq,send_ctss,recive_ctss,ower_callsign,status,note,
     create_time, update_time
-    FROM relay  %v   ORDER by id asc %v  `, w, p)
+    FROM relay  %v %v %v  `, w, sort, p)
 
 	//fmt.Println(query)
 
