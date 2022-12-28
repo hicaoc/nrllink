@@ -212,6 +212,15 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		} else {
 			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, time.Time{}, time.Time{}}
+			log.Printf("device %v-%v online group %v, %v", nrl.CallSign,  nrl.SSID,gp.ID, nrl.UDPAddr)
+		}
+
+		for kkk, vv := range gp.connPool.devConnList {
+			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, kkk)
+				delete(gp.connPool.devConnList, kkk)
+
+			}
 		}
 		//原样回复心跳
 
@@ -248,12 +257,13 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 
 	case 6: //设备到设备控制通道
+
 		if (dev.Status & 1) == 1 {
 
 			return
 		}
 
-		if nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
+		if nrl.timeStamp.Sub(dev.LastCtlEndTime).Milliseconds() > 200 {
 			dev.LastCtlBeginTime = nrl.timeStamp
 		}
 		dev.LastCtlDuration = int(nrl.timeStamp.Sub(dev.LastCtlBeginTime).Milliseconds())
@@ -314,11 +324,11 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 		for kk, vv := range gp.connPool.devConnList {
 			//删除超时的会话
 
-			if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
-				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-				delete(gp.connPool.devConnList, kk)
-				continue
-			}
+			// if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
+			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
+			// 	delete(gp.connPool.devConnList, kk)
+			// 	continue
+			// }
 			//报文转发给其它设备，不包含自己
 			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
@@ -352,11 +362,11 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 		}
 
 		for kk, vv := range gp.connPool.devConnList {
-			if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
-				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-				delete(gp.connPool.devConnList, kk)
-				continue
-			}
+			// if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
+			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
+			// 	delete(gp.connPool.devConnList, kk)
+			// 	continue
+			// }
 
 			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				conn.WriteToUDP(packet, vv.UDPAddr)
@@ -415,11 +425,6 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 		for kk, vv := range gp.connPool.devConnList {
 			//删除超时的会话
 
-			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
-				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-				delete(gp.connPool.devConnList, kk)
-				continue
-			}
 			//报文转发给其它设备，不包含自己
 			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
@@ -444,6 +449,10 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 				k.lastCtlTime = nrl.timeStamp
 			}
 
+			// if nrl.CallSign == "BH4TDV" {
+			// 	fmt.Println("*****return", gp.connPool.devConnList)
+			// }
+
 			return
 			//否则重新让新设备抢占语音权，并更新上次报文时间
 		} else {
@@ -453,11 +462,11 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 		}
 
 		for kk, vv := range gp.connPool.devConnList {
-			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
-				log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-				delete(gp.connPool.devConnList, kk)
-				continue
-			}
+			// if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
+			// 	delete(gp.connPool.devConnList, kk)
+			// 	continue
+			// }
 
 			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
 				conn.WriteToUDP(packet, vv.UDPAddr)
