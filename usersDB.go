@@ -269,8 +269,6 @@ func getuser(username string) *userinfo {
 
 	r.Roles = strings.Split(roles, ",")
 
-	r.userinit()
-	userlist.Store(r.CallSign, *r)
 	// r.userinit()
 	// userlist.Store(r.CallSign, *r)
 
