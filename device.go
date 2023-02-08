@@ -346,6 +346,10 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		//fmt.Println(k, v)
 
 		switch k {
+		case "CPUID":
+			continue
+		case "callsign":
+			continue
 		case "dcd_select":
 			_, err := changeDeviceByteParm(cpuid, 0, v[0])
 			if err != nil {
