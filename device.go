@@ -569,13 +569,14 @@ func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	res, err := changeDevice1W(stb)
+	_, err = changeDevice1W(stb)
 
 	if err != nil {
 		w.Write([]byte(`{"code":20000,"data":{"message":"1W模块设置失败"}}`))
 		return
 	}
-	w.Write(res)
+	w.Write([]byte(`{"code":20000,"data":{"message":"1W模块设置完成"}}`))
+	//w.Write(res)
 
 }
 
@@ -612,12 +613,13 @@ func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	res, err := changeDevice2W(stb)
+	_, err = changeDevice2W(stb)
 
 	if err != nil {
-		w.Write([]byte(`{"code":20000,"data":{"message":"1W模块设置失败"}}`))
+		w.Write([]byte(`{"code":20000,"data":{"message":"2W模块设置失败"}}`))
 		return
 	}
-	w.Write(res)
+	w.Write([]byte(`{"code":20000,"data":{"message":"2W模块设置成功"}}`))
+	//w.Write(res)
 
 }
