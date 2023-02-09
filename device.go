@@ -346,10 +346,9 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		//fmt.Println(k, v)
 
 		switch k {
-		case "CPUID":
+		case "CPUID", "callsign":
 			continue
-		case "callsign":
-			continue
+
 		case "dcd_select":
 			_, err := changeDeviceByteParm(cpuid, 0, v[0])
 			if err != nil {
@@ -429,7 +428,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				return
 			}
 
-		case "local_ipaddr":
+		case "local_ipaddr", "gateway", "netmask", "dns_ipaddr", "dest_domainname":
 
 			ipparm := ipparm{32, req.Form["local_ipaddr"][0], 36, req.Form["gateway"][0], 40, req.Form["netmask"][0], 44, req.Form["dns_ipaddr"][0], 80, req.Form["dest_domainname"][0]}
 			_, err := changeDeviceIPParm(cpuid, ipparm)
@@ -438,42 +437,12 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				return
 			}
 
-		// case "gateway":
-		// 	res, err := changeDeviceIPParm(cpuid, 36, v[0])
-		// 	if err != nil {
-		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变目网关IP失败,IP不正确"}}`))
-		// 		return
-		// 	}
-		// 	r = append(r, res...)
-
-		// case "netmask":
-		// 	res, err := changeDeviceIPParm(cpuid, 40, v[0])
-		// 	if err != nil {
-		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变本地IP掩码失败,IP不正确"}}`))
-		// 		return
-		// 	}
-
-		// case "dns_ipaddr":
-		// 	res, err := changeDeviceIPParm(cpuid, 44, v[0])
-		// 	if err != nil {
-		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变DNS服务器地址失败,IP不正确"}}`))
-		// 		return
-		// 	}
-
 		case "ssid":
 			_, err := changeDeviceByteParm(cpuid, 64, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备SSID失败"}}`))
 				return
 			}
-
-		// case "dest_domainname":
-		// 	res, err := changeDeviceMutiByteParm(cpuid, 80, v[0])
-		// 	if err != nil {
-		// 		w.Write([]byte(`{"code":20000,"data":{"message":"改变目标IP失败,IP格式不正确"}}`))
-		// 		return
-		// 	}
-		// 	r = append(r, res...)
 
 		case "one_uv_power":
 			_, err := changeDeviceByteParm(cpuid, 163, v[0])
