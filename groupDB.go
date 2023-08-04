@@ -272,3 +272,17 @@ func deletePublicGroup(pg *group) error {
 	return nil
 
 }
+
+func getGroupListForDevice(packet []byte) []byte {
+
+	for _, v := range publicGroupMap {
+
+		str := fmt.Sprintf("%v,%v,%v\n", v.ID, v.Name, v.Status)
+
+		packet = append(packet, []byte(str)...)
+
+	}
+
+	return packet
+
+}

@@ -212,7 +212,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		} else {
 			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, time.Time{}, time.Time{}}
-			log.Printf("device %v-%v online group %v, %v", nrl.CallSign,  nrl.SSID,gp.ID, nrl.UDPAddr)
+			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, nrl.UDPAddr)
 		}
 
 		for kkk, vv := range gp.connPool.devConnList {
@@ -296,6 +296,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			changeDevGroup(dev, groupid)
 
 			conn.WriteToUDP(packet, nrl.UDPAddr)
+		case 2: //获取组列表
+			conn.WriteToUDP(getGroupListForDevice(packet), nrl.UDPAddr)
 
 		}
 
