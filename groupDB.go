@@ -277,9 +277,9 @@ func getGroupListForDevice(packet []byte) []byte {
 
 	for _, v := range publicGroupMap {
 
-		str := fmt.Sprintf("%v,%v,%v\n", v.ID, v.Name, v.Status)
-
-		packet = append(packet, []byte(str)...)
+		if v.Status == 1 {
+			packet = append(packet, fmt.Sprintf("%v,%v\n", v.ID, v.Name)...)
+		}
 
 	}
 
