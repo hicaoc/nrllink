@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -293,11 +294,21 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			groupid := int(binary.BigEndian.Uint32(packet[49:53]))
 
 			fmt.Printf("dev:%v-%v change group to %v to %v, data:  % X \n", dev.CallSign, dev.SSID, dev.GroupID, groupid, packet)
-			changeDevGroup(dev, groupid)
+			str, err := changeDevGroup(dev, groupid)
 
-			conn.WriteToUDP(packet, nrl.UDPAddr)
+			if err != nil {
+				log.Println("change group err:", err)
+				conn.WriteToUDP(append(packet, (strconv.Itoa(groupid)+",error")...), nrl.UDPAddr)
+			} else {
+				conn.WriteToUDP(append(packet, str...), nrl.UDPAddr)
+			}
+
 		case 2: //获取组列表
-			conn.WriteToUDP(getGroupListForDevice(packet), nrl.UDPAddr)
+
+			resp := getGroupListForDevice(packet)
+
+			conn.WriteToUDP(resp, nrl.UDPAddr)
+			fmt.Printf("dev:%v-%v download grouplist. size: %v\n", dev.CallSign, dev.SSID, len(resp))
 
 		}
 

@@ -14,11 +14,11 @@
 
 ### web管理后台:
 
+https://nrlptt.com
 http://ham.bi4qzw.com
-
 http://121.5.149.170:9998
 
-http://bg6fcs.nrllink.net:9998
+
 
 
 ### 服务器语音等控制信号端口：udp 60050 

@@ -434,7 +434,7 @@ func updateDevice(e *deviceInfo) error {
 
 				if e.GroupID == 0 || g.Password == "" || e.Password == g.Password {
 
-					err := changeDevGroup(d, e.GroupID)
+					_, err := changeDevGroup(d, e.GroupID)
 					if err != nil {
 						return err
 					}
@@ -445,7 +445,7 @@ func updateDevice(e *deviceInfo) error {
 				}
 
 			} else if e.GroupID < 1000 && e.GroupID != 0 {
-				err := changeDevGroup(d, e.GroupID)
+				_, err := changeDevGroup(d, e.GroupID)
 				if err != nil {
 					return err
 				}
@@ -481,7 +481,7 @@ func changeDeviceGroup(e *deviceInfo) error {
 
 				if e.GroupID == 0 || g.Password == "" || e.Password == g.Password {
 
-					err := changeDevGroup(d, e.GroupID)
+					_, err := changeDevGroup(d, e.GroupID)
 					if err != nil {
 						return err
 					}
@@ -496,7 +496,7 @@ func changeDeviceGroup(e *deviceInfo) error {
 				}
 
 			} else if e.GroupID < 1000 && e.GroupID != 0 {
-				err := changeDevGroup(d, e.GroupID)
+				_, err := changeDevGroup(d, e.GroupID)
 				if err != nil {
 					return err
 				}

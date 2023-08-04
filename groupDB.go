@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -151,7 +152,7 @@ func getGroup(name string) (pg *group) {
 
 }
 
-func changeDevGroup(dev *deviceInfo, groupid int) (err error) {
+func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 	//从之前的组删除
 
@@ -159,8 +160,10 @@ func changeDevGroup(dev *deviceInfo, groupid int) (err error) {
 
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
 			delete(g.DevMap, dev.ID)
+
 		} else {
-			return fmt.Errorf("dev not in group ")
+
+			return "", fmt.Errorf("dev not in group ")
 		}
 	}
 
@@ -171,10 +174,11 @@ func changeDevGroup(dev *deviceInfo, groupid int) (err error) {
 		if g, ok := publicGroupMap[groupid]; ok {
 			dev.GroupID = groupid
 			g.DevMap[dev.ID] = dev
+			group = strconv.Itoa(g.ID) + g.Name
 
 		} else {
 
-			return fmt.Errorf("group not found")
+			return "", fmt.Errorf("group not found")
 
 		}
 	} else {
@@ -273,15 +277,42 @@ func deletePublicGroup(pg *group) error {
 
 }
 
+type groupItem struct {
+	ID   int
+	Name string
+}
+
+func convertPublicGroupMapToArray() []groupItem {
+	groups := make([]groupItem, 0, len(publicGroupMap))
+
+	for _, group := range publicGroupMap {
+		if group.Status == 1 {
+			groups = append(groups, groupItem{
+				ID:   group.ID,
+				Name: group.Name,
+			})
+		}
+	}
+
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].ID < groups[j].ID
+	})
+
+	return groups
+}
+
 func getGroupListForDevice(packet []byte) []byte {
 
-	for _, v := range publicGroupMap {
+	groups := convertPublicGroupMapToArray()
 
-		if v.Status == 1 {
-			packet = append(packet, fmt.Sprintf("%v,%v\n", v.ID, v.Name)...)
-		}
-
+	csv := make([]string, len(groups))
+	for i, group := range groups {
+		csv[i] = fmt.Sprintf("%d,%s", group.ID, group.Name)
 	}
+
+	output := strings.Join(csv, "\n")
+
+	packet = append(packet, output...)
 
 	return packet
 
