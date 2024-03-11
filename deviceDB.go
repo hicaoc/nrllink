@@ -313,13 +313,16 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 	if d, ok := devCPUIDMap[ctr.LocalCPUID]; ok {
 
 		oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
+		//oneParm[0] = []byte{'0'}  //无需修改，使用原始的GBW数据
 		oneParm[1] = []byte(ctr.OneTransmitFreq)
 		oneParm[2] = []byte(ctr.OneReciveFreq)
 		oneParm[3] = []byte(ctr.OneReciveCXCSS)
 		oneParm[4] = []byte(strconv.Itoa(ctr.OneSQLLevel))
 		oneParm[5] = []byte(ctr.OneTransmitCXCSS)
+		//oneParm[6] = []byte{'0'}  //无需修改，使用原始的fLAG值
 
 		p := bytes.Join(oneParm, []byte{','})
+		p = append(p, 0x00)
 
 		fmt.Println("One w:", string(p))
 
@@ -330,6 +333,9 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 			return nil, errors.New("device be offline")
 
 		} else {
+			if len(p) > 32 {
+				p = p[:32]
+			}
 			copy(d.DeviceParm.data[128:], p)
 			d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
 			d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
