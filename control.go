@@ -49,7 +49,7 @@ type control struct {
 	OneTransmitFreq   string `json:"one_transmit_freq"`  //
 	OneReciveCXCSS    string `json:"one_recive_cxcss"`   //
 	OneTransmitCXCSS  string `json:"one_transmit_cxcss"` //
-	OneSQLLevel       byte   `json:"one_sql_level"`
+	OneSQLLevel       string `json:"one_sql_level"`
 	OneVolume         byte   `json:"one_volume"`          //0xA0  UV1模块音量1-9级
 	OneMICSensitivity byte   `json:"one_mic_sensitivity"` //0xA1  MIC灵敏度1-8
 	OneMICEncryption  byte   `json:"one_mic_encryption"`  //0xA2  MIC语音加密 0 1-8
@@ -128,7 +128,7 @@ func decodeControlPacket(data []byte) *control {
 			c.OneTransmitFreq = string(oneParm[1])
 			c.OneReciveFreq = string(oneParm[2])
 			c.OneReciveCXCSS = string(oneParm[3])
-			c.OneSQLLevel = oneParm[4][0]
+			c.OneSQLLevel = string(oneParm[4])
 
 			c.OneTransmitCXCSS = string(oneParm[5])
 

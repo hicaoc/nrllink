@@ -317,7 +317,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 		oneParm[1] = []byte(ctr.OneTransmitFreq)
 		oneParm[2] = []byte(ctr.OneReciveFreq)
 		oneParm[3] = []byte(ctr.OneReciveCXCSS)
-		oneParm[4] = []byte{ctr.OneSQLLevel}
+		oneParm[4] = []byte(ctr.OneSQLLevel)
 		oneParm[5] = []byte(ctr.OneTransmitCXCSS)
 		//oneParm[6] = []byte{'0'}  //无需修改，使用原始的fLAG值
 
