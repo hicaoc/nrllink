@@ -195,12 +195,16 @@ func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 	packet = append(packet, 3)                            //类型3  20
 	packet = append(packet, 0)                            //busy 21
 	packet = append(packet, []byte{0x00, 0x00}...)        //计数器  22-23
-	packet = append(packet, []byte(dev.CallSign)...)      //callsign     24-29  //可能存在5位呼号的问题
-	packet = append(packet, dev.SSID)                     // 30
-	packet = append(packet, []byte{0x21, 0x03, 0x14}...)  //version  31-33
-	packet = append(packet, make([]byte, 12)...)          //Reserved  34-45
-	packet = append(packet, []byte{0x00, 0x00}...)        //crc   46-47
-	packet = append(packet, subtype)                      // 查询
+
+	packet = append(packet,
+		append([]byte(dev.CallSign),
+			make([]byte, 6-len(dev.CallSign))...)...) //callsign     24-29  //可能存在5位呼号的问题
+
+	packet = append(packet, dev.SSID)                    // 30
+	packet = append(packet, []byte{0x21, 0x03, 0x14}...) //version  31-33
+	packet = append(packet, make([]byte, 12)...)         //Reserved  34-45
+	packet = append(packet, []byte{0x00, 0x00}...)       //crc   46-47
+	packet = append(packet, subtype)                     // 查询
 
 	//log.Println(len(packet), fmt.Sprintf("CPUID:%v Callsign:%v-%v %02X", dev.CPUID, dev.CallSign, dev.SSID, packet))
 
