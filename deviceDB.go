@@ -317,7 +317,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 		oneParm[1] = []byte(ctr.OneTransmitFreq)
 		oneParm[2] = []byte(ctr.OneReciveFreq)
 		oneParm[3] = []byte(ctr.OneReciveCXCSS)
-		oneParm[4] = []byte(ctr.OneSQLLevel)
+		oneParm[4] = []byte(strconv.Itoa(ctr.OneSQLLevel))
 		oneParm[5] = []byte(ctr.OneTransmitCXCSS)
 		//oneParm[6] = []byte{'0'}  //无需修改，使用原始的fLAG值
 
@@ -337,8 +337,8 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 				p = p[:32]
 			}
 			copy(d.DeviceParm.data[128:], p)
-			d.DeviceParm.data[160] = []byte(ctr.OneVolume)[0]
-			d.DeviceParm.data[161] = []byte(ctr.OneMICSensitivity)[0]
+			d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
+			d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
 
 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
 			globelconn.WriteToUDP(newpacket, d.udpAddr)
