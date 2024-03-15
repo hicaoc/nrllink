@@ -1,6 +1,6 @@
 module udphub
 
-go 1.19
+go 1.22
 
 require (
 	github.com/json-iterator/go v1.1.12

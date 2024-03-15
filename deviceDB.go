@@ -337,8 +337,8 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 				p = p[:32]
 			}
 			copy(d.DeviceParm.data[128:], p)
-			d.DeviceParm.data[160] = ctr.OneVolume
-			d.DeviceParm.data[161] = ctr.OneMICSensitivity
+			d.DeviceParm.data[160] = []byte(ctr.OneVolume)[0]
+			d.DeviceParm.data[161] = []byte(ctr.OneMICSensitivity)[0]
 
 			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
 			globelconn.WriteToUDP(newpacket, d.udpAddr)
