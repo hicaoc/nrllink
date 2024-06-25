@@ -44,6 +44,7 @@ type deviceInfo struct {
 	LastVoiceBeginTime time.Time `json:"last_voice_begin_time"` //上次语音开始时间
 	LastVoiceEndTime   time.Time `json:"last_voice_end_time"`   //最后语音时间
 	LastVoiceDuration  int       `json:"last_voice_duration"`   //上次语音持续时长  秒
+	Loged              bool
 
 	CtlTime          int       `json:"ctl_time"`            //通话时长
 	LastCtlBeginTime time.Time `json:"last_ctl_begin_time"` //上次控制开始时间
@@ -102,7 +103,7 @@ func initAllDevList() {
 }
 
 func (d *deviceInfo) String() string {
-	return fmt.Sprintf("ID:%v callsign:%v cpuid:%v", d.ID, d.CallSign, d.CPUID)
+	return fmt.Sprintf("%v,%v-%v,%v,%v,%v", d.LastVoiceEndTime.Format("2006-01-02 15:04:05"), d.CallSign, d.SSID, d.ID, d.GroupID, d.LastVoiceDuration/1000+1)
 
 }
 

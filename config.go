@@ -14,9 +14,10 @@ import (
 
 type config struct {
 	System struct {
-		Port    string `yaml:"Port" json:"port"`
-		Logpath string `yaml:"LogPath" json:"log_path"`
-		DBfile  string `yaml:"DBfile" json:"dbfile"`
+		Port        string `yaml:"Port" json:"port"`
+		Logpath     string `yaml:"LogPath" json:"log_path"`
+		DBfile      string `yaml:"DBfile" json:"dbfile"`
+		CallLogPath string `yaml:"CallLogPath" json:"calllog_path"`
 	} `yaml:"System" json:"system"`
 
 	Web struct {

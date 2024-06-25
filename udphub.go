@@ -55,6 +55,9 @@ func main() {
 
 	go jsonhttp.init()
 
+	logbuffer = make(chan *deviceInfo, 1000)
+	go saveLog()
+
 	udpServer()
 
 }
@@ -187,9 +190,16 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			return
 		}
 
-		if nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
+		td := nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds()
+
+		if td > 200 {
 			dev.LastVoiceBeginTime = nrl.timeStamp
+			logbuffer <- dev
+			dev.Loged = true
 		}
+
+		dev.Loged = false
+
 		dev.LastVoiceDuration = int(nrl.timeStamp.Sub(dev.LastVoiceBeginTime).Milliseconds())
 		dev.LastVoiceEndTime = nrl.timeStamp
 
@@ -207,6 +217,11 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		forwardVoice(nrl, packet, dev, conn, gp)
 	case 2:
 		//心跳包，用于保存设备在线存活状态， 目前设备60ms一次发送，后期需要优化成60秒以上一次
+
+		if !dev.Loged && nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
+			logbuffer <- dev
+			dev.Loged = true
+		}
 
 		if kk, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
 			kk.lastTime = nrl.timeStamp
