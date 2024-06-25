@@ -12,7 +12,7 @@ var logbuffer chan *deviceInfo
 func saveLog() {
 
 	var err error
-
+	timer := time.NewTimer(timeUntilNext10Minutes())
 	file := createFile()
 
 	for {
@@ -26,7 +26,7 @@ func saveLog() {
 					log.Println("写入日志文件失败:", err)
 				}
 			}
-		case <-time.After(60 * time.Minute):
+		case <-timer.C:
 			// 每10分钟轮换日志文件
 			if file != nil {
 				if err := file.Close(); err != nil {
@@ -37,6 +37,9 @@ func saveLog() {
 			if file == nil {
 				log.Println("创建或打开日志文件失败:", err)
 			}
+
+			// 重新设置定时器
+			timer.Reset(timeUntilNext10Minutes())
 
 		}
 	}
@@ -62,4 +65,10 @@ func createFile() *os.File {
 	log.Println("开始新的日志文件:", fileName)
 	return file
 
+}
+
+func timeUntilNext10Minutes() time.Duration {
+	now := time.Now()
+	next := now.Truncate(time.Minute * 10).Add(time.Minute * 10)
+	return time.Until(next)
 }
