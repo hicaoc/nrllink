@@ -422,6 +422,24 @@ func addDevice(dev *deviceInfo) error {
 
 }
 
+func delDevice(dev *deviceInfo) error {
+
+	//	fmt.Println("user:", e)
+	query := `delete from devices where id=? `
+
+	_, err := db.Exec(query, dev.ID)
+
+	if err != nil {
+		log.Println("add dev failed, ", err, '\n', query)
+		return err
+	}
+
+	delete(devCPUIDMap, dev.CPUID)
+
+	return nil
+
+}
+
 func updateDevice(e *deviceInfo) error {
 
 	if d, ok := devCPUIDMap[e.CPUID]; ok {

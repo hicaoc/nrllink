@@ -180,7 +180,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 	case 0:
 		//控制指令，用户远程控制设备
 		fmt.Println("recived control commond ", nrl)
-	case 1:
+	case 1, 8:
 		//1 语音消息，需要转发给群组内其它设备,
 		//fmt.Println("recived G.711 voice ")
 		// fmt.Println(connpool.allowDEV, n.CPUID, n.CallSign)
@@ -268,7 +268,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 	case 4:
 
-	case 5: //语音通道
+	case 5: //文本消息通道
 
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 

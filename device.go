@@ -192,6 +192,50 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, ok := checktoken(w, req)
+	if !ok {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &deviceInfo{}
+	err := jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device update err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备删除错误,数据格式错误"}}`))
+		return
+	}
+
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备删从错误，不是本人，或者权限不够！"}}`))
+		return
+
+	}
+
+	// if stb.CallSign != u.CallSign {
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
+	// 	return
+	// }
+
+	err = delDevice(stb)
+
+	if err != nil {
+		log.Println("device update err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"设备删除错误"}}`))
+		return
+	}
+	w.Write([]byte(`{"code":20000,"data":{"message":"设备删除成功"}}`))
+
+}
+
 func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
