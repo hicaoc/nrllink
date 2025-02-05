@@ -1,39 +1,42 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-	"sync"
+	"net"
 )
 
 //var ServersMap = make(map[int]*Server, 1000) //key 房间号
 
-var ServersMap sync.Map
+//var ServersMap sync.Map
 
 type Server struct {
-	ID           int                 `json:"id" db:"id"`
-	Name         string              `json:"name" db:"name"`
-	JoinKey      string              `json:"join_key" db:"join_key"`
-	CpuType      int                 `json:"cpu_type" db:"cpu_type"`
-	MemSize      int                 `json:"mem_size" db:"mem_size"`
-	InputRate    int                 `json:"input_rate" db:"input_rate"`
-	OuputRate    int                 `json:"output_rate" db:"output_rate"`
-	Providers    string              `json:"Providers"`                    //电信，联通，移动，其他
-	NetCard      string              `json:"netcard" db:"netcard"`         //网卡
-	IPType       int                 `json:"ip_type" db:"ip_type"`         //动态，静态，是否经过nat
-	IPAddr       string              `json:"ip_addr" db:"ip_addr"`         //动态IP可以写0.0.0.0
-	UDPPort      string              `json:"udp_port" db:"udp_port"`       //服务端口
-	DNSName      string              `json:"dns_name" db:"dns_name"`       //域名
-	ServerType   int                 `json:"server_type" db:"server_type"` //服务器类型： 物理机，虚拟机，树莓派等
-	GroupList    []int               `json:"group_list" `                  //服务器负责的群组列表
-	DevMap       map[int]*deviceInfo `json:"devmap" `                      //key: 设备列表
-	ISOnline     bool                `json:"is_online"`                    //服务器是否在线
-	Status       int                 `json:"status" db:"status"`
-	OwerID       int                 `json:"ower_id" db:"ower_id"`             //谁的服务器
-	OwerCallsign string              `json:"ower_callsign" db:"ower_callsign"` //服务器所有者呼号
-	CreateTime   string              `json:"create_time" db:"create_time"`
-	UpdateTime   string              `json:"update_time" db:"update_time"`
-	Note         string              `json:"note" db:"note"`
+	ID         int    `json:"id" db:"id"`
+	Name       string `json:"name" db:"name"`
+	ServerType int    `json:"server_type" db:"server_type"` //服务器类型： 物理机，虚拟机，树莓派等
+	JoinKey    string `json:"join_key" db:"join_key"`
+	CpuType    int    `json:"cpu_type" db:"cpu_type"`
+	MemSize    int    `json:"mem_size" db:"mem_size"`
+	InputRate  int    `json:"input_rate" db:"input_rate"`
+	OuputRate  int    `json:"output_rate" db:"output_rate"`
+	Providers  string `json:"providers"`              //电信，联通，移动，其他
+	NetCard    string `json:"netcard" db:"netcard"`   //网卡
+	IPType     int    `json:"ip_type" db:"ip_type"`   //动态，静态，是否经过nat
+	IPAddr     string `json:"ip_addr" db:"ip_addr"`   //动态IP可以写0.0.0.0
+	UDPPort    string `json:"udp_port" db:"udp_port"` //服务端口
+	//UDPAddr    *net.UDPAddr
+	DNSName string `json:"dns_name" db:"dns_name"` //域名
+	//GroupList  []int  `json:"group_list" `            //服务器负责的群组列表
+	//DevMap       map[int]*deviceInfo `json:"devmap" `                          //key: 设备列表
+	ISOnline     bool   `json:"is_online"`                        //服务器是否在线
+	Status       int    `json:"status" db:"status"`               //1 启动  2 关闭
+	OwerID       int    `json:"ower_id" db:"ower_id"`             //谁的服务器
+	OwerCallsign string `json:"ower_callsign" db:"ower_callsign"` //服务器所有者呼号
+	CreateTime   string `json:"create_time" db:"create_time"`
+	UpdateTime   string `json:"update_time" db:"update_time"`
+	//udpSocket    *net.UDPConn
+	Note string `json:"note" db:"note"`
 }
 
 func (p *Server) String() string {
@@ -42,13 +45,113 @@ func (p *Server) String() string {
 
 }
 
-func initServers() {
+func (p *Server) Start() error {
+	//创建到服务器的连接
+	addr, err := net.ResolveUDPAddr("udp", p.IPAddr+":"+p.UDPPort)
+	if err != nil {
+		log.Printf("Failed to resolve UDP address for server %d: %v", p.ID, err)
+		return err
+	}
 
-	query := `SELECT id,name,join_key,cpu_type,mem_size,
-	input_rate,output_rate,netcard,ip_type,ip_addr,
-	udp_port,dns_name,server_type,group_list,
-	status,ower_id,ower_callsign,create_time,update_time 
-	from servers`
+	log.Printf("UDP connection established for server %d to %s", p.ID, addr)
+
+	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
+
+		dev.udpSocket = globelconn
+		dev.udpAddr = addr
+
+		go dev.sendHeartbear()
+
+		fmt.Println("start device", p.OwerCallsign, 200)
+
+		return nil
+
+	}
+
+	fmt.Println("start device1111", p.OwerCallsign, 200)
+
+	d := getDevice(p.OwerCallsign, 200)
+
+	if d.ID == 0 {
+
+		fmt.Println("start device2222", p.OwerCallsign, 200)
+
+		cpuid := calculateCpuId(p.OwerCallsign + "-200")
+
+		cpuIDHex := fmt.Sprintf("%x", cpuid)
+
+		deviceInfo := &deviceInfo{
+			Name:      p.IPAddr + ":" + p.UDPPort,
+			CallSign:  p.OwerCallsign,
+			udpSocket: globelconn,
+			udpAddr:   addr,
+			SSID:      200,
+			CPUID:     cpuIDHex,
+			Note:      "server"}
+
+		err = addDevice(deviceInfo)
+		if err != nil {
+			log.Printf("Failed to add dev: %v", err)
+
+		}
+		return fmt.Errorf("add device error")
+	}
+
+	fmt.Println("add device", p.OwerCallsign, 200)
+
+	devCallsignSSIDMap[p.OwerCallsign+"-200"] = d
+
+	if p, ok := publicGroupMap[0]; ok {
+
+		p.DevMap[d.ID] = d
+
+	}
+
+	go d.sendHeartbear()
+
+	return nil
+
+}
+
+func (p *Server) Stop() {
+
+	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
+
+		dev.udpSocket = nil
+
+		fmt.Println("stop server hearbeard:", p.OwerCallsign, 200)
+
+	} else {
+		fmt.Println("stop server hearbeard err: server not start :", p.OwerCallsign, 200)
+	}
+
+	//断开到服务器的udp连接
+
+}
+
+func queryServers() (serverlist []*Server) {
+	serverlist = make([]*Server, 0)
+
+	query := `SELECT id,
+		name,
+		join_key,
+		cpu_type,
+		mem_size,
+		input_rate,
+		output_rate,
+		netcard,
+		ip_type,
+		ip_addr,
+		udp_port,
+		dns_name,
+		server_type,
+		
+		status,
+		ower_id,
+		ower_callsign,
+		create_time,
+		update_time 
+	FROM servers`
 
 	rows, err := db.Query(query)
 
@@ -57,21 +160,94 @@ func initServers() {
 	}
 
 	for rows.Next() {
-		var grouplist string
-		pg := &Server{DevMap: make(map[int]*deviceInfo, 10)}
-		err := rows.Scan(&pg.ID, &pg.Name, &pg.JoinKey, &pg.CpuType, &pg.MemSize,
-			&pg.InputRate, &pg.OuputRate, &pg.NetCard, &pg.IPType, &pg.IPAddr,
-			&pg.UDPPort, &pg.DNSName, &pg.ServerType, &grouplist,
-			&pg.Status, &pg.OwerID, &pg.OwerCallsign, &pg.CreateTime, &pg.UpdateTime)
+
+		pg := &Server{}
+		err := rows.Scan(
+			&pg.ID,
+			&pg.Name,
+			&pg.JoinKey,
+			&pg.CpuType,
+			&pg.MemSize,
+			&pg.InputRate,
+			&pg.OuputRate,
+			&pg.NetCard,
+			&pg.IPType,
+			&pg.IPAddr,
+			&pg.UDPPort,
+			&pg.DNSName,
+			&pg.ServerType,
+
+			&pg.Status,
+			&pg.OwerID,
+			&pg.OwerCallsign,
+			&pg.CreateTime,
+			&pg.UpdateTime)
 		if err != nil {
 			log.Println("query  server rows err:", err)
 		}
 
-		pg.GroupList = convertStr2IntArray(grouplist)
-
-		ServersMap.Store(pg.ID, pg)
+		serverlist = append(serverlist, pg)
 
 	}
+
+	return serverlist
+
+}
+
+func getServer(id int) (server *Server) {
+
+	query := `SELECT id,
+		name,
+		join_key,
+		cpu_type,
+		mem_size,
+		input_rate,
+		output_rate,
+		netcard,
+		ip_type,
+		ip_addr,
+		udp_port,
+		dns_name,
+		server_type,
+		
+		status,
+		ower_id,
+		ower_callsign,
+		create_time,
+		update_time 
+	FROM servers where id=?`
+
+	pg := &Server{}
+
+	err := db.QueryRow(query, id).Scan(&pg.ID,
+		&pg.Name,
+		&pg.JoinKey,
+		&pg.CpuType,
+		&pg.MemSize,
+		&pg.InputRate,
+		&pg.OuputRate,
+		&pg.NetCard,
+		&pg.IPType,
+		&pg.IPAddr,
+		&pg.UDPPort,
+		&pg.DNSName,
+		&pg.ServerType,
+
+		&pg.Status,
+		&pg.OwerID,
+		&pg.OwerCallsign,
+		&pg.CreateTime,
+		&pg.UpdateTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("No record found with ID %d", id)
+		} else {
+			log.Fatalf("Failed to query device: %v", err)
+		}
+		return
+	}
+
+	return pg
 
 }
 
@@ -130,14 +306,12 @@ func addServers(s *Server) error {
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO servers (name,join_key,cpu_type,mem_size,input_rate,output_rate,netcard,
-		ip_type,ip_addr,udp_port,dns_name,server_type,group_list,ower_id,ower_callsign,status,note,create_time,update_time) 
-	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) `
-
-	grouplist := convertIntArray2Str(s.GroupList)
+		ip_type,ip_addr,udp_port,dns_name,server_type,ower_id,ower_callsign,status,note,create_time,update_time) 
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) `
 
 	resault, err := db.Exec(query,
 		s.Name, s.JoinKey, s.CpuType, s.MemSize, s.InputRate, s.OuputRate, s.NetCard,
-		s.IPType, s.IPAddr, s.UDPPort, s.DNSName, s.ServerType, grouplist, s.OwerID, s.OwerCallsign, s.Status, s.Note)
+		s.IPType, s.IPAddr, s.UDPPort, s.DNSName, s.ServerType, s.OwerID, s.OwerCallsign, s.Status, s.Note)
 
 	if err != nil {
 		log.Println("add server failed, ", err, '\n', query)
@@ -146,26 +320,33 @@ func addServers(s *Server) error {
 		fmt.Println("resault:", resault)
 	}
 
-	initServers()
-
 	return nil
 
 }
 
 func updateServer(s *Server) error {
 
-	grouplist := convertIntArray2Str(s.GroupList)
+	oldserver := getServer(s.ID)
 
 	_, err := db.Exec(`update servers set name=?,cpu_type=?,mem_size=?,input_rate=?,output_rate=?,netcard=?,
-	ip_type=?,ip_addr=?,udp_port=?,dns_name=?,server_type=?,group_list=?,ower_id=?,ower_callsign=?,status=?,note=?,join_key=?,update_time=CURRENT_TIMESTAMP where id=?`,
+	ip_type=?,ip_addr=?,udp_port=?,dns_name=?,server_type=?,ower_id=?,ower_callsign=?,status=?,note=?,join_key=?,update_time=CURRENT_TIMESTAMP where id=?`,
 		s.Name, s.CpuType, s.MemSize, s.InputRate, s.OuputRate, s.NetCard,
-		s.IPType, s.IPAddr, s.UDPPort, s.DNSName, s.ServerType, grouplist, s.OwerID, s.OwerCallsign, s.Status, s.Note, s.JoinKey, s.ID)
+		s.IPType, s.IPAddr, s.UDPPort, s.DNSName, s.ServerType, s.OwerID, s.OwerCallsign, s.Status, s.Note, s.JoinKey, s.ID)
 	if err != nil {
 		log.Println("update server failed, ", err)
 		return err
 	}
+	if oldserver.Status != s.Status {
 
-	initServers()
+		if s.Status == 1 {
+			s.Start()
+
+		} else if s.Status == 2 {
+			s.Stop()
+		}
+	}
+
+	//initServers()
 
 	return nil
 

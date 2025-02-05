@@ -128,3 +128,25 @@ func getDB() *sql.DB {
 
 	return db
 }
+
+func updatedb() {
+	sqlStatements := []string{
+		"ALTER TABLE devices ADD COLUMN callsign TEXT DEFAULT '';",
+		"ALTER TABLE public_groups ADD COLUMN allow_callsign_ssid TEXT DEFAULT '';",
+		"CREATE UNIQUE INDEX idx_ssid_callsign ON devices (ssid, callsign);",
+		"CREATE UNIQUE INDEX idx_name_unique ON public_groups(name);",
+	}
+
+	// 逐条执行 SQL 语句并输出日志
+	for _, stmt := range sqlStatements {
+		fmt.Printf("Executing SQL: %s\n", stmt) // 输出当前执行的 SQL
+		_, err := db.Exec(stmt)
+		if err != nil {
+			// 如果执行出错，打印错误日志
+			log.Printf("Error executing statement: %s\nError: %v\n", stmt, err)
+		} else {
+			// 如果执行成功，打印成功日志
+			log.Printf("Successfully executed: %s\n", stmt)
+		}
+	}
+}

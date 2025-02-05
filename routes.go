@@ -51,9 +51,8 @@ func setRoutes(route string) {
 func (j *jsonapi) httpGetRoutes(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -72,8 +71,8 @@ func (j *jsonapi) httpGetRoutes(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpSetRoutes(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 

@@ -13,8 +13,8 @@ import (
 func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -23,7 +23,7 @@ func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device list err :", err)
@@ -31,7 +31,17 @@ func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rescode, _ := jsonextra.Marshal(ServersMap)
+	serverlist := queryServers()
+
+	//fmt.Println("device list :", serverlist)
+
+	rescode, err := jsonextra.Marshal(serverlist)
+
+	if err != nil {
+		log.Println("server list err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询服务器列表参数错误"}}`))
+		return
+	}
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
 		0, rescode)
@@ -43,8 +53,8 @@ func (j *jsonapi) httpServersList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -59,7 +69,7 @@ func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &Server{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("update user  err :", err)
@@ -84,8 +94,8 @@ func (j *jsonapi) httpUpdateServer(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpAddServer(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -100,7 +110,7 @@ func (j *jsonapi) httpAddServer(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &Server{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user add err :", err)
@@ -127,8 +137,8 @@ func (j *jsonapi) httpAddServer(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDeleteServer(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -143,7 +153,7 @@ func (j *jsonapi) httpDeleteServer(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &Server{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user delete err :", err)

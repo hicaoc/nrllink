@@ -1,15 +1,11 @@
 package main
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 )
 
 //var operatermap = make(map[string]operater)
@@ -27,21 +23,6 @@ type loginreq struct {
 	Password string `json:"password"`
 }
 
-type tokenhead struct {
-	Alg string `json:"alg"`
-}
-type tokenpayload struct {
-	Iss string `json:"iss"`
-	//Sub string  `json:"sub"`
-	//Aud string `json:"aud"`
-	//Nbf string `json:"nbf"`
-	//Jat string `json:"jat"`
-	//Jti string `json:"jti"`
-	Exp   string   `json:"exp"`
-	Name  string   `json:"name"`
-	Roles []string `json:"roles"`
-}
-
 // type tokensignature struct{}
 
 type tokenrescode struct {
@@ -57,8 +38,8 @@ type resdata struct {
 func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -72,7 +53,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user list err :", err)
@@ -101,8 +82,8 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -111,11 +92,11 @@ func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user list err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询员工列表参数错误"}}`))
+		w.Write(ResParmErr)
 		return
 	}
 
@@ -143,8 +124,8 @@ func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUserListbyRole(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -190,8 +171,8 @@ func (j *jsonapi) httpUserListbyRole(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUserDetail(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -206,8 +187,8 @@ func (j *jsonapi) httpUserDetail(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -222,7 +203,7 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &userinfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("update user  err :", err)
@@ -247,8 +228,8 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -257,7 +238,7 @@ func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Reques
 	req.Body.Close()
 
 	stb := &userinfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("update user  err :", err)
@@ -295,8 +276,8 @@ func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Reques
 func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -311,7 +292,7 @@ func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &userinfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user add err :", err)
@@ -335,8 +316,8 @@ func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -351,7 +332,7 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &userinfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user delete err :", err)
@@ -374,8 +355,8 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 
 func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -405,9 +386,8 @@ func (j *jsonapi) httpGetRoles(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -489,30 +469,30 @@ func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func gentokenid(username string, roles []string) string {
+// func gentokenid(username string, roles []string) string {
 
-	tokenHead := &tokenhead{Alg: "HS256"}
-	tokenPayload := &tokenpayload{
-		Iss:   "nrllink",
-		Exp:   time.Now().Add(24 * time.Hour).Format("20060102"),
-		Name:  username,
-		Roles: roles,
-	}
+// 	tokenHead := &tokenhead{Alg: "HS256"}
+// 	tokenPayload := &tokenpayload{
+// 		Iss:   "nrllink",
+// 		Exp:   time.Now().Add(24 * 365 * time.Hour).Format("20060102"),
+// 		Name:  username,
+// 		Roles: roles,
+// 	}
 
-	head, _ := jsonextra.Marshal(tokenHead)
-	base64head := base64.StdEncoding.EncodeToString(head)
+// 	head, _ := jsonextra.Marshal(tokenHead)
+// 	base64head := base64.StdEncoding.EncodeToString(head)
 
-	payload, _ := jsonextra.Marshal(tokenPayload)
-	base64payload := base64.StdEncoding.EncodeToString(payload)
+// 	payload, _ := jsonextra.Marshal(tokenPayload)
+// 	base64payload := base64.StdEncoding.EncodeToString(payload)
 
-	key := []byte(conf.Web.TokenKey)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(base64payload))
-	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
+// 	key := []byte(conf.Web.TokenKey)
+// 	h := hmac.New(sha256.New, key)
+// 	h.Write([]byte(base64payload))
+// 	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
-	return base64head + "." + base64payload + "." + sign
+// 	return base64head + "." + base64payload + "." + sign
 
-}
+// }
 
 func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 
@@ -532,7 +512,12 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if v, ok := loginCheck(stb.Password, stb.Username, req.RemoteAddr); ok {
-		s := gentokenid(stb.Username, v)
+		s, err := GenerateToken(stb.Username, v)
+		if err != nil {
+			log.Println("token generate err:", err)
+			w.Write(ResTokenErr)
+			return
+		}
 
 		res := &tokenrescode{Code: 20000,
 			Data:    resdata{Token: s},
@@ -575,8 +560,8 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUserInfo(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -617,55 +602,27 @@ func (j *jsonapi) httpoplogout(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, bool) {
-
-	token := req.Header.Get("x-token")
-
-	p := strings.Split(token, ".")
-
-	if len(p) != 3 {
-
-		//	log.Println("token err  len != 3", p)
-		w.Write([]byte(`{"code":50008,"data":{"isok":1,"message":"token format err"}}`))
-		return nil, false
-	}
-
-	key := []byte(conf.Web.TokenKey)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(p[1]))
-	sign := base64.StdEncoding.EncodeToString(h.Sum(nil))
-
-	if !strings.EqualFold(sign, p[2]) {
-		log.Println("token err key not equal")
-		w.Write([]byte(`{"code":50008,"data":{"isok":1,"message":"token sign err"}}`))
-		return nil, false
-	}
-
-	jsonpayload, err := base64.StdEncoding.DecodeString(p[1])
-
+func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, error) {
+	// 验证令牌，如果验证失败，向客户端写入错误响应并返回错误信息
+	token, err := ValidateToken(req.Header.Get("x-token"))
 	if err != nil {
-		log.Println("token err decode base64 ")
-		w.Write([]byte(`{"code":50008,"data":{"isok":1,"message":"token decode err"}}`))
-		return nil, false
+		w.Write(ResTokenErr)
+		return nil, fmt.Errorf("令牌错误，登录超时，请重新登录")
 	}
 
-	payload := &tokenpayload{}
-
-	err = jsonextra.Unmarshal(jsonpayload, payload)
-
+	// 根据令牌中的用户名获取用户信息，如果获取失败，向客户端写入错误响应并返回错误信息
+	emp, err := getuser(token.Username)
 	if err != nil {
-		log.Println("token err :decode payload")
-		w.Write([]byte(`{"code":50008,"data":{"isok":1,"message":"token data decode err"}}`))
-		return nil, false
+		w.Write(ResAccountErr)
+		return nil, err
 	}
 
-	if payload.Exp != time.Now().Add(24*time.Hour).Format("20060102") {
-		log.Println("token err ,timeout exp ")
-		w.Write([]byte(`{"code":50014,"data":{"isok":1,"message":"token exp err"}}`))
-		return nil, false
-
+	// 检查客户启用状态，如果员工被禁用，向客户端写入错误响应并返回错误信息
+	if emp.Status != 1 {
+		w.Write(ResAccountErr)
+		return nil, fmt.Errorf("账号已禁用")
 	}
 
-	return getuser(payload.Name), true
-
+	// 所有检查通过，返回员工信息指针和nil错误
+	return emp, nil
 }

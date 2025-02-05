@@ -53,7 +53,7 @@ type totalStats struct {
 
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
 
-	totalstats.DevNumber = len(devCPUIDMap)
+	totalstats.DevNumber = len(devCallsignSSIDMap)
 	totalstats.UserNumber = 1000
 	//totalstats.UserNumber = len(userlist)
 
@@ -69,7 +69,7 @@ func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 	p := platforminfo{
 		Name:     conf.SystemInfo.PlatformName,
 		LogoURL:  conf.SystemInfo.LogoURL,
-		Version:  "v1.0.0",
+		Version:  "v2.0.0",
 		ICP:      conf.Web.ICP,
 		Mail:     "caoc@live.com",
 		Callsign: "BH4RPN",

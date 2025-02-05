@@ -13,8 +13,8 @@ import (
 func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -23,7 +23,7 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device list err :", err)
@@ -43,8 +43,8 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -62,8 +62,8 @@ func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -78,7 +78,7 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &group{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("update user  err :", err)
@@ -103,8 +103,8 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -119,7 +119,7 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &group{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user add err :", err)
@@ -145,9 +145,8 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 
 func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
-
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -162,7 +161,7 @@ func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &group{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user delete err :", err)

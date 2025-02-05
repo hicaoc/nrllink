@@ -13,8 +13,8 @@ import (
 func (j *jsonapi) httpGetRelayList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, ok := checktoken(w, req)
-	if !ok {
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -24,7 +24,7 @@ func (j *jsonapi) httpGetRelayList(w http.ResponseWriter, req *http.Request) {
 
 	stb := &query{}
 
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("query freq list  err :", err)
@@ -46,8 +46,8 @@ func (j *jsonapi) httpGetRelayList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -56,7 +56,7 @@ func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &relay{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("update user  err :", err)
@@ -87,8 +87,8 @@ func (j *jsonapi) httpUpdaterelay(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpAddrelay(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -97,7 +97,7 @@ func (j *jsonapi) httpAddrelay(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &relay{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("user add err :", err)
@@ -123,8 +123,8 @@ func (j *jsonapi) httpAddrelay(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDeleterelay(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -139,7 +139,7 @@ func (j *jsonapi) httpDeleterelay(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &relay{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("freq delete err :", err)

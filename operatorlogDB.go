@@ -16,7 +16,7 @@ type OperatorLog struct {
 	Note       string `db:"note" json:"note"`
 }
 
-func getOperatorLog(s string, p string, emp *userinfo) ([]*OperatorLog, int) {
+func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
 
 	// if checkrole(emp, []string{"admin"}) == true {
 	// 	schname = "public"

@@ -244,7 +244,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 
 }
 
-func getuser(username string) *userinfo {
+func getuser(username string) (*userinfo, error) {
 
 	r := &userinfo{}
 
@@ -264,7 +264,7 @@ func getuser(username string) *userinfo {
 		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime)
 	if err != nil {
 		log.Println("getuser by username err :", err, "\n", query)
-		return r
+		return r, err
 	}
 
 	r.Roles = strings.Split(roles, ",")
@@ -272,7 +272,7 @@ func getuser(username string) *userinfo {
 	// r.userinit()
 	// userlist.Store(r.CallSign, *r)
 
-	return r
+	return r, nil
 }
 
 func getEmpListByRole(role string) ([]userinfo, int) {

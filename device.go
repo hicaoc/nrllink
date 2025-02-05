@@ -11,8 +11,8 @@ import (
 func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -21,7 +21,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device list err :", err)
@@ -37,11 +37,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	totalstats.OnlineDevNumber = 0
 
-	for _, vv := range devCPUIDMap {
-
-		if vv.CallSign == "" {
-			continue
-		}
+	for _, vv := range devCallsignSSIDMap {
 
 		t := time.Now()
 		if t.Sub(vv.LastPacketTime) > 15*time.Second {
@@ -66,7 +62,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 	rescode, _ := jsonextra.Marshal(devicelist)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(devCPUIDMap), rescode)
+		len(devCallsignSSIDMap), rescode)
 
 	w.Write([]byte(respone))
 
@@ -75,8 +71,8 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -85,7 +81,7 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device list err :", err)
@@ -95,7 +91,7 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	mydevicelist := make(map[string]deviceInfo, 10)
 
-	for kk, vv := range devCPUIDMap {
+	for kk, vv := range devCallsignSSIDMap {
 		if vv.CallSign == u.CallSign {
 			mydevicelist[kk] = *vv
 		}
@@ -105,7 +101,7 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 	rescode, _ := jsonextra.Marshal(mydevicelist)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(devCPUIDMap), rescode)
+		len(devCallsignSSIDMap), rescode)
 
 	w.Write([]byte(respone))
 
@@ -151,8 +147,8 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -161,7 +157,7 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &deviceInfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device update err :", err)
@@ -195,8 +191,8 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -205,7 +201,7 @@ func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Requ
 	req.Body.Close()
 
 	stb := &deviceInfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device update err :", err)
@@ -238,9 +234,8 @@ func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Requ
 
 func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
-
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -249,7 +244,7 @@ func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("my room list err :", err)
@@ -269,8 +264,8 @@ func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -279,7 +274,7 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 	req.Body.Close()
 
 	stb := &deviceInfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device parm query  err :", err)
@@ -294,7 +289,11 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 
 	}
 
-	dev, err := queryDeviceParm(stb.CPUID)
+	callsignssid := getCallsignSSID(stb.CallSign, stb.SSID)
+
+	fmt.Println("callsignssid:", callsignssid, stb.CallSign, stb.SSID)
+
+	dev, err := queryDeviceParm(callsignssid)
 
 	if err != nil {
 		log.Println("device parm query  err :", err)
@@ -314,31 +313,31 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
 	req.ParseForm()
 
-	fmt.Println("REQ:", len(req.Form))
+	fmt.Println("REQ:", req.Form)
 
-	cpuid := req.Form["CPUID"][0]
+	//cpuid := req.Form["CPUID"][0]
 	callsign := req.Form["callsign"][0]
+	ssid := req.Form["ssid"][0]
+	callsignssid := callsign + "-" + ssid
 
 	if !checkrole(u, []string{"admin"}) && u.CallSign != callsign {
 		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+		w.Write(ResRightErr)
 		return
 
 	}
 
-	if cpuid == "" {
-
+	if callsign == "" || ssid == "" {
 		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+		w.Write(ResParmErr)
 		return
-
 	}
 
 	for k, v := range req.Form {
@@ -346,25 +345,25 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		//fmt.Println(k, v)
 
 		switch k {
-		case "CPUID", "callsign":
+		case "CPUID", "ssid", "callsign":
 			continue
 
 		case "dcd_select":
-			_, err := changeDeviceByteParm(cpuid, 0, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 0, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备DCD选择失败"}}`))
 				return
 			}
 
 		case "ptt_enable":
-			_, err := changeDeviceByteParm(cpuid, 1, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 1, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改使能PTT失败"}}`))
 				return
 			}
 
 		case "ptt_level_reversed":
-			_, err := changeDeviceByteParm(cpuid, 2, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 2, v[0])
 
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
@@ -372,42 +371,42 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 			}
 
 		case "add_tail_voice":
-			_, err := changeDeviceUint16Parm(cpuid, 3, v[0])
+			_, err := changeDeviceUint16Parm(callsignssid, 3, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"加尾音失败"}}`))
 				return
 			}
 
 		case "remove_tail_voice":
-			_, err := changeDeviceUint16Parm(cpuid, 5, v[0])
+			_, err := changeDeviceUint16Parm(callsignssid, 5, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"消尾音失败"}}`))
 				return
 			}
 
 		case "ptt_resistive":
-			_, err := changeDeviceByteParm(cpuid, 7, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 7, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 
 		case "monitor_out":
-			_, err := changeDeviceByteParm(cpuid, 8, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 8, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 
 		case "key_func":
-			_, err := changeDeviceByteParm(cpuid, 9, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 9, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 
 		case "realy_status":
-			_, err := changeDeviceByteParm(cpuid, 10, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 10, v[0])
 
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
@@ -415,14 +414,14 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 			}
 
 		case "allow_relay_control":
-			_, err := changeDeviceByteParm(cpuid, 11, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 11, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 
 		case "voice_bitrate":
-			_, err := changeDeviceByteParm(cpuid, 12, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 12, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改语音码率失败"}}`))
 				return
@@ -431,28 +430,28 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		case "local_ipaddr", "gateway", "netmask", "dns_ipaddr", "dest_domainname":
 
 			ipparm := ipparm{32, req.Form["local_ipaddr"][0], 36, req.Form["gateway"][0], 40, req.Form["netmask"][0], 44, req.Form["dns_ipaddr"][0], 80, req.Form["dest_domainname"][0]}
-			_, err := changeDeviceIPParm(cpuid, ipparm)
+			_, err := changeDeviceIPParm(callsignssid, ipparm)
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"改变IP失败,IP不正确"}}`))
 				return
 			}
 
-		case "ssid":
-			_, err := changeDeviceByteParm(cpuid, 64, v[0])
-			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备SSID失败"}}`))
-				return
-			}
+		// case "ssid":
+		// 	_, err := changeDeviceByteParm(callsignssid, 64, v[0])
+		// 	if err != nil {
+		// 		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备SSID失败"}}`))
+		// 		return
+		// 	}
 
 		case "one_uv_power":
-			_, err := changeDeviceByteParm(cpuid, 163, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 163, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"UV电源开关失败"}}`))
 				return
 			}
 
 		case "moto_channel":
-			_, err := changeDeviceByteParm(cpuid, 164, v[0])
+			_, err := changeDeviceByteParm(callsignssid, 164, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20000,"data":{"message":"改变摩托3188/3688信道失败"}}`))
 				return
@@ -512,8 +511,8 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -522,7 +521,7 @@ func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &control{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device parm update err :", err)
@@ -556,8 +555,8 @@ func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -566,7 +565,7 @@ func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &control{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device parm update err :", err)

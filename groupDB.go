@@ -12,11 +12,11 @@ import (
 var publicGroupMap = make(map[int]*group, 1000) //key 房间号
 
 type group struct {
-	ID         int    `json:"id" db:"id"`
-	Name       string `json:"name" db:"name"`
-	Type       int    `json:"type" db:"type"`
-	AllowCPUID string `json:"allow_cpuid" db:"allow_cpuid"`
-	DevList    []int  `json:"devlist" db:"devlist"`
+	ID            int    `json:"id" db:"id"`
+	Name          string `json:"name" db:"name"`
+	Type          int    `json:"type" db:"type"`
+	AllowCALLSSID string `json:"allow_callsign_ssid" db:"allow_callsign_ssid"`
+	DevList       []int  `json:"devlist" db:"devlist"`
 	//KeepTime     int           `json:"keep_time" db:"keep_time"`
 	Password     string `json:"password" db:"password"`
 	Status       int    `json:"status" db:"status"`
@@ -68,7 +68,7 @@ func initPublicGroup() {
 		ID:           0,
 		Name:         "公共大厅",
 		OwerCallsign: "default",
-		connPool:     &currentConnPool{devConnList: make(map[string]*connPool)},
+		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 		DevMap:       make(map[int]*deviceInfo, 10),
 		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
@@ -76,7 +76,19 @@ func initPublicGroup() {
 
 	publicGroupMap[0] = pg0
 
-	rows, err := db.Query("SELECT * from  public_groups")
+	rows, err := db.Query(
+		`SELECT 
+			id,
+			name,
+			type,
+			callsign,
+			password,
+			ower_id,
+			allow_callsign_ssid,
+			devlist,
+			status,
+			create_time,update_time,note
+		from  public_groups `)
 
 	if err != nil {
 		log.Println("query all public group list  err:", err)
@@ -86,16 +98,15 @@ func initPublicGroup() {
 
 	for rows.Next() {
 		pg := &group{}
-		err := rows.Scan(&pg.ID,
+		err := rows.Scan(
+			&pg.ID,
 			&pg.Name,
 			&pg.Type,
 			&pg.OwerCallsign,
 			&pg.Password,
-			&pg.AllowCPUID,
 			&pg.OwerID,
+			&pg.AllowCALLSSID,
 			&devlist,
-			&pg.MasterServer,
-			&pg.SlaveServer,
 			&pg.Status,
 			&pg.CreateTime,
 			&pg.UpdateTime,
@@ -106,12 +117,12 @@ func initPublicGroup() {
 
 		pg.DevList = convertStr2IntArray(devlist)
 
-		pg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
+		pg.connPool = &currentConnPool{devConnList: make(map[string]*deviceInfo)}
 		pg.DevMap = make(map[int]*deviceInfo, 10)
 
 		// 类型为3的公共组，只能一个设备转发，用于中继收听
 		if pg.Type == 3 {
-			pg.connPool.allowCPUID = pg.AllowCPUID
+			pg.connPool.allowCALLSSID = pg.AllowCALLSSID
 		}
 
 		publicGroupMap[pg.ID] = pg
@@ -128,14 +139,28 @@ func getGroup(name string) (pg *group) {
 	pg = &group{}
 	var devlist string
 
-	row := db.QueryRow(`select * FROM public_groups  where name=?`, name)
-	err := row.Scan(&pg.ID,
+	row := db.QueryRow(`select 
+	id,
+	name,
+	type,
+	callsign,
+	ower_id,
+	password,
+	allow_callsign_ssid,
+	devlist,
+		master_server,
+		slave_server,
+		status,
+		create_time,update_time,note 
+	FROM public_groups  where name=?`, name)
+	err := row.Scan(
+		&pg.ID,
 		&pg.Name,
 		&pg.Type,
 		&pg.OwerCallsign,
-		&pg.Password,
-		&pg.AllowCPUID,
 		&pg.OwerID,
+		&pg.Password,
+		&pg.AllowCALLSSID,
 		&devlist,
 		&pg.MasterServer,
 		&pg.SlaveServer,
@@ -159,6 +184,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 	if dev.GroupID >= 1000 || dev.GroupID == 0 {
 
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
+			delete(g.connPool.devConnList, dev.udpAddr.String())
 			delete(g.DevMap, dev.ID)
 
 		} else {
@@ -197,11 +223,11 @@ func addPublicGroup(pg *group) error {
 
 	//	fmt.Println("user:", e)
 	var devllist = convertIntArray2Str(pg.DevList)
-	query := `INSERT INTO public_groups (name,type,allow_cpuid,callsign,ower_id,password,devlist,
+	query := `INSERT INTO public_groups (name,type,allow_callsign_ssid,callsign,ower_id,password,devlist,
 		master_server,slave_server,status,note,create_time,update_time	) 
 	VALUES (?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
-	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCPUID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
+	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCALLSSID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
 		pg.MasterServer, pg.SlaveServer, pg.Status, pg.Note)
 
 	if err != nil {
@@ -217,7 +243,7 @@ func addPublicGroup(pg *group) error {
 
 	}
 	if _, ok := publicGroupMap[newpg.ID]; !ok {
-		newpg.connPool = &currentConnPool{devConnList: make(map[string]*connPool)}
+		newpg.connPool = &currentConnPool{devConnList: make(map[string]*deviceInfo)}
 		newpg.DevMap = make(map[int]*deviceInfo, 10)
 		publicGroupMap[newpg.ID] = newpg
 	}
@@ -230,9 +256,9 @@ func addPublicGroup(pg *group) error {
 
 func updatePublicGroup(pg *group) error {
 
-	_, err := db.Exec(`update public_groups set name=?, type=?, allow_cpuid=?, password=?, status=?,
+	_, err := db.Exec(`update public_groups set name=?, type=?, allow_callsign_ssid=?, password=?, status=?,
 	master_server=?, slave_server=?, note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,
-		pg.Name, pg.Type, pg.AllowCPUID, pg.Password, pg.Status, pg.MasterServer, pg.SlaveServer, pg.Note, pg.ID)
+		pg.Name, pg.Type, pg.AllowCALLSSID, pg.Password, pg.Status, pg.MasterServer, pg.SlaveServer, pg.Note, pg.ID)
 
 	if err != nil {
 		log.Println("update public group failed, ", err)
@@ -248,14 +274,14 @@ func updatePublicGroup(pg *group) error {
 		p.Status = pg.Status
 		p.Note = pg.Note
 		p.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
-		p.AllowCPUID = pg.AllowCPUID
-		p.connPool.allowCPUID = pg.AllowCPUID
+		p.AllowCALLSSID = pg.AllowCALLSSID
+		p.connPool.allowCALLSSID = pg.AllowCALLSSID
 		p.Password = pg.Password
 
 		if pg.Type == 3 {
-			p.connPool.allowCPUID = pg.AllowCPUID
+			p.connPool.allowCALLSSID = pg.AllowCALLSSID
 		} else {
-			p.connPool.allowCPUID = ""
+			p.connPool.allowCALLSSID = ""
 		}
 
 	}

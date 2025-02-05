@@ -9,57 +9,25 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/json-iterator/go/extra"
 )
 
 //var userlist = make(map[string]userinfo, 1000) //key 用户id
 
 var userlist sync.Map // callid ,userinfo
 
-var devCPUIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
+var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
 
 var limitChan = make(chan bool, 1)
 
 var globelconn *net.UDPConn
 
-type connPool struct {
-	UDPAddr       *net.UDPAddr
-	dev           *deviceInfo
-	lastTime      time.Time
-	lastVoiceTime time.Time
-	lastCtlTime   time.Time
-}
-
 type currentConnPool struct {
 	UDPAddr       *net.UDPAddr
 	lastVoiceTime time.Time
 	lastCtlTime   time.Time
-	allowCPUID    string
+	allowCALLSSID string
 	//lastVoiceTime time.Time
-	devConnList map[string]*connPool //key cpuid
-}
-
-func main() {
-
-	extra.RegisterFuzzyDecoders()
-
-	conf.init()
-
-	db = getDB()
-
-	initServers()
-	initPublicGroup()
-	initAllUserList()
-	initAllDevList()
-
-	go jsonhttp.init()
-
-	logbuffer = make(chan *deviceInfo, 1000)
-	go saveLog()
-
-	udpServer()
-
+	devConnList map[string]*deviceInfo //key cpuid
 }
 
 func udpProcess(conn *net.UDPConn) {
@@ -90,12 +58,13 @@ func udpProcess(conn *net.UDPConn) {
 			// return
 		}
 
-		if dev, ok := devCPUIDMap[nrl.CPUID]; ok {
+		if dev, ok := devCallsignSSIDMap[getCallsignSSID(nrl.CallSign, nrl.SSID)]; ok {
 
 			dev.udpAddr = nrl.UDPAddr
+			dev.ISOnline = true
 			//设备呼号有变更，更新下
-			dev.CallSign = nrl.CallSign
-			dev.SSID = nrl.SSID
+			//dev.CallSign = nrl.CallSign
+			//dev.SSID = nrl.SSID
 			dev.LastPacketTime = nrl.timeStamp
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
@@ -123,13 +92,35 @@ func udpProcess(conn *net.UDPConn) {
 
 		} else {
 
-			//设备不存在，加入设备,并加入加入缺省0公共群组,不保存呼号callsign
+			//升级用，先用cpuid加载下设备尝试
+			dev := getDeviceByCpuID(nrl.CPUID)
 
-			addDevice(&deviceInfo{SSID: nrl.SSID, CPUID: nrl.CPUID, ChanName: make([]string, 8)})
+			if dev.ID > 0 {
 
-			d := getDevice(nrl.CPUID)
+				updateDeviceCallsignSSIDByCPuid(nrl.CallSign, nrl.CPUID, nrl.SSID)
 
-			devCPUIDMap[nrl.CPUID] = d
+				fmt.Println("dev updated:", dev, nrl)
+
+			} else {
+
+				//设备不存在，加入设备,并加入加入缺省0公共群组,需要保存呼号callsign
+
+				err = addDevice(&deviceInfo{
+					CallSign: nrl.CallSign,
+					SSID:     nrl.SSID,
+					CPUID:    nrl.CPUID,
+					DevModel: nrl.DevMode,
+					ChanName: make([]string, 8)})
+
+				if err != nil {
+					fmt.Println("add dev failed, ", err, '\n', nrl)
+					break
+				}
+			}
+
+			d := getDevice(nrl.CallSign, nrl.SSID)
+
+			devCallsignSSIDMap[getCallsignSSID(nrl.CallSign, nrl.SSID)] = d
 
 			if p, ok := publicGroupMap[0]; ok {
 
@@ -206,56 +197,57 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.VoiceTime = dev.VoiceTime + 63
 		totalstats.VoiceTime = totalstats.VoiceTime + 63
 
-		if gp.connPool.allowCPUID != "" && nrl.CPUID != gp.connPool.allowCPUID {
+		if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != getCallsignSSID(nrl.CallSign, nrl.SSID) {
 			return
 		}
 
+		dev.udpAddr = nrl.UDPAddr
+		//dev.LastPacketTime = nrl.timeStamp
+		dev.LastVoiceEndTime = nrl.timeStamp
+		dev.LastCtlEndTime = nrl.timeStamp
+
 		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
+			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
 		}
 
-		forwardVoice(nrl, packet, dev, conn, gp)
+		forwardVoice(nrl, packet, conn, gp)
 	case 2:
-		//心跳包，用于保存设备在线存活状态， 目前设备60ms一次发送，后期需要优化成60秒以上一次
-
+		//心跳包，用于保存设备在线存活状态， 目前设备1s一次发送
 		if !dev.Loged && nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
 			logbuffer <- dev
 			dev.Loged = true
 		}
 
-		if kk, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
-			kk.lastTime = nrl.timeStamp
+		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
+			//kk.LastPacketTime = nrl.timeStamp
 
 		} else {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, time.Time{}, time.Time{}}
+			dev.udpAddr = nrl.UDPAddr
+			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
 			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, nrl.UDPAddr)
 		}
 
 		for kkk, vv := range gp.connPool.devConnList {
-			if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
+			if nrl.timeStamp.Sub(vv.LastPacketTime) > 15*time.Second {
 				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, kkk)
 				delete(gp.connPool.devConnList, kkk)
 
 			}
 		}
-		//原样回复心跳
-
-		//设备端有bug，某些报文没有填充callsign
-		// if dev.CallSign != nrl.CallSign || dev.SSID != nrl.SSID {
-		// 	dev.CallSign = nrl.CallSign
-		// 	dev.SSID = nrl.SSID
-		// 	updateDevice(dev)
-		// }
-		// dev.CallSign = nrl.CallSign
-		// dev.SSID = nrl.SSID
-		dev.ISOnline = true
 
 		//如果设备没有携带型号，则使用用户指定的型号，不更新
 		if nrl.DevMode != 0 {
 			dev.DevModel = nrl.DevMode
 		}
 
-		if dev.DeviceParm == nil {
+		//如何是服务器自己发出的和其他服务器连接的心跳包，则更新在线状态，不能继续转发
+		// dev.udpsocket 这个值只有发出心跳包的设备用到
+		if dev.udpSocket != nil {
+			return
+		}
+
+		//原样回复心跳，ssid小于100的设备，尝试获取设备的配置参数
+		if dev.DeviceParm == nil && dev.DevModel < 100 {
 			conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
 		} else {
 			conn.WriteToUDP(packet, nrl.UDPAddr)
@@ -268,7 +260,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 	case 4:
 
-	case 5: //语音通道
+	case 5: //文本消息
 
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 
@@ -288,15 +280,16 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.CtlTime = dev.CtlTime + 63
 		//totalstats.CtlTime = totalstats.CtlTime + 63
 
-		if gp.connPool.allowCPUID != "" && nrl.CPUID != gp.connPool.allowCPUID {
+		if gp.connPool.allowCALLSSID != "" && nrl.CPUID != gp.connPool.allowCALLSSID {
 			return
 		}
 
 		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = &connPool{nrl.UDPAddr, dev, nrl.timeStamp, nrl.timeStamp, nrl.timeStamp}
+			dev.udpAddr = nrl.UDPAddr
+			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
 		}
 
-		forwardCtl(nrl, packet, dev, conn, gp)
+		forwardCtl(nrl, packet, conn, gp)
 
 	case 7: //设备端操作指令
 
@@ -335,7 +328,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 }
 
-func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
+func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
 	switch len(gp.connPool.devConnList) {
 
@@ -358,13 +351,20 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 			// 	continue
 			// }
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
-				//fmt.Println("case 2 :", clientAddrStr)
-				conn.WriteToUDP(packet, vv.UDPAddr)
+			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
+
+				if vv.DevModel == 200 {
+					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
+					conn.WriteToUDP(newpacket, vv.udpAddr)
+
+				} else {
+					//fmt.Println("case 2 :", clientAddrStr)
+					conn.WriteToUDP(packet, vv.udpAddr)
+				}
 			} else {
 				//更新自己的时间
-				vv.lastTime = nrl.timeStamp
-				vv.lastVoiceTime = nrl.timeStamp
+				//vv.LastPacketTime = nrl.timeStamp
+				vv.LastVoiceEndTime = nrl.timeStamp
 				//必须要更新下地址，防止用户端口变化
 				// vv.UDPAddr = n.UDPAddr
 
@@ -378,7 +378,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
-				k.lastCtlTime = nrl.timeStamp
+				k.LastCtlEndTime = nrl.timeStamp
 			}
 
 			return
@@ -396,12 +396,20 @@ func forwardVoice(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UD
 			// 	continue
 			// }
 
-			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
-				conn.WriteToUDP(packet, vv.UDPAddr)
+			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
+
+				if vv.DevModel == 200 {
+					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
+					conn.WriteToUDP(newpacket, vv.udpAddr)
+
+				} else {
+					conn.WriteToUDP(packet, vv.udpAddr)
+				}
+
 			} else {
 				//更新自己连接池的上次报文接收时间
-				vv.lastTime = nrl.timeStamp
-				vv.lastVoiceTime = nrl.timeStamp
+				//vv.LastPacketTime = nrl.timeStamp
+				vv.LastVoiceEndTime = nrl.timeStamp
 
 			}
 		}
@@ -422,21 +430,31 @@ func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPCon
 		// }
 
 	} else {
-		connpool.devConnList[clientAddrStr] = &connPool{n.UDPAddr, dev, n.timeStamp, time.Time{}, time.Time{}}
+
+		dev.udpAddr = n.UDPAddr
+
+		connpool.devConnList[clientAddrStr] = dev
 
 	}
 
 	for kk, vv := range connpool.devConnList {
 
 		if clientAddrStr != kk {
-			conn.WriteToUDP(packet, vv.UDPAddr)
+			if vv.DevModel == 200 {
+				newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
+				conn.WriteToUDP(newpacket, vv.udpAddr)
+
+			} else {
+				conn.WriteToUDP(packet, vv.udpAddr)
+			}
+
 		}
 	}
 
 }
 
 // forwardCtl forwardCtl
-func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
+func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
 	switch len(gp.connPool.devConnList) {
 
@@ -454,13 +472,20 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 			//删除超时的会话
 
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
+			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
-				conn.WriteToUDP(packet, vv.UDPAddr)
+				if vv.DevModel == 200 {
+					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
+					conn.WriteToUDP(newpacket, vv.udpAddr)
+
+				} else {
+					conn.WriteToUDP(packet, vv.udpAddr)
+				}
+
 			} else {
 				//更新自己的时间
-				vv.lastTime = nrl.timeStamp
-				vv.lastCtlTime = nrl.timeStamp
+				//vv.LastPacketTime = nrl.timeStamp
+				vv.LastCtlEndTime = nrl.timeStamp
 				//必须要更新下地址，防止用户端口变化
 				// vv.UDPAddr = n.UDPAddr
 
@@ -474,7 +499,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
-				k.lastCtlTime = nrl.timeStamp
+				k.LastCtlEndTime = nrl.timeStamp
 			}
 
 			// if nrl.CallSign == "BH4TDV" {
@@ -496,12 +521,20 @@ func forwardCtl(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 			// 	continue
 			// }
 
-			if nrl.UDPAddrStr != kk && (vv.dev.Status&2) != 2 {
-				conn.WriteToUDP(packet, vv.UDPAddr)
+			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
+
+				if vv.DevModel == 200 {
+					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
+					conn.WriteToUDP(newpacket, vv.udpAddr)
+
+				} else {
+					conn.WriteToUDP(packet, vv.udpAddr)
+				}
+
 			} else {
 				//更新自己连接池的上次报文接收时间
-				vv.lastTime = nrl.timeStamp
-				vv.lastCtlTime = nrl.timeStamp
+				//vv.LastPacketTime = nrl.timeStamp
+				vv.LastCtlEndTime = nrl.timeStamp
 
 			}
 		}

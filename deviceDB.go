@@ -18,11 +18,11 @@ type deviceInfo struct {
 	CPUID           string `json:"cpuid" db:"cpuid"`         //设备CPUID
 	Password        string `json:"password" db:"password"`   //设备接入密码
 	Gird            string `json:"gird" db:"gird"`           //设备位置
-	DevType         int    `json:"dev_type" db:"dev_type"`   //设备型号
+	DevType         byte   `json:"dev_type" db:"dev_type"`   //设备型号
 	DevModel        byte   `json:"dev_model" db:"dev_model"` //设备型号
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
-	CallSign        string `json:"callsign"`                           //所有者呼号
+	CallSign        string `json:"callsign" db:"callsign"`             //所有者呼号
 	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者呼号
 	GroupID         int    `json:"group_id" db:"group_id"`             //内置群租编号
 	GroupPassword   string `json:"group_password" db:"group_password"` //加入组的密码
@@ -32,6 +32,7 @@ type deviceInfo struct {
 	Traffic         int    `json:"traffic"`                            //流量消耗
 
 	udpAddr    *net.UDPAddr
+	udpSocket  *net.UDPConn
 	CreateTime string         `json:"create_time" db:"create_time"` //加入时间
 	UpdateTime string         `json:"update_time" db:"update_time"` //信息更新时间
 	OnlineTime string         `json:"online_time" db:"online_time"` //设备上线时间
@@ -55,12 +56,52 @@ type deviceInfo struct {
 	DeviceParm *control `json:"device_parm"`
 }
 
+func (d *deviceInfo) sendHeartbear() {
+
+	cpuid := calculateCpuId(d.CallSign + "-200")
+
+	packet := encodeNRL21(d.CallSign, 200, 2, 200, cpuid, []byte{})
+
+	fmt.Println(packet)
+
+	for {
+
+		if d.udpSocket != nil {
+			//发送心跳包
+			d.udpSocket.WriteToUDP(packet, d.udpAddr)
+			time.Sleep(time.Second * 5)
+
+		} else {
+			fmt.Print("send hb stoped: device udp socket is nil")
+			break
+		}
+
+	}
+
+}
+
 func initAllDevList() {
 
-	rows, err := db.Query(`SELECT id,name,cpuid,password,gird,dev_type,dev_model,
-		group_id,status,is_certed,chan_name,
-		create_time,update_time,online_time,note,rf_type  
-	 from  devices`)
+	rows, err := db.Query(`SELECT 
+	id,
+	name,
+	callsign,
+	CAST(ssid AS INTEGER) AS ssid,	
+	cpuid,
+	password,
+	gird,
+	dev_type,
+	dev_model,
+	group_id,
+	status,
+	is_certed,
+	chan_name,
+	create_time,
+	update_time,
+	online_time,
+	note,
+	rf_type  
+	FROM  devices`)
 
 	if err != nil {
 		log.Println("query all device list  err:", err)
@@ -69,14 +110,14 @@ func initAllDevList() {
 	for rows.Next() {
 
 		dev := &deviceInfo{}
-		err := rows.Scan(&dev.ID, &dev.Name, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 			&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 			&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 		if err != nil {
 			log.Println("query  all device rows err:", err)
 		}
 
-		devCPUIDMap[dev.CPUID] = dev
+		devCallsignSSIDMap[getCallsignSSID(dev.CallSign, dev.SSID)] = dev
 
 		if kk, ok := publicGroupMap[dev.GroupID]; ok {
 
@@ -107,15 +148,18 @@ func (d *deviceInfo) String() string {
 
 }
 
-func getDevice(cpuid string) (dev *deviceInfo) {
+func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 	dev = &deviceInfo{}
 
-	row := db.QueryRow(`select id,name,cpuid,password,gird,dev_type,dev_model,
+	row := db.QueryRow(`select id,name,callsign,
+	CAST(ssid AS INTEGER) AS ssid,		
+
+	cpuid,password,gird,dev_type,dev_model,
 	group_id,status,is_certed,chan_name,
 	create_time,update_time,online_time,note,rf_type  
- from  devices   where cpuid=?`, cpuid)
+ from  devices   where callsign=? and ssid=?`, callsign, ssid)
 
-	err := row.Scan(&dev.ID, &dev.Name, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 
@@ -127,15 +171,41 @@ func getDevice(cpuid string) (dev *deviceInfo) {
 
 }
 
-func queryDeviceParm(cpuid string) (dev deviceInfo, err error) {
+func getDeviceByCpuID(cpuid string) (dev *deviceInfo) {
+	dev = &deviceInfo{}
 
-	if dev, ok := devCPUIDMap[cpuid]; ok {
+	row := db.QueryRow(`select 
+	id,
+	name,
+	callsign,
+	CAST(ssid AS INTEGER) AS ssid,
+	cpuid,
+	password,gird,dev_type,dev_model,
+	group_id,status,is_certed,chan_name,
+	create_time,update_time,online_time,note,rf_type  
+ from  devices   where cpuid=? `, cpuid)
+
+	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
+
+	if err != nil {
+		log.Println("query one device rows err:", err)
+	}
+
+	return dev
+
+}
+
+func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
+
+	if dev, ok := devCallsignSSIDMap[callsignwithssid]; ok {
 
 		t := time.Now()
 		//fmt.Println(t.Sub(d.LastPacketTime))
 		if t.Sub(dev.LastPacketTime) > 15*time.Second {
 			dev.ISOnline = false
-			return *dev, fmt.Errorf("dev offline: %v-%v %v ", dev.CPUID, dev.SSID, cpuid)
+			return *dev, fmt.Errorf("dev offline: %v-%v %v ", dev.CPUID, dev.SSID, callsignwithssid)
 
 		} else {
 
@@ -148,15 +218,15 @@ func queryDeviceParm(cpuid string) (dev deviceInfo, err error) {
 
 	}
 
-	return dev, fmt.Errorf("dev not found with cpuid %v ", cpuid)
+	return dev, fmt.Errorf("dev not found with callsign and ssid %v ", callsignwithssid)
 
 }
 
-func changeDeviceByteParm(cpuid string, offset int, str string) (res []byte, err error) {
+func changeDeviceByteParm(callsignssid string, offset int, str string) (res []byte, err error) {
 
 	val, _ := strconv.Atoi(str)
 
-	if d, ok := devCPUIDMap[cpuid]; ok {
+	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
@@ -212,7 +282,7 @@ func checkIP(str string) ([]byte, bool) {
 
 }
 
-func changeDeviceIPParm(cpuid string, ip ipparm) (res []byte, err error) {
+func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) {
 
 	if len(ip.destIPValue) != 15 {
 		return nil, fmt.Errorf("DIP format err")
@@ -228,7 +298,7 @@ func changeDeviceIPParm(cpuid string, ip ipparm) (res []byte, err error) {
 		return nil, errors.New("ip format error")
 	}
 
-	if d, ok := devCPUIDMap[cpuid]; ok {
+	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
@@ -278,11 +348,11 @@ func changeDeviceIPParm(cpuid string, ip ipparm) (res []byte, err error) {
 
 }
 
-func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, err error) {
+func changeDeviceUint16Parm(callsignssid string, offset int, str string) (res []byte, err error) {
 
 	val, _ := strconv.Atoi(str)
 
-	if d, ok := devCPUIDMap[cpuid]; ok {
+	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
@@ -311,7 +381,7 @@ func changeDeviceUint16Parm(cpuid string, offset int, str string) (res []byte, e
 
 func changeDevice1W(ctr *control) (res []byte, err error) {
 
-	if d, ok := devCPUIDMap[ctr.LocalCPUID]; ok {
+	if d, ok := devCallsignSSIDMap[getCallsignSSID(ctr.CallSign, ctr.SSID)]; ok {
 
 		oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
 		//oneParm[0] = []byte{'0'}  //无需修改，使用原始的GBW数据
@@ -358,7 +428,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 
 func changeDevice2W(ctr *control) (res []byte, err error) {
 
-	if d, ok := devCPUIDMap[ctr.LocalCPUID]; ok {
+	if d, ok := devCallsignSSIDMap[getCallsignSSID(ctr.CallSign, ctr.SSID)]; ok {
 
 		//oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
 
@@ -408,10 +478,10 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 func addDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,cpuid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
-		 VALUES ('','',0,0,0,0,?,?,'','',0,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
+	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,callsign,ssid,cpuid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
+		 VALUES ('','',0,0,0,0,?,?,?,?,'','',0,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
-	_, err := db.Exec(query, dev.CPUID, dev.ChanName)
+	_, err := db.Exec(query, dev.CallSign, strconv.Itoa(int(dev.SSID)), dev.CPUID, dev.ChanName)
 
 	if err != nil {
 		log.Println("add dev failed, ", err, '\n', query)
@@ -424,7 +494,7 @@ func addDevice(dev *deviceInfo) error {
 
 func updateDevice(e *deviceInfo) error {
 
-	if d, ok := devCPUIDMap[e.CPUID]; ok {
+	if d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]; ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
 		d.DevType = e.DevType
@@ -478,9 +548,22 @@ func updateDevice(e *deviceInfo) error {
 
 }
 
+func updateDeviceCallsignSSIDByCPuid(callsign, cpuid string, ssid byte) error {
+
+	_, err := db.Exec(`update devices set callsign=?, ssid=? where cpuid=?`,
+		callsign, strconv.Itoa(int(ssid)), cpuid)
+	if err != nil {
+		log.Println("update device failed, ", err)
+		return err
+	}
+
+	return nil
+
+}
+
 func changeDeviceGroup(e *deviceInfo) error {
 
-	if d, ok := devCPUIDMap[e.CPUID]; ok {
+	if d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]; ok {
 
 		if d.GroupID != e.GroupID {
 

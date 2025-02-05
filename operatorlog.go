@@ -23,8 +23,9 @@ import (
 
 func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
-	u, ok := checktoken(w, req)
-	if !ok {
+
+	_, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -36,7 +37,7 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 	var total = 0
 
 	stb := &query{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("operater log  query err :", err)
@@ -46,7 +47,7 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 
 	ww, p, _ := queryToWhere("", *stb)
 
-	list, total := getOperatorLog(ww, p, u)
+	list, total := getOperatorLog(ww, p)
 
 	// list := getOperatorLog()
 

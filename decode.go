@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -60,6 +62,105 @@ func (n *NRL21packet) String() string {
 type G711Voice struct {
 	Number uint32
 	DATA   []byte
+}
+
+func calculateCpuId(callSign string) []byte {
+	// 将字符串生成 32 位哈希值
+	var hash uint32 = 0
+	for _, char := range callSign {
+		hash = (hash*31 + uint32(char))
+	}
+
+	cpuIdBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(cpuIdBytes[:4], hash)
+
+	return cpuIdBytes
+
+	// 将哈希值转换为 7 字节的十六进制字符串
+
+}
+
+func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, cpuid, data []byte) (packet []byte) {
+
+	packet = make([]byte, len(data))
+
+	copy(packet, data)
+
+	// 写入 CPUID
+
+	copy(packet[6:11], cpuid)
+
+	// 写入 CallSign
+	copy(packet[24:30], callsign)
+
+	// 写入 SSID
+	packet[30] = ssid
+
+	// 写入 DevMode
+	packet[31] = DevMode
+
+	return packet
+
+}
+
+func encodeNRL21(callsign string, ssid, packetType, DevMode uint8, cpuid, data []byte) (packet []byte) {
+
+	//编码报名
+
+	const fixedBufferSize = 48
+
+	// 计算总大小
+	totalSize := fixedBufferSize + len(data)
+
+	// 创建字节切片
+	packet = make([]byte, totalSize)
+
+	// 写入固定头部
+	copy(packet[0:4], []byte("NRL2"))
+
+	// 写入长度
+	binary.BigEndian.PutUint16(packet[4:6], uint16(totalSize))
+
+	// 写入 CPUID
+
+	copy(packet[6:11], cpuid)
+
+	// 写入 Type  2
+	packet[20] = packetType
+
+	// 写入 Status
+	packet[21] = 1
+
+	// 写入 Count
+	// binary.BigEndian.PutUint16(data[18:20], n.Count)
+
+	// 写入 CallSign
+	copy(packet[24:30], callsign)
+
+	// 写入 SSID
+	packet[30] = ssid
+
+	// 写入 DevMode
+	packet[31] = DevMode
+
+	// 写入 DATA
+	if len(data) > 0 {
+		copy(packet[48:], data)
+	}
+
+	return packet
+
+}
+
+func getCallsignSSID(callsign string, ssid byte) string {
+
+	var builder strings.Builder
+
+	// 拼接字符串
+	builder.WriteString(callsign)
+	builder.WriteString("-")
+	builder.WriteString(strconv.Itoa(int(ssid)))
+	return builder.String()
 }
 
 // type COMData struct {

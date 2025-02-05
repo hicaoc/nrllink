@@ -171,7 +171,7 @@ func decodeControlPacket(data []byte) *control {
 
 	} else {
 
-		fmt.Println("device parm:", data)
+		//fmt.Println("device parm:", data)
 
 	}
 
@@ -189,6 +189,9 @@ func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 	packet = append(packet, id...) //本机CPUID  6-10
 
 	pass_hex_data, _ := hex.DecodeString(dev.Password)
+	if len(pass_hex_data) < 3 {
+		pass_hex_data = []byte("000")
+	}
 	packet = append(packet, []byte(pass_hex_data)[:3]...) //本机设备密码  10-12
 	packet = append(packet, id...)                        //目标CPUID  13-19
 	packet = append(packet, []byte(pass_hex_data)[:3]...) //目标设备密码  10-12
