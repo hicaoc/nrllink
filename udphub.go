@@ -58,7 +58,9 @@ func udpProcess(conn *net.UDPConn) {
 			// return
 		}
 
-		if dev, ok := devCallsignSSIDMap[getCallsignSSID(nrl.CallSign, nrl.SSID)]; ok {
+		callsignSSID := getCallsignSSID(nrl.CallSign, nrl.SSID)
+
+		if dev, ok := devCallsignSSIDMap[callsignSSID]; ok {
 
 			dev.udpAddr = nrl.UDPAddr
 			dev.ISOnline = true
@@ -106,11 +108,12 @@ func udpProcess(conn *net.UDPConn) {
 				//设备不存在，加入设备,并加入加入缺省0公共群组,需要保存呼号callsign
 
 				err = addDevice(&deviceInfo{
-					CallSign: nrl.CallSign,
-					SSID:     nrl.SSID,
-					CPUID:    nrl.CPUID,
-					DevModel: nrl.DevMode,
-					ChanName: make([]string, 8)})
+					CallSignSSID: callsignSSID,
+					CallSign:     nrl.CallSign,
+					SSID:         nrl.SSID,
+					CPUID:        nrl.CPUID,
+					DevModel:     nrl.DevMode,
+					ChanName:     make([]string, 8)})
 
 				if err != nil {
 					fmt.Println("add dev failed, ", err, '\n', nrl)
@@ -120,7 +123,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			d := getDevice(nrl.CallSign, nrl.SSID)
 
-			devCallsignSSIDMap[getCallsignSSID(nrl.CallSign, nrl.SSID)] = d
+			devCallsignSSIDMap[callsignSSID] = d
 
 			if p, ok := publicGroupMap[0]; ok {
 
@@ -197,7 +200,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.VoiceTime = dev.VoiceTime + 63
 		totalstats.VoiceTime = totalstats.VoiceTime + 63
 
-		if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != getCallsignSSID(nrl.CallSign, nrl.SSID) {
+		if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
 			return
 		}
 

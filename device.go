@@ -191,8 +191,8 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, ok := checktoken(w, req)
-	if !ok {
+	u, err := checktoken(w, req)
+	if err != nil {
 		return
 	}
 
@@ -201,7 +201,7 @@ func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 
 	stb := &deviceInfo{}
-	err := jsonextra.Unmarshal(result, &stb)
+	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device update err :", err)

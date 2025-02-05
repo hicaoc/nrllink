@@ -24,6 +24,7 @@ type deviceInfo struct {
 	VoiceServerPort string `json:"voice_server_port"`
 	CallSign        string `json:"callsign" db:"callsign"`             //所有者呼号
 	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者呼号
+	CallSignSSID    string `json:"callsignssid"`                       //callsign+ssid
 	GroupID         int    `json:"group_id" db:"group_id"`             //内置群租编号
 	GroupPassword   string `json:"group_password" db:"group_password"` //加入组的密码
 	Status          int    `json:"status" db:"status"`                 //状态  0 正常   1 禁用接收  2 禁用发射  3 禁止发射和接收
@@ -117,7 +118,10 @@ func initAllDevList() {
 			log.Println("query  all device rows err:", err)
 		}
 
-		devCallsignSSIDMap[getCallsignSSID(dev.CallSign, dev.SSID)] = dev
+		callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
+		dev.CallSignSSID = callsignSSID
+
+		devCallsignSSIDMap[callsignSSID] = dev
 
 		if kk, ok := publicGroupMap[dev.GroupID]; ok {
 
@@ -167,6 +171,9 @@ func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 		log.Println("query one device rows err:", err)
 	}
 
+	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
+	dev.CallSignSSID = callsignSSID
+
 	return dev
 
 }
@@ -192,6 +199,9 @@ func getDeviceByCpuID(cpuid string) (dev *deviceInfo) {
 	if err != nil {
 		log.Println("query one device rows err:", err)
 	}
+
+	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
+	dev.CallSignSSID = callsignSSID
 
 	return dev
 
@@ -356,7 +366,7 @@ func changeDeviceUint16Parm(callsignssid string, offset int, str string) (res []
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 5*time.Second {
+		if t.Sub(d.LastPacketTime) > 15*time.Second {
 			d.ISOnline = false
 			return nil, errors.New("device be offline")
 
@@ -447,7 +457,7 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 5*time.Second {
+		if t.Sub(d.LastPacketTime) > 15*time.Second {
 			d.ISOnline = false
 			return nil, errors.New("device be offline")
 
@@ -504,7 +514,7 @@ func delDevice(dev *deviceInfo) error {
 		return err
 	}
 
-	delete(devCPUIDMap, dev.CPUID)
+	delete(devCallsignSSIDMap, dev.CallSignSSID)
 
 	return nil
 
