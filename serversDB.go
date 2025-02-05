@@ -68,19 +68,17 @@ func (p *Server) Start() error {
 
 	}
 
-	fmt.Println("start device1111", p.OwerCallsign, 200)
+	dev := getDevice(p.OwerCallsign, 200)
 
-	d := getDevice(p.OwerCallsign, 200)
+	if dev.ID == 0 {
 
-	if d.ID == 0 {
-
-		fmt.Println("start device2222", p.OwerCallsign, 200)
+		fmt.Println("start device", p.OwerCallsign, 200)
 
 		cpuid := calculateCpuId(p.OwerCallsign + "-200")
 
 		cpuIDHex := fmt.Sprintf("%x", cpuid)
 
-		deviceInfo := &deviceInfo{
+		dev = &deviceInfo{
 			Name:      p.IPAddr + ":" + p.UDPPort,
 			CallSign:  p.OwerCallsign,
 			udpSocket: globelconn,
@@ -89,25 +87,30 @@ func (p *Server) Start() error {
 			CPUID:     cpuIDHex,
 			Note:      "server"}
 
-		err = addDevice(deviceInfo)
+		err = addDevice(dev)
 		if err != nil {
 			log.Printf("Failed to add dev: %v", err)
+			return fmt.Errorf("add device error")
+		}
+
+		fmt.Println("add device", p.OwerCallsign, 200)
+
+		dev = getDevice(p.OwerCallsign, 200)
+
+		dev.udpSocket = globelconn
+		dev.udpAddr = addr
+
+		devCallsignSSIDMap[p.OwerCallsign+"-200"] = dev
+
+		if p, ok := publicGroupMap[0]; ok {
+
+			p.DevMap[dev.ID] = dev
 
 		}
-		return fmt.Errorf("add device error")
-	}
 
-	fmt.Println("add device", p.OwerCallsign, 200)
-
-	devCallsignSSIDMap[p.OwerCallsign+"-200"] = d
-
-	if p, ok := publicGroupMap[0]; ok {
-
-		p.DevMap[d.ID] = d
+		go dev.sendHeartbear()
 
 	}
-
-	go d.sendHeartbear()
 
 	return nil
 

@@ -63,7 +63,7 @@ func (d *deviceInfo) sendHeartbear() {
 
 	packet := encodeNRL21(d.CallSign, 200, 2, 200, cpuid, []byte{})
 
-	fmt.Println(packet)
+	//fmt.Println(packet)
 
 	for {
 
