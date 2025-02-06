@@ -196,8 +196,8 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 		//私人房间
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			delete(user.(userinfo).Groups[groupid].DevMap, dev.ID)
-			delete(user.(userinfo).Groups[groupid].connPool.devConnList, dev.udpAddr.String())
+			delete(user.(*userinfo).Groups[dev.GroupID].DevMap, dev.ID)
+			delete(user.(*userinfo).Groups[dev.GroupID].connPool.devConnList, dev.udpAddr.String())
 
 		}
 
@@ -220,8 +220,8 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 	} else {
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			user.(userinfo).Groups[groupid].DevMap[dev.ID] = dev
-			group = strconv.Itoa(user.(userinfo).Groups[groupid].ID) + user.(userinfo).Groups[groupid].Name
+			user.(*userinfo).Groups[groupid].DevMap[dev.ID] = dev
+			group = strconv.Itoa(user.(*userinfo).Groups[groupid].ID) + user.(*userinfo).Groups[groupid].Name
 
 		}
 

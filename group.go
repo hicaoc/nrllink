@@ -38,9 +38,9 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if user, okok := userlist.Load(u.CallSign); okok {
-		groupmap[1] = user.(userinfo).Groups[1]
-		groupmap[2] = user.(userinfo).Groups[2]
-		groupmap[3] = user.(userinfo).Groups[3]
+		groupmap[1] = user.(*userinfo).Groups[1]
+		groupmap[2] = user.(*userinfo).Groups[2]
+		groupmap[3] = user.(*userinfo).Groups[3]
 
 	} else {
 		log.Println("user not found")

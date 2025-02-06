@@ -461,7 +461,7 @@ func addUser(e *userinfo) error {
 	fmt.Println(id)
 
 	e.userinit()
-	userlist.Store(e.CallSign, *e)
+	userlist.Store(e.CallSign, e)
 
 	return nil
 
@@ -517,7 +517,7 @@ func updateUser(e *userinfo) error {
 	}
 
 	e.userinit()
-	userlist.Store(e.CallSign, *e)
+	userlist.Store(e.CallSign, e)
 
 	return nil
 
