@@ -14,9 +14,9 @@
 
 ### web管理后台:
 
-https://nrlptt.com
+https://nrlptt.com  BH4TDV 
 
-http://ham.bi4qzw.com
+https://ba1gm.nrlptt.com 101.43.152.246
 
 
 

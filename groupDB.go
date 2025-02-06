@@ -22,13 +22,13 @@ type group struct {
 	Status       int    `json:"status" db:"status"`
 	OwerID       int    `json:"ower_id" db:"ower_id"`
 	OwerCallsign string `json:"callsign" db:"callsign"`
-	MasterServer int    `json:"master_server" db:"master_server"`
-	SlaveServer  int    `json:"slave_server" db:"slave_server"`
-	CreateTime   string `json:"create_time" db:"create_time"`
-	UpdateTime   string `json:"update_time" db:"update_time"`
-	Note         string `json:"note" db:"note"`
-	connPool     *currentConnPool
-	DevMap       map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
+	//MasterServer int    `json:"master_server" db:"master_server"`
+	//SlaveServer  int    `json:"slave_server" db:"slave_server"`
+	CreateTime string `json:"create_time" db:"create_time"`
+	UpdateTime string `json:"update_time" db:"update_time"`
+	Note       string `json:"note" db:"note"`
+	connPool   *currentConnPool
+	DevMap     map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
 }
 
 func (p *group) String() string {
@@ -162,8 +162,8 @@ func getGroup(name string) (pg *group) {
 		&pg.Password,
 		&pg.AllowCALLSSID,
 		&devlist,
-		&pg.MasterServer,
-		&pg.SlaveServer,
+		//&pg.MasterServer,
+		//&pg.SlaveServer,
 		&pg.Status,
 		&pg.CreateTime,
 		&pg.UpdateTime,
@@ -191,6 +191,16 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 			return "", fmt.Errorf("dev not in group ")
 		}
+	} else {
+
+		//私人房间
+
+		if user, okok := userlist.Load(dev.CallSign); okok {
+			delete(user.(userinfo).Groups[groupid].DevMap, dev.ID)
+			delete(user.(userinfo).Groups[groupid].connPool.devConnList, dev.udpAddr.String())
+
+		}
+
 	}
 
 	//加入新的组
@@ -209,6 +219,12 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 		}
 	} else {
 
+		if user, okok := userlist.Load(dev.CallSign); okok {
+			user.(userinfo).Groups[groupid].DevMap[dev.ID] = dev
+			group = strconv.Itoa(user.(userinfo).Groups[groupid].ID) + user.(userinfo).Groups[groupid].Name
+
+		}
+
 		//私有房间
 
 		dev.GroupID = groupid
@@ -224,11 +240,11 @@ func addPublicGroup(pg *group) error {
 	//	fmt.Println("user:", e)
 	var devllist = convertIntArray2Str(pg.DevList)
 	query := `INSERT INTO public_groups (name,type,allow_callsign_ssid,callsign,ower_id,password,devlist,
-		master_server,slave_server,status,note,create_time,update_time	) 
+		status,note,create_time,update_time	) 
 	VALUES (?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
 	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCALLSSID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
-		pg.MasterServer, pg.SlaveServer, pg.Status, pg.Note)
+		pg.Status, pg.Note)
 
 	if err != nil {
 		log.Println("add public group failed, ", err, '\n', query)
@@ -257,8 +273,8 @@ func addPublicGroup(pg *group) error {
 func updatePublicGroup(pg *group) error {
 
 	_, err := db.Exec(`update public_groups set name=?, type=?, allow_callsign_ssid=?, password=?, status=?,
-	master_server=?, slave_server=?, note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,
-		pg.Name, pg.Type, pg.AllowCALLSSID, pg.Password, pg.Status, pg.MasterServer, pg.SlaveServer, pg.Note, pg.ID)
+	 note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,
+		pg.Name, pg.Type, pg.AllowCALLSSID, pg.Password, pg.Status, pg.Note, pg.ID)
 
 	if err != nil {
 		log.Println("update public group failed, ", err)
@@ -269,8 +285,7 @@ func updatePublicGroup(pg *group) error {
 
 		p.Name = pg.Name
 		p.Type = pg.Type
-		p.MasterServer = pg.MasterServer
-		p.SlaveServer = pg.SlaveServer
+
 		p.Status = pg.Status
 		p.Note = pg.Note
 		p.UpdateTime = time.Now().Format("2006-01-02 15:04:05")

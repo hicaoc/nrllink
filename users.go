@@ -537,7 +537,7 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 	w.Write(rescode)
 	addOperatorLog("用户名或者密码错误 "+stb.Username+" "+req.RemoteAddr, "登录失败", &userinfo{})
 
-	log.Println(req.RemoteAddr + " User login err :username:" + stb.Username + " password:" + stb.Password)
+	log.Println(req.RemoteAddr + " User login err :username:" + stb.Username)
 
 }
 

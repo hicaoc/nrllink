@@ -42,27 +42,37 @@ func (u *userinfo) userinit() {
 
 	u.Groups[1] = &group{
 		ID:       1,
-		Name:     "房间1",
+		Name:     "私有房间1",
+		Type:     8,
+		DevMap:   make(map[int]*deviceInfo),
+		OwerID:   u.ID,
 		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 	}
 
 	u.Groups[2] = &group{
 		ID:       2,
-		Name:     "房间2",
+		Name:     "私有房间2",
+		Type:     8,
+		OwerID:   u.ID,
+		DevMap:   make(map[int]*deviceInfo),
 		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 	}
 
 	u.Groups[3] = &group{
 		ID:       3,
-		Name:     "房间3",
+		Name:     "私有房间3",
+		Type:     8,
+		OwerID:   u.ID,
+		DevMap:   make(map[int]*deviceInfo),
 		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 	}
 
-	u.Groups[4] = &group{
-		ID:       4,
-		Name:     "房间4",
-		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
-	}
+	// u.Groups[4] = &group{
+	// 	ID:       4,
+	// 	Name:     "房间4",
+	// 	type:    : 8,
+	// 	connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+	// }
 
 	// u.ConnPoll = make(map[int]*currentConnPool, 5)
 

@@ -13,7 +13,7 @@ import (
 func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
+	u, err := checktoken(w, req)
 	if err != nil {
 		return
 	}
@@ -31,10 +31,25 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	rescode, _ := jsonextra.Marshal(publicGroupMap)
+	groupmap := make(map[int]*group)
+
+	for k, v := range publicGroupMap {
+		groupmap[k] = v
+	}
+
+	if user, okok := userlist.Load(u.CallSign); okok {
+		groupmap[1] = user.(userinfo).Groups[1]
+		groupmap[2] = user.(userinfo).Groups[2]
+		groupmap[3] = user.(userinfo).Groups[3]
+
+	} else {
+		log.Println("user not found")
+	}
+
+	rescode, _ := jsonextra.Marshal(groupmap)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(publicGroupMap), rescode)
+		len(groupmap), rescode)
 
 	w.Write([]byte(respone))
 
