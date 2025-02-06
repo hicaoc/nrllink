@@ -41,30 +41,33 @@ func (u *userinfo) userinit() {
 	u.Groups = make(map[int]*group, 5)
 
 	u.Groups[1] = &group{
-		ID:       1,
-		Name:     "私有房间1",
-		Type:     8,
-		DevMap:   make(map[int]*deviceInfo),
-		OwerID:   u.ID,
-		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		ID:           1,
+		Name:         "私有房间1",
+		Type:         8,
+		DevMap:       make(map[int]*deviceInfo),
+		OwerID:       u.ID,
+		OwerCallsign: u.CallSign,
+		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 	}
 
 	u.Groups[2] = &group{
-		ID:       2,
-		Name:     "私有房间2",
-		Type:     8,
-		OwerID:   u.ID,
-		DevMap:   make(map[int]*deviceInfo),
-		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		ID:           2,
+		Name:         "私有房间2",
+		Type:         8,
+		OwerID:       u.ID,
+		OwerCallsign: u.CallSign,
+		DevMap:       make(map[int]*deviceInfo),
+		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 	}
 
 	u.Groups[3] = &group{
-		ID:       3,
-		Name:     "私有房间3",
-		Type:     8,
-		OwerID:   u.ID,
-		DevMap:   make(map[int]*deviceInfo),
-		connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		ID:           3,
+		Name:         "私有房间3",
+		Type:         8,
+		OwerID:       u.ID,
+		OwerCallsign: u.CallSign,
+		DevMap:       make(map[int]*deviceInfo),
+		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
 	}
 
 	// u.Groups[4] = &group{
