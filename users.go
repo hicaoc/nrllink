@@ -505,8 +505,8 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 	err := jsonextra.Unmarshal(result, &stb)
 	//fmt.Println("adminlogin username and password:", stb.Username, stb.Password)
 	if err != nil {
-		log.Println("login data decode:", req.RemoteAddr, err)
-		addOperatorLog("登录数据解码错误 "+req.RemoteAddr, "登录错误", &userinfo{})
+		log.Println("login data decode:", req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, err)
+		addOperatorLog("登录数据解码错误 "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "登录错误", &userinfo{})
 		w.Write([]byte("login data error "))
 		return
 	}
@@ -525,9 +525,9 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 		rescode, _ := jsonextra.Marshal(res)
 		w.Write(rescode)
 
-		addOperatorLog(stb.Username+" "+req.RemoteAddr, "登录成功", &userinfo{})
+		addOperatorLog(stb.Username+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "登录成功", &userinfo{})
 
-		log.Println(req.RemoteAddr + " User login ok :username:" + stb.Username)
+		log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " User login ok :username:" + stb.Username)
 		return
 
 	}
@@ -535,9 +535,9 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 	res := &tokenrescode{Code: 60204, Message: "用户名或者密码错误"}
 	rescode, _ := jsonextra.Marshal(res)
 	w.Write(rescode)
-	addOperatorLog("用户名或者密码错误 "+stb.Username+" "+req.RemoteAddr, "登录失败", &userinfo{})
+	addOperatorLog("用户名或者密码错误 "+stb.Username+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "登录失败", &userinfo{})
 
-	log.Println(req.RemoteAddr + " User login err :username:" + stb.Username)
+	log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " User login err :username:" + stb.Username)
 
 }
 

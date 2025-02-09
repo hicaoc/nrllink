@@ -227,12 +227,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		} else {
 			dev.udpAddr = nrl.UDPAddr
 			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
-			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, nrl.UDPAddr)
+			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, dev.udpAddr)
 		}
 
 		for kkk, vv := range gp.connPool.devConnList {
 			if nrl.timeStamp.Sub(vv.LastPacketTime) > 15*time.Second {
-				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, kkk)
+				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, vv.udpAddr)
 				delete(gp.connPool.devConnList, kkk)
 
 			}
