@@ -113,6 +113,7 @@ func udpProcess(conn *net.UDPConn) {
 					SSID:         nrl.SSID,
 					CPUID:        nrl.CPUID,
 					DevModel:     nrl.DevMode,
+					udpAddr:      nrl.UDPAddr,
 					ChanName:     make([]string, 8)})
 
 				if err != nil {
@@ -204,14 +205,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			return
 		}
 
-		dev.udpAddr = nrl.UDPAddr
 		//dev.LastPacketTime = nrl.timeStamp
 		dev.LastVoiceEndTime = nrl.timeStamp
 		dev.LastCtlEndTime = nrl.timeStamp
-
-		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
-			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
-		}
 
 		forwardVoice(nrl, packet, conn, gp)
 	case 2:
@@ -225,16 +221,19 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			//kk.LastPacketTime = nrl.timeStamp
 
 		} else {
-			dev.udpAddr = nrl.UDPAddr
+
 			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
 			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, dev.udpAddr)
 		}
 
 		for kkk, vv := range gp.connPool.devConnList {
-			if nrl.timeStamp.Sub(vv.LastPacketTime) > 15*time.Second {
+			if nrl.timeStamp.Sub(vv.LastPacketTime) > 10*time.Second {
 				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, vv.udpAddr)
 				delete(gp.connPool.devConnList, kkk)
+			}
 
+			if kkk != vv.udpAddr.String() {
+				delete(gp.connPool.devConnList, kkk)
 			}
 		}
 
@@ -348,11 +347,6 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 		for kk, vv := range gp.connPool.devConnList {
 			//删除超时的会话
 
-			// if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
-			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-			// 	delete(gp.connPool.devConnList, kk)
-			// 	continue
-			// }
 			//报文转发给其它设备，不包含自己
 			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 
@@ -393,7 +387,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 		}
 
 		for kk, vv := range gp.connPool.devConnList {
-			// if nrl.timeStamp.Sub(vv.lastTime) > 15*time.Second {
+			// if nrl.timeStamp.Sub(vv.lastTime) > 10*time.Second {
 			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
 			// 	delete(gp.connPool.devConnList, kk)
 			// 	continue

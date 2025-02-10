@@ -40,7 +40,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 	for _, vv := range devCallsignSSIDMap {
 
 		t := time.Now()
-		if t.Sub(vv.LastPacketTime) > 15*time.Second {
+		if t.Sub(vv.LastPacketTime) > 10*time.Second {
 			vv.ISOnline = false
 		} else {
 			totalstats.OnlineDevNumber++

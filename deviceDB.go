@@ -70,7 +70,7 @@ func (d *deviceInfo) sendHeartbear() {
 		if d.udpSocket != nil {
 			//发送心跳包
 			d.udpSocket.WriteToUDP(packet, d.udpAddr)
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 3)
 
 		} else {
 			fmt.Print("send hb stoped: device udp socket is nil")
@@ -213,7 +213,7 @@ func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
 
 		t := time.Now()
 		//fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(dev.LastPacketTime) > 15*time.Second {
+		if t.Sub(dev.LastPacketTime) > 10*time.Second {
 			dev.ISOnline = false
 			return *dev, fmt.Errorf("dev offline: %v-%v %v ", dev.CPUID, dev.SSID, callsignwithssid)
 
@@ -366,7 +366,7 @@ func changeDeviceUint16Parm(callsignssid string, offset int, str string) (res []
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 15*time.Second {
+		if t.Sub(d.LastPacketTime) > 10*time.Second {
 			d.ISOnline = false
 			return nil, errors.New("device be offline")
 
@@ -457,7 +457,7 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 		t := time.Now()
 		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 15*time.Second {
+		if t.Sub(d.LastPacketTime) > 10*time.Second {
 			d.ISOnline = false
 			return nil, errors.New("device be offline")
 
