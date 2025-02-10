@@ -4,7 +4,7 @@ System:
     DBfile: /nrllink/udphub.sqlite3
 Web:
     Path: /nrllink/www
-    Port: "9998"
+    Port: "9000"
     Token_Key: nrl1234
     ICP: 皖ICP备2022007119号
     SSLCrt: ""
@@ -20,4 +20,22 @@ WeiXin:
     WeixinAPIURL: ""
     WxMsgURL: ""
     AlarmModeID: ""
+PlatformList :
+  - Name: nrlptt主站
+    Host: nrlptt.com
+    Port: 60050
+  - Name: 北京阳光无线俱乐部
+    Host: ba1gm.nrlptt.com
+    Port: 60050
+  - Name: BH4TDV实验站
+    Host: bh4tdv.nrlptt.com
+    Port: 60050
+  - Name: 徐州HAM互联
+    Host: bd4two.nrlptt.com
+    Port: 60050
+  - Name: BD4VKI实验站
+    Host: bd4vki.nrlptt.com
+    Port: 60050
+
+
 

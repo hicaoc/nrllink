@@ -82,6 +82,15 @@ func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(respone))
 }
 
+func (j *jsonapi) httpplatformList(w http.ResponseWriter, req *http.Request) {
+
+	rescode, _ := jsonextra.Marshal(conf.PlatformList)
+
+	respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)
+
+	w.Write([]byte(respone))
+}
+
 func sethttphead(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型
@@ -106,6 +115,7 @@ func (j *jsonapi) msghttp() {
 	// http.HandleFunc("/user/datelist", j.httpUserDataList)
 
 	http.HandleFunc("/platform/info", j.httpplatforminfo)
+	http.HandleFunc("/platform/list", j.httpplatformList)
 	http.HandleFunc("/platform/totalstats", j.httpTotalStats)
 
 	http.HandleFunc("/device/list", j.httpDeviceList)

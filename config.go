@@ -29,6 +29,12 @@ type config struct {
 		SSLKey   string `yaml:"SSLKey" json:"ssl_key"`
 	} `yaml:"Web" json:"web" `
 
+	PlatformList []struct {
+		Name string `yaml:"Name" json:"name"` // 对应 YAML 和 JSON 的 name 字段
+		Host string `yaml:"Host" json:"host"` // 对应 YAML 和 JSON 的 host 字段
+		Port int    `yaml:"Port" json:"port"` // 对应 YAML 和 JSON 的 port 字段
+	} `yaml:"PlatformList" json:"platforms"`
+
 	SystemInfo struct {
 		PlatformName  string `yaml:"Name" json:"name"`
 		NameShorthand string `yaml:"NameShorthand" json:"nameshorthand"`
