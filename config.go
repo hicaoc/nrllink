@@ -16,6 +16,7 @@ type config struct {
 	System struct {
 		Port        string `yaml:"Port" json:"port"`
 		Logpath     string `yaml:"LogPath" json:"log_path"`
+		LicensePath string `yaml:"LicensePath" json:"license_path"`
 		DBfile      string `yaml:"DBfile" json:"dbfile"`
 		CallLogPath string `yaml:"CallLogPath" json:"calllog_path"`
 	} `yaml:"System" json:"system"`
