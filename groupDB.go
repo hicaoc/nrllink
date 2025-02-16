@@ -148,10 +148,8 @@ func getGroup(name string) (pg *group) {
 	password,
 	allow_callsign_ssid,
 	devlist,
-		master_server,
-		slave_server,
-		status,
-		create_time,update_time,note 
+	status,
+	create_time,update_time,note 
 	FROM public_groups  where name=?`, name)
 	err := row.Scan(
 		&pg.ID,
@@ -241,7 +239,7 @@ func addPublicGroup(pg *group) error {
 	var devllist = convertIntArray2Str(pg.DevList)
 	query := `INSERT INTO public_groups (name,type,allow_callsign_ssid,callsign,ower_id,password,devlist,
 		status,note,create_time,update_time	) 
-	VALUES (?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
+	VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
 	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCALLSSID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
 		pg.Status, pg.Note)

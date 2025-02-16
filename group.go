@@ -27,7 +27,7 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 
 	if err != nil {
 		log.Println("device list err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备表参数错误"}}`))
+		w.Write(ResParmErr)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
+		w.Write(ResRightErr)
 		return
 
 	}
@@ -97,7 +97,7 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("update user  err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		w.Write(ResParmErr)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 
 	addOperatorLog(stb.String(), "修改公共群组信息成功", u)
 
-	w.Write([]byte(`{"code":20000,"data":{"message":"公共群组更新成功"}}`))
+	w.Write(ResOK)
 
 }
 
@@ -124,7 +124,7 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
+		w.Write(ResRightErr)
 		return
 
 	}
@@ -138,7 +138,7 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("user add err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"新增群组失败,json格式错误"}}`))
+		w.Write(ResParmErr)
 		return
 	}
 
@@ -147,14 +147,14 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 
 	if addPublicGroup(stb) != nil {
 
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"新增公共群组失败"}}`))
+		w.Write(ResOpErr)
 		return
 
 	}
 
 	addOperatorLog(stb.String(), "新增公共群组成功", u)
 
-	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"新增公共群组成功"}}`))
+	w.Write(ResOK)
 
 }
 
@@ -166,7 +166,7 @@ func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
+		w.Write(ResRightErr)
 		return
 
 	}
@@ -180,13 +180,13 @@ func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("user delete err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"公共群组删除失败"}}`))
+		w.Write(ResParmErr)
 		return
 	}
 
 	deletePublicGroup(stb)
 	addOperatorLog(stb.String(), "公共群组删除成功", u)
 
-	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"员工删除成功成功"}}`))
+	w.Write(ResOK)
 
 }
