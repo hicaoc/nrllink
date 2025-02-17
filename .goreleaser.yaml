@@ -36,17 +36,6 @@ nfpms:
       - deb
       - rpm
       - apk
-    metadata:
-      section: network
-      priority: optional
-      vendor: BH4RPN
-      depends:
-        - libc6
-        - libstdc++6
-      recommends:
-        - ca-certificates
-      suggests:
-        - git
 
 snapcrafts:
   - name: nrllink
