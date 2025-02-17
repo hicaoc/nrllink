@@ -132,6 +132,12 @@ func udpProcess(conn *net.UDPConn) {
 
 				NRL21parser(nrl, data[:n], d, conn, p)
 
+			} else {
+
+				publicGroupMap[0].DevMap[d.ID] = d
+
+				NRL21parser(nrl, data[:n], d, conn, publicGroupMap[0])
+
 			}
 
 		}
