@@ -1,7 +1,9 @@
+version: 2
 
 project_name: nrllink
+
 builds:
-  - env: [CGO_ENABLED=0]
+  - env: [CGO_ENABLED=1]
     goos:
       - linux
       - windows
@@ -9,24 +11,36 @@ builds:
     goarch:
       - amd64
       - arm64
+
 dockers:
-- image_templates: ["ghcr.io/hicaoc/nrllink:{{ .Version }}"]
-  dockerfile: Dockerfile
-  build_flag_templates:
-  - --label=org.opencontainers.image.title={{ .ProjectName }}
-  - --label=org.opencontainers.image.description={{ .ProjectName }}
-  - --label=org.opencontainers.image.url=https://github.com/hicaoc/nrllink
-  - --label=org.opencontainers.image.source=https://github.com/hicaoc/nrllink
-  - --label=org.opencontainers.image.version={{ .Version }}
-  - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
-  - --label=org.opencontainers.image.revision={{ .FullCommit }}
-  - --label=org.opencontainers.image.licenses=MIT
+  - image_templates:
+      - "ghcr.io/hicaoc/nrllink:{{ .Version }}"
+      - "ghcr.io/hicaoc/nrllink:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description=Radio over network.
+      - --label=org.opencontainers.image.url=https://github.com/hicaoc/nrllink
+      - --label=org.opencontainers.image.source=https://github.com/hicaoc/nrllink
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+
 nfpms:
-- maintainer: BH4RPN <caoc@live.com>
-  description: Radio over network.
-  homepage: https://github.com/hicaoc/nrllink
-  license: MIT
-  formats:
-  - deb
-  - rpm
-  - apk
+  - maintainer: BH4RPN <caoc@live.com>
+    description: Radio over network.
+    homepage: https://github.com/hicaoc/nrllink
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+
+snapcrafts:
+  - name: nrllink
+    summary: Radio over network.
+    description: |
+      NRLLINK enables radio communication over a network.
+    confinement: strict
+    grade: stable
