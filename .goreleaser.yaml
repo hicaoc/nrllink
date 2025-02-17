@@ -1,7 +1,7 @@
-
+version: 2
 project_name: nrllink
 builds:
-  - env: [CGO_ENABLED=0]
+  - env: [CGO_ENABLED=1]
     goos:
       - linux
       - windows
