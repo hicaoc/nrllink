@@ -332,7 +332,14 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	switch len(gp.connPool.devConnList) {
+	numbs := len(gp.connPool.devConnList)
+
+	//房间类型为中继互联的时候，使用不允许出现双工
+	if gp.Type == 1 {
+		numbs = 3
+	}
+
+	switch numbs {
 
 	case 0:
 		log.Println("err connpoll is null")
@@ -453,7 +460,14 @@ func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPCon
 // forwardCtl forwardCtl
 func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	switch len(gp.connPool.devConnList) {
+	numbs := len(gp.connPool.devConnList)
+
+	//房间类型为中继互联的时候，使用不允许出现双工
+	if gp.Type == 1 {
+		numbs = 3
+	}
+
+	switch numbs {
 
 	case 0:
 		log.Println("err connpoll is null")
