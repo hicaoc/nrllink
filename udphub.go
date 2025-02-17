@@ -126,7 +126,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			devCallsignSSIDMap[callsignSSID] = d
 
-			if p, ok := publicGroupMap[0]; ok {
+			if p, ok := publicGroupMap[d.GroupID]; ok {
 
 				p.DevMap[d.ID] = d
 
