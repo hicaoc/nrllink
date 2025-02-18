@@ -107,6 +107,9 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	fmt.Println("opCertPath:", opCertPath)
+	fmt.Println("licensePath:", licensePath)
+
 	reguser := &reguser{
 		CallSign:    callsign,
 		Name:        name,
@@ -121,9 +124,12 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		Status:      1,
 	}
 
+	fmt.Println("注册信息：", reguser)
+
 	err = createRegUser(reguser)
 
 	if err != nil {
+		log.Println("add reg user failed  , ", err)
 		w.Write(ResParmErr)
 		return
 

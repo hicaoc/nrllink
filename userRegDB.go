@@ -47,15 +47,24 @@ func createRegUser(e *reguser) error {
 		return err
 	}
 
-	res, err := stmt.Exec(query, e.CallSign, e.Name, e.Phone, e.Sex, e.Address, e.Birthday, e.Mail, password, e.OpCertPath, e.LicensePath, e.Status, e.Note)
+	res, err := stmt.Exec(e.CallSign, e.Name, e.Phone, e.Sex, e.Address, e.Birthday, e.Mail, password, e.OpCertPath, e.LicensePath, e.Status, e.Note)
 	if err != nil {
+		log.Println("add reg user failed 2, ", err, '\n', query)
+
+		err2 := updateRegUserCertPath(e.OpCertPath, e.LicensePath, e.CallSign)
+
+		if err2 != nil {
+			log.Println("add reg user ok , ", err, '\n', query)
+			return nil
+		}
+
 		return err
 	}
 
 	id, err := res.LastInsertId()
 
 	if err != nil {
-		log.Println("add reg user failed 2, ", err, '\n', query)
+		log.Println("add reg user failed 3, ", err, '\n', query)
 		return err
 	}
 
@@ -211,6 +220,41 @@ func addUserReg(ctx context.Context, u *reguser) error {
 
 	e.userinit()
 	userlist.Store(e.CallSign, e)
+
+	return nil
+
+}
+
+func updateRegUserCertPath(opCertPath, licensePath, callsign string) error {
+
+	query := ""
+
+	if opCertPath != "" {
+		query = `update registers set 
+			op_cert_path = ?,
+			update_time=CURRENT_TIMESTAMP
+			 where callsign=? `
+
+		_, err := db.Exec(query, opCertPath, callsign)
+		if err != nil {
+			log.Println("update reg user OpCertPath failed, ", err)
+			return err
+		}
+
+	}
+
+	if licensePath != "" {
+		query = `update registers set 
+			license_path = ?,
+			update_time=CURRENT_TIMESTAMP
+	 		where callsign=?`
+
+		_, err := db.Exec(query, licensePath, callsign)
+		if err != nil {
+			log.Println("update reg user LicensePath failed, ", err)
+			return err
+		}
+	}
 
 	return nil
 
