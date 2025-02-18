@@ -189,14 +189,26 @@ func (j *jsonapi) msghttp() {
 
 	http.Handle("/", http.FileServer(http.Dir(conf.Web.Path)))
 
-	err := http.ListenAndServe(":"+conf.Web.Port, nil)
-	//err := http.ListenAndServeTLS(":"+conf.wwwport, "server.crt", "server.key", nil)
+	if conf.Web.SSLCrt != "" && conf.Web.SSLKey != "" {
 
-	if err != nil {
-		log.Println("http server start err :", err)
+		err := http.ListenAndServeTLS(":"+conf.Web.Port, conf.Web.SSLCrt, conf.Web.SSLKey, nil)
+		if err != nil {
+			log.Println("http server start err :", err)
+		}
+
 	} else {
-		log.Println("http server on port ", conf.Web.Port)
+
+		err := http.ListenAndServe(":"+conf.Web.Port, nil)
+
+		if err != nil {
+			log.Println("http server start err :", err)
+		}
+
+		//err := http.ListenAndServeTLS(":"+conf.wwwport, "server.crt", "server.key", nil)
+
 	}
+
+	log.Println("http server on port ", conf.Web.Port)
 
 }
 
