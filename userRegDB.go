@@ -22,7 +22,7 @@ type reguser struct {
 	Mail        string `db:"mail" json:"mail"`
 	OpCertPath  string `db:"op_cert_path" json:"op_cert_path"`
 	LicensePath string `db:"license_path" json:"license_path"`
-	Status      int    `json:"status" db:"status"`
+	Status      int    `json:"status" db:"status"` //1 未审核，2：审核通过
 	CreateTime  string `db:"create_time" json:"create_time"`
 	UpdateTime  string `db:"update_time" json:"update_time"`
 	Note        string `db:"note" json:"note"`
@@ -83,8 +83,9 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 	emp := []reguser{}
 
 	query := fmt.Sprintf(`SELECT 
-	 id,name,phone,
+	 id,name,phone,address,sex,
 	 callsign,status,
+	 op_cert_path,license_path, 
 	 birthday,sex,address,mail,note, 
 	 create_time,update_time FROM registers  %v  ORDER by id asc %v  `, w, p)
 
@@ -96,8 +97,9 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 
 		r := reguser{}
 
-		err := rows.Scan(&r.ID, &r.Name, &r.Phone,
+		err := rows.Scan(&r.ID, &r.Name, &r.Phone, &r.Address, &r.Sex,
 			&r.CallSign, &r.Status,
+			&r.OpCertPath, &r.LicensePath,
 			&r.Birthday, &r.Sex, &r.Address, &r.Mail, &r.Note,
 			&r.CreateTime, &r.UpdateTime,
 		)
@@ -116,7 +118,7 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 	}
 
 	var t int
-	q := fmt.Sprintf(`SELECT count(*) as total FROM users  %v  `, w)
+	q := fmt.Sprintf(`SELECT count(*) as total FROM registers  %v  `, w)
 	//fmt.Println(q)
 	row := db.QueryRow(q)
 	err = row.Scan(&t)
@@ -213,6 +215,16 @@ func addUserReg(ctx context.Context, u *reguser) error {
 
 	if err != nil {
 		log.Println("add user failed 3, ", err, '\n', query)
+		return err
+	}
+
+	_, err = db.Exec(`update registers set 
+     status = 2 ,note = ?,
+     update_time=CURRENT_TIMESTAMP 
+	 where id=?`,
+		u.Note, u.ID)
+	if err != nil {
+		log.Println("update reg user status failed, ", err)
 		return err
 	}
 

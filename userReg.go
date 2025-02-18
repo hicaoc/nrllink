@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -26,7 +28,7 @@ func (j *jsonapi) httpRegisterList(w http.ResponseWriter, req *http.Request) {
 	err = jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
-		log.Println("user list err :", err)
+		log.Println("reg user list err :", err)
 		w.Write(ResParmErr)
 		return
 	}
@@ -39,6 +41,72 @@ func (j *jsonapi) httpRegisterList(w http.ResponseWriter, req *http.Request) {
 		total, rescode)
 
 	w.Write([]byte(respone))
+
+}
+
+func (j *jsonapi) httpRegisterImage(w http.ResponseWriter, req *http.Request) {
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	if !checkrole(u, []string{"admin"}) {
+
+		w.Write(ResRightErr)
+		return
+
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("reg user list err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	// 验证图片路径合法性
+	absPath, err := filepath.Abs(stb.Path) // 转换为绝对路径
+	if err != nil {
+		http.Error(w, "Invalid image path", http.StatusBadRequest)
+		return
+	}
+
+	// 检查文件是否存在并读取内容
+	file, err := os.Open(absPath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// 读取文件内容
+	imageData, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Failed to read file", http.StatusInternalServerError)
+		return
+	}
+
+	// 将二进制数据转换为 Base64 编码
+	base64Data := base64.StdEncoding.EncodeToString(imageData)
+
+	// 构造 JSON 响应
+	response := Response{
+		Code:    20000,
+		Message: "Image data retrieved successfully",
+		Data:    base64Data,
+	}
+
+	// 设置响应头信息
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// 返回 JSON 响应
+	json.NewEncoder(w).Encode(response)
 
 }
 
@@ -148,6 +216,12 @@ func (j *jsonapi) httpAddReg(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if !checkrole(u, []string{"admin"}) {
+		w.Write(ResRightErr)
+		return
+
+	}
+
 	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
@@ -162,6 +236,9 @@ func (j *jsonapi) httpAddReg(w http.ResponseWriter, req *http.Request) {
 		return
 
 	}
+
+	stb.Note = u.Name + u.CallSign
+
 	err = addUserReg(req.Context(), stb)
 	if err != nil {
 		log.Println("area school add err :", err)
@@ -169,7 +246,7 @@ func (j *jsonapi) httpAddReg(w http.ResponseWriter, req *http.Request) {
 		w.Write(ResOpErr)
 		return
 	}
-	addOperatorLog(stb.Name, "增加用户", u)
+	addOperatorLog(stb.Name+stb.CallSign+stb.Phone, "增加用户", u)
 
 	//writeJSONResponse(w, &Response{20000, "校区添加成功", nil))
 	w.Write(ResOK)

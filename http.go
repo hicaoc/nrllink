@@ -158,6 +158,7 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/user/reg/add", j.httpAddReg)
 	http.HandleFunc("/user/reg/update", j.httpUpdateReg)
 	http.HandleFunc("/user/reg/list", j.httpRegisterList)
+	http.HandleFunc("/user/reg/image/get", j.httpRegisterImage)
 	http.HandleFunc("/user/reg/delete", j.httpDeleteRegUser)
 
 	http.HandleFunc("/user/login", j.httpUserLogin)
@@ -258,6 +259,7 @@ type query struct {
 	Status        string   `json:"status"`
 	NotStatus     string   `json:"note_status"`
 	IsDeleted     string   `json:"isdeleted"`
+	Path          string   `json:"path"`
 }
 
 func queryToWhere(subquery string, q query) (string, string, string) {
