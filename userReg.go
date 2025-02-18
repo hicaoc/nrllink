@@ -86,10 +86,10 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 	var opCertPath, licensePath string
 
 	// 处理上传的操作证文件
-	opCertFile, opCertHeader, err := r.FormFile("op_cert")
+	opCertFile, opCertHeader, err := r.FormFile("certificate")
 	if err == nil {
 		defer opCertFile.Close()
-		opCertPath = filepath.Join(uploadDir, callsign+"_op_cert"+filepath.Ext(opCertHeader.Filename))
+		opCertPath = filepath.Join(uploadDir, callsign+"_certificate"+filepath.Ext(opCertHeader.Filename))
 		if err := saveFile(opCertFile, opCertPath); err != nil {
 			w.Write(ResOpErr)
 			return
