@@ -87,7 +87,7 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 	 callsign,status,
 	 op_cert_path,license_path, 
 	 birthday,sex,address,mail,note, 
-	 create_time,update_time FROM registers  %v  ORDER by id asc %v  `, w, p)
+	 create_time,update_time FROM registers  %v %v %v  `, w, sort, p)
 
 	//fmt.Println(query)
 

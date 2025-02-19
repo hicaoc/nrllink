@@ -168,7 +168,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 	 callsign,gird,birthday,
 	 sex,nickname,openid,avatar,address, status,
 	 last_login_time, login_err_times, last_login_ip,
-	 alarm_msg,roles,create_time,update_time FROM users  %v   ORDER by id asc %v  `, w, p)
+	 alarm_msg,roles,create_time,update_time FROM users  %v  %v  %v  `, w, sort, p)
 
 	//fmt.Println(query)
 

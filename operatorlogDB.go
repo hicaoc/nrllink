@@ -25,7 +25,7 @@ func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
 	loglist := []*OperatorLog{}
 
 	query := fmt.Sprintf(`SELECT id,timestamp,content,event_type,operator,operator_id 
-	FROM operator_log %v ORDER BY timestamp DESC %v`, s, p)
+	FROM operator_log %v ORDER BY id DESC %v`, s, p)
 
 	rows, err := db.Query(query)
 
