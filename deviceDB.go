@@ -274,6 +274,10 @@ type ipparm struct {
 	destIPValue        string
 }
 
+func (i *ipparm) String() string {
+	return fmt.Sprintf("%v,%v,%v,%v,%v", i.localIPValue, i.localNetmaskValue, i.gatewayValue, i.dnsValue, i.destIPValue)
+}
+
 func checkIP(str string) ([]byte, bool) {
 
 	ipaddr := net.ParseIP(str)

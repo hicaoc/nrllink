@@ -8,7 +8,7 @@ import (
 )
 
 // 定义你的签名密钥
-var jwtKey = []byte("BKWEUaKinE1te2ujmPGA")
+//var jwtKey = []byte("BKWEUaKinE1te2ujmPGA")
 
 // 定义 payload 的结构
 type Claims struct {
@@ -32,7 +32,7 @@ func GenerateToken(username string, roles []string) (string, error) {
 
 	// 创建 token 并签名
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString([]byte(conf.Web.TokenKey))
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +49,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return jwtKey, nil
+		return []byte(conf.Web.TokenKey), nil
 	})
 
 	if err != nil {

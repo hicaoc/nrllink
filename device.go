@@ -398,6 +398,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备DCD选择失败"}}`))
 				return
 			}
+			break
 
 		case "ptt_enable":
 			_, err := changeDeviceByteParm(callsignssid, 1, v[0])
@@ -405,6 +406,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改使能PTT失败"}}`))
 				return
 			}
+			break
 
 		case "ptt_level_reversed":
 			_, err := changeDeviceByteParm(callsignssid, 2, v[0])
@@ -413,6 +415,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
+			break
 
 		case "add_tail_voice":
 			_, err := changeDeviceUint16Parm(callsignssid, 3, v[0])
@@ -420,6 +423,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"加尾音失败"}}`))
 				return
 			}
+			break
 
 		case "remove_tail_voice":
 			_, err := changeDeviceUint16Parm(callsignssid, 5, v[0])
@@ -427,6 +431,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"消尾音失败"}}`))
 				return
 			}
+			break
 
 		case "ptt_resistive":
 			_, err := changeDeviceByteParm(callsignssid, 7, v[0])
@@ -434,6 +439,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
+			break
 
 		case "monitor_out":
 			_, err := changeDeviceByteParm(callsignssid, 8, v[0])
@@ -441,6 +447,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
+			break
 
 		case "key_func":
 			_, err := changeDeviceByteParm(callsignssid, 9, v[0])
@@ -448,6 +455,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
+			break
 
 		case "realy_status":
 			_, err := changeDeviceByteParm(callsignssid, 10, v[0])
@@ -456,6 +464,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
+			break
 
 		case "allow_relay_control":
 			_, err := changeDeviceByteParm(callsignssid, 11, v[0])
@@ -463,6 +472,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
+			break
 
 		case "voice_bitrate":
 			_, err := changeDeviceByteParm(callsignssid, 12, v[0])
@@ -470,6 +480,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"修改语音码率失败"}}`))
 				return
 			}
+			break
 
 		case "local_ipaddr", "gateway", "netmask", "dns_ipaddr", "dest_domainname":
 
@@ -479,6 +490,9 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"改变IP失败,IP不正确"}}`))
 				return
 			}
+
+			addOperatorLog(callsignssid+":"+ipparm.String(), "修改地址成功", u)
+			break
 
 		// case "ssid":
 		// 	_, err := changeDeviceByteParm(callsignssid, 64, v[0])
@@ -493,6 +507,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"UV电源开关失败"}}`))
 				return
 			}
+			break
 
 		case "moto_channel":
 			_, err := changeDeviceByteParm(callsignssid, 164, v[0])
@@ -500,6 +515,7 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 				w.Write([]byte(`{"code":20000,"data":{"message":"改变摩托3188/3688信道失败"}}`))
 				return
 			}
+			break
 
 		default:
 			fmt.Println("unknow parm: ", k, v)
