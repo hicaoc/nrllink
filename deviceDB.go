@@ -294,7 +294,7 @@ func checkIP(str string) ([]byte, bool) {
 
 func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) {
 
-	if len(ip.destIPValue) != 15 {
+	if len(ip.destIPValue) >= 30 {
 		return nil, fmt.Errorf("DIP format err")
 
 	}
