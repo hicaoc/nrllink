@@ -514,7 +514,7 @@ func delDevice(dev *deviceInfo) error {
 	_, err := db.Exec(query, dev.ID)
 
 	if err != nil {
-		log.Println("add dev failed, ", err, '\n', query)
+		log.Println("delete dev failed, ", err, '\n', query)
 		return err
 	}
 

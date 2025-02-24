@@ -366,6 +366,11 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 
 	fmt.Println("REQ:", req.Form)
 
+	if len(req.Form) < 4 {
+		w.Write(ResParmErr)
+		return
+	}
+
 	//cpuid := req.Form["CPUID"][0]
 	callsign := req.Form["callsign"][0]
 	ssid := req.Form["ssid"][0]
