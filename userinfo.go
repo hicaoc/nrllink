@@ -47,7 +47,7 @@ func (u *userinfo) userinit() {
 		DevMap:       make(map[int]*deviceInfo),
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
-		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 	}
 
 	u.Groups[2] = &group{
@@ -57,7 +57,7 @@ func (u *userinfo) userinit() {
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
 		DevMap:       make(map[int]*deviceInfo),
-		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 	}
 
 	u.Groups[3] = &group{
@@ -67,24 +67,24 @@ func (u *userinfo) userinit() {
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
 		DevMap:       make(map[int]*deviceInfo),
-		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 	}
 
 	// u.Groups[4] = &group{
 	// 	ID:       4,
 	// 	Name:     "房间4",
 	// 	type:    : 8,
-	// 	connPool: &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+	// 	connPool: &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 	// }
 
 	// u.ConnPoll = make(map[int]*currentConnPool, 5)
 
 	u.DevList = make(map[int]*deviceInfo, 10)
 
-	// u.ConnPoll[0] = &currentConnPool{devConnList: make(map[string]*connPool)}
-	// u.ConnPoll[1] = &currentConnPool{devConnList: make(map[string]*connPool)}
-	// u.ConnPoll[2] = &currentConnPool{devConnList: make(map[string]*connPool)}
-	// u.ConnPoll[3] = &currentConnPool{devConnList: make(map[string]*connPool)}
-	// u.ConnPoll[4] = &currentConnPool{devConnList: make(map[string]*connPool)}
+	// u.ConnPoll[0] = &currentConnPool{devConnMap: make(map[string]*connPool)}
+	// u.ConnPoll[1] = &currentConnPool{devConnMap: make(map[string]*connPool)}
+	// u.ConnPoll[2] = &currentConnPool{devConnMap: make(map[string]*connPool)}
+	// u.ConnPoll[3] = &currentConnPool{devConnMap: make(map[string]*connPool)}
+	// u.ConnPoll[4] = &currentConnPool{devConnMap: make(map[string]*connPool)}
 
 }

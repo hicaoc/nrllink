@@ -68,7 +68,7 @@ func initPublicGroup() {
 		ID:           0,
 		Name:         "公共大厅",
 		OwerCallsign: "default",
-		connPool:     &currentConnPool{devConnList: make(map[string]*deviceInfo)},
+		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 		DevMap:       make(map[int]*deviceInfo, 10),
 		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
@@ -117,7 +117,8 @@ func initPublicGroup() {
 
 		pg.DevList = convertStr2IntArray(devlist)
 
-		pg.connPool = &currentConnPool{devConnList: make(map[string]*deviceInfo)}
+		pg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
+
 		pg.DevMap = make(map[int]*deviceInfo, 10)
 
 		// 类型为3的公共组，只能一个设备转发，用于中继收听
@@ -182,7 +183,16 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 	if dev.GroupID >= 1000 || dev.GroupID == 0 {
 
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
-			delete(g.connPool.devConnList, dev.udpAddr.String())
+			delete(g.connPool.devConnMap, dev.udpAddr.String())
+
+			list := []*deviceInfo{}
+
+			for _, vv := range g.connPool.devConnMap {
+				list = append(list, vv)
+			}
+
+			g.connPool.devConnList = list
+
 			delete(g.DevMap, dev.ID)
 
 		} else {
@@ -195,7 +205,14 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
 			delete(user.(*userinfo).Groups[dev.GroupID].DevMap, dev.ID)
-			delete(user.(*userinfo).Groups[dev.GroupID].connPool.devConnList, dev.udpAddr.String())
+			delete(user.(*userinfo).Groups[dev.GroupID].connPool.devConnMap, dev.udpAddr.String())
+			//delete(user.(*userinfo).Groups[dev.GroupID].connPool.devConnList, dev.udpAddr.String())
+
+			list := []*deviceInfo{}
+			for _, vv := range user.(*userinfo).Groups[dev.GroupID].connPool.devConnMap {
+				list = append(list, vv)
+			}
+			user.(*userinfo).Groups[dev.GroupID].connPool.devConnList = list
 
 		}
 
@@ -257,7 +274,7 @@ func addPublicGroup(pg *group) error {
 
 	}
 	if _, ok := publicGroupMap[newpg.ID]; !ok {
-		newpg.connPool = &currentConnPool{devConnList: make(map[string]*deviceInfo)}
+		newpg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
 		newpg.DevMap = make(map[int]*deviceInfo, 10)
 		publicGroupMap[newpg.ID] = newpg
 	}

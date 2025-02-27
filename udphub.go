@@ -26,8 +26,8 @@ type currentConnPool struct {
 	lastVoiceTime time.Time
 	lastCtlTime   time.Time
 	allowCALLSSID string
-	//lastVoiceTime time.Time
-	devConnList map[string]*deviceInfo //key cpuid
+	devConnMap    map[string]*deviceInfo //key cpuid
+	devConnList   []*deviceInfo
 }
 
 func udpProcess(conn *net.UDPConn) {
@@ -223,26 +223,37 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			dev.Loged = true
 		}
 
-		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
+		changeed := false
+
+		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 			//kk.LastPacketTime = nrl.timeStamp
 
 		} else {
 
-			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
+			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
+			changeed = true
 			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, dev.udpAddr)
 		}
 
-		for kkk, vv := range gp.connPool.devConnList {
+		for kkk, vv := range gp.connPool.devConnMap {
 			if nrl.timeStamp.Sub(vv.LastPacketTime) > 10*time.Second {
 				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, vv.udpAddr)
-				delete(gp.connPool.devConnList, kkk)
+				delete(gp.connPool.devConnMap, kkk)
+				changeed = true
 			}
 
 			if kkk != vv.udpAddr.String() {
-				delete(gp.connPool.devConnList, kkk)
+				delete(gp.connPool.devConnMap, kkk)
+				changeed = true
 			}
 		}
-
+		if changeed {
+			list := []*deviceInfo{}
+			for _, vv := range gp.connPool.devConnMap {
+				list = append(list, vv)
+			}
+			gp.connPool.devConnList = list
+		}
 		//如果设备没有携带型号，则使用用户指定的型号，不更新
 		if nrl.DevMode != 0 {
 			dev.DevModel = nrl.DevMode
@@ -292,9 +303,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			return
 		}
 
-		if _, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; !ok {
+		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 			dev.udpAddr = nrl.UDPAddr
-			gp.connPool.devConnList[nrl.UDPAddrStr] = dev
+			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
 		}
 
 		forwardCtl(nrl, packet, conn, gp)
@@ -338,7 +349,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	numbs := len(gp.connPool.devConnList)
+	numbs := len(gp.connPool.devConnMap)
 
 	//房间类型为中继互联的时候，使用不允许出现双工
 	if gp.Type == 1 {
@@ -348,7 +359,8 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 	switch numbs {
 
 	case 0:
-		log.Println("err connpoll is null")
+		//log.Println("err connpoll is null")
+		return
 	case 1: //只有一个设备，缺省为环路测试，报文原样返回
 		//fmt.Println("case 1 :", clientAddrStr)
 		conn.WriteToUDP(packet, nrl.UDPAddr)
@@ -357,7 +369,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
 
-		for kk, vv := range gp.connPool.devConnList {
+		for kk, vv := range gp.connPool.devConnMap {
 			//删除超时的会话
 
 			//报文转发给其它设备，不包含自己
@@ -387,7 +399,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
 		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
-			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
+			if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 				k.LastCtlEndTime = nrl.timeStamp
 			}
 
@@ -399,14 +411,14 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 
 		}
 
-		for kk, vv := range gp.connPool.devConnList {
+		for _, vv := range gp.connPool.devConnList {
 			// if nrl.timeStamp.Sub(vv.lastTime) > 10*time.Second {
 			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-			// 	delete(gp.connPool.devConnList, kk)
+			// 	delete(gp.connPool.devConnMap, kk)
 			// 	continue
 			// }
 
-			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
+			if nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
 
 				if vv.DevModel == 200 {
 					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
@@ -433,7 +445,7 @@ func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPCon
 
 	clientAddrStr := n.UDPAddr.String()
 
-	if _, ok := connpool.devConnList[clientAddrStr]; ok {
+	if _, ok := connpool.devConnMap[clientAddrStr]; ok {
 
 		// if clientAddrStr != currentClientAddr {
 		// 	continue
@@ -443,11 +455,11 @@ func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPCon
 
 		dev.udpAddr = n.UDPAddr
 
-		connpool.devConnList[clientAddrStr] = dev
+		connpool.devConnMap[clientAddrStr] = dev
 
 	}
 
-	for kk, vv := range connpool.devConnList {
+	for kk, vv := range connpool.devConnMap {
 
 		if clientAddrStr != kk {
 			if vv.DevModel == 200 {
@@ -466,7 +478,7 @@ func forwardMsg(n *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPCon
 // forwardCtl forwardCtl
 func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	numbs := len(gp.connPool.devConnList)
+	numbs := len(gp.connPool.devConnMap)
 
 	//房间类型为中继互联的时候，使用不允许出现双工
 	if gp.Type == 1 {
@@ -476,7 +488,8 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 	switch numbs {
 
 	case 0:
-		log.Println("err connpoll is null")
+		//log.Println("err connpoll is null")
+		return
 	case 1: //只有一个设备，缺省为环路测试，报文原样返回
 		//fmt.Println("case 1 :", clientAddrStr)
 		conn.WriteToUDP(packet, nrl.UDPAddr)
@@ -485,7 +498,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
 
-		for kk, vv := range gp.connPool.devConnList {
+		for kk, vv := range gp.connPool.devConnMap {
 			//删除超时的会话
 
 			//报文转发给其它设备，不包含自己
@@ -515,12 +528,12 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
 		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
-			if k, ok := gp.connPool.devConnList[nrl.UDPAddrStr]; ok {
+			if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 				k.LastCtlEndTime = nrl.timeStamp
 			}
 
 			// if nrl.CallSign == "BH4TDV" {
-			// 	fmt.Println("*****return", gp.connPool.devConnList)
+			// 	fmt.Println("*****return", gp.connPool.devConnMap)
 			// }
 
 			return
@@ -531,10 +544,10 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
 		}
 
-		for kk, vv := range gp.connPool.devConnList {
+		for kk, vv := range gp.connPool.devConnMap {
 			// if nrl.timeStamp.Sub(vv.lastTime) > 5*time.Second {
 			// 	log.Println("device timeout offline:", nrl.CallSign, "-", nrl.SSID, " ", kk)
-			// 	delete(gp.connPool.devConnList, kk)
+			// 	delete(gp.connPool.devConnMap, kk)
 			// 	continue
 			// }
 
