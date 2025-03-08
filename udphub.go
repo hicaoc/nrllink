@@ -63,10 +63,6 @@ func udpProcess(conn *net.UDPConn) {
 		if dev, ok := devCallsignSSIDMap[callsignSSID]; ok {
 
 			dev.udpAddr = nrl.UDPAddr
-			dev.ISOnline = true
-			//设备呼号有变更，更新下
-			//dev.CallSign = nrl.CallSign
-			//dev.SSID = nrl.SSID
 			dev.LastPacketTime = nrl.timeStamp
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
@@ -217,6 +213,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		forwardVoice(nrl, packet, conn, gp)
 	case 2:
+
+		dev.ISOnline = true
 		//心跳包，用于保存设备在线存活状态， 目前设备1s一次发送
 		if !dev.Loged && nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
 			logbuffer <- dev
