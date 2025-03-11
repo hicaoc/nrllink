@@ -2,6 +2,7 @@ System:
     Port: "60050"
     LogPath: ""
     DBfile: /nrllink/udphub.sqlite3
+    IPfile:: /nrllink/udphub.ipdb
 Web:
     Path: /nrllink/www
     Port: "9000"

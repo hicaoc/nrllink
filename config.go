@@ -18,6 +18,7 @@ type config struct {
 		Logpath     string `yaml:"LogPath" json:"log_path"`
 		LicensePath string `yaml:"LicensePath" json:"license_path"`
 		DBfile      string `yaml:"DBfile" json:"dbfile"`
+		IPfile      string `yaml:"IPfile" json:"ipfile"`
 		CallLogPath string `yaml:"CallLogPath" json:"calllog_path"`
 	} `yaml:"System" json:"system"`
 

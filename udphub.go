@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -91,32 +92,32 @@ func udpProcess(conn *net.UDPConn) {
 		} else {
 
 			//升级用，先用cpuid加载下设备尝试
-			dev := getDeviceByCpuID(nrl.CPUID)
+			// dev := getDeviceByCpuID(nrl.CPUID)
 
-			if dev.ID > 0 {
+			// if dev.ID > 0 {
 
-				updateDeviceCallsignSSIDByCPuid(nrl.CallSign, nrl.CPUID, nrl.SSID)
+			// 	updateDeviceCallsignSSIDByCPuid(nrl.CallSign, nrl.CPUID, nrl.SSID)
 
-				fmt.Println("dev updated:", dev, nrl)
+			// 	fmt.Println("dev updated:", dev, nrl)
 
-			} else {
+			// } else {
 
-				//设备不存在，加入设备,并加入加入缺省0公共群组,需要保存呼号callsign
+			//设备不存在，加入设备,并加入加入缺省0公共群组,需要保存呼号callsign
 
-				err = addDevice(&deviceInfo{
-					CallSignSSID: callsignSSID,
-					CallSign:     nrl.CallSign,
-					SSID:         nrl.SSID,
-					CPUID:        nrl.CPUID,
-					DevModel:     nrl.DevMode,
-					udpAddr:      nrl.UDPAddr,
-					ChanName:     make([]string, 8)})
+			err = addDevice(&deviceInfo{
+				CallSignSSID: callsignSSID,
+				CallSign:     nrl.CallSign,
+				SSID:         nrl.SSID,
+				CPUID:        nrl.CPUID,
+				DevModel:     nrl.DevMode,
+				udpAddr:      nrl.UDPAddr,
+				ChanName:     make([]string, 8)})
 
-				if err != nil {
-					fmt.Println("add dev failed, ", err, '\n', nrl)
-					break
-				}
+			if err != nil {
+				fmt.Println("add dev failed, ", err, '\n', nrl)
+				break
 			}
+			//}
 
 			d := getDevice(nrl.CallSign, nrl.SSID)
 
@@ -214,7 +215,19 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		forwardVoice(nrl, packet, conn, gp)
 	case 2:
 
-		dev.ISOnline = true
+		if !dev.ISOnline {
+			dev.ISOnline = true
+
+			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
+			s := strings.Join(qth, "-")
+			if !strings.Contains(s, "纯真网络") {
+				dev.QTH = strings.TrimRight(s, "-")
+			} else {
+				dev.QTH = "火星"
+			}
+			fmt.Println("dev online:", dev.udpAddr.IP.String(), qth, s, dev.QTH)
+		}
+
 		//心跳包，用于保存设备在线存活状态， 目前设备1s一次发送
 		if !dev.Loged && nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
 			logbuffer <- dev
