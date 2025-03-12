@@ -221,8 +221,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		if len(packet) == 52 {
 
-			fmt.Println("forward source dev ip:", nrl.UDPAddr.String(), nrl.CallSign, "-", nrl.SSID, packet[48:], net.IP(packet[48:]).String())
-
 			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
 			s := strings.Join(qth, "-")
 			if !strings.Contains(s, "纯真网络") {
@@ -230,7 +228,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			} else {
 				dev.QTH = "火星"
 			}
-			fmt.Println("dev online:", dev.udpAddr.String(), qth, s, dev.QTH)
+
+			fmt.Printf("forward dev online:%v %v %v-%v %v ", nrl.UDPAddrStr, net.IP(packet[48:]).String(), dev.CallSign, dev.SSID, dev.QTH)
 			return
 
 		}
@@ -318,7 +317,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			} else {
 				dev.QTH = "火星"
 			}
-			fmt.Println("dev online:", dev.udpAddr.IP.String(), qth, s, dev.QTH)
+			fmt.Printf("dev online:%v %v-%v %v ", dev.udpAddr.IP.String(), dev.CallSign, dev.SSID, dev.QTH)
 
 			dev.ISOnline = true
 
