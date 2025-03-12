@@ -221,7 +221,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		if len(packet) == 52 {
 
-			fmt.Println("forward source dev ip:", packet[48:], net.IP(packet[48:]).String())
+			fmt.Println("forward source dev ip:", nrl.UDPAddr.String(), nrl.CallSign, "-", nrl.SSID, packet[48:], net.IP(packet[48:]).String())
 
 			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
 			s := strings.Join(qth, "-")
@@ -305,7 +305,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			}
 
 			for _, vv := range ServerMap {
-				if vv.udpAddr != nil {
+				if vv.udpAddr != nil && vv.ISOnline {
 					packet = append(packet, nrl.UDPAddr.IP...)
 					conn.WriteToUDP(packet, vv.udpAddr)
 				}
