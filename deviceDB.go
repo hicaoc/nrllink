@@ -64,17 +64,15 @@ func (d *deviceInfo) sendHeartbear() {
 
 	packet := encodeNRL21(d.CallSign, 200, 2, 200, cpuid, []byte{})
 
-	//fmt.Println(packet)
-
 	for {
 
-		if d.udpSocket != nil {
+		if d.ISOnline {
 			//发送心跳包
 			d.udpSocket.WriteToUDP(packet, d.udpAddr)
 			time.Sleep(time.Second * 2)
 
 		} else {
-			fmt.Print("send hb stoped: device udp socket is nil")
+			fmt.Println("send hb stoped: device udp socket is nil")
 			break
 		}
 
@@ -87,14 +85,19 @@ func checkdeviceOnline() {
 
 	for {
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 
 		t := time.Now()
 
 		for _, vv := range devCallsignSSIDMap {
 
+			//200的向外连接的设备，不能下线
+			if vv.SSID == 200 && vv.udpSocket != nil {
+				continue
+			}
+
 			if t.Sub(vv.LastPacketTime) > 6*time.Second && vv.ISOnline {
-				log.Printf("device %v-%v timeout offline %v, %v", vv.CallSign, vv.SSID, vv.GroupID, vv.udpAddr)
+				log.Printf("device offline: %v-%v  %v, %v", vv.CallSign, vv.SSID, vv.GroupID, vv.udpAddr)
 
 				if kk, ok := publicGroupMap[vv.GroupID]; ok {
 					delete(kk.connPool.devConnMap, vv.udpAddr.String())

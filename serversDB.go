@@ -55,16 +55,18 @@ func (p *Server) Start() error {
 
 	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
 
-		if dev.udpSocket != nil {
+		if dev.ISOnline {
+			log.Println("device Already started:", p.OwerCallsign, 200)
 			return nil
 		}
 
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr
+		dev.ISOnline = true
 
 		go dev.sendHeartbear()
 
-		fmt.Println("start device", p.OwerCallsign, 200)
+		log.Println("start device", p.OwerCallsign, 200)
 
 		return nil
 
@@ -101,6 +103,7 @@ func (p *Server) Start() error {
 
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr
+		dev.ISOnline = true
 
 		devCallsignSSIDMap[p.OwerCallsign+"-200"] = dev
 
@@ -124,7 +127,7 @@ func (p *Server) Stop() {
 
 	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
 
-		dev.udpSocket = nil
+		dev.ISOnline = false
 
 		fmt.Println("stop server hearbeard:", p.OwerCallsign, 200)
 

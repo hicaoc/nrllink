@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -164,6 +165,9 @@ func udpServer() {
 
 	globelconn = conn
 
+	//启动服务器互联
+	queryServers()
+
 	log.Println("data parse server started on udp :", udpAddr, conf.System.Port)
 
 	for {
@@ -224,12 +228,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
 			s := strings.Join(qth, "-")
 			if !strings.Contains(s, "纯真网络") {
-				dev.QTH = strings.TrimRight(s, "-")
+				dev.QTH = "转-" + strings.TrimRight(s, "-")
 			} else {
-				dev.QTH = "火星"
+				dev.QTH = "转-火星"
 			}
 
-			fmt.Printf("forward dev online:%v %v %v-%v %v ", nrl.UDPAddrStr, net.IP(packet[48:]).String(), dev.CallSign, dev.SSID, dev.QTH)
+			log.Printf("forward dev online:%v %v %v-%v %v\n", nrl.UDPAddrStr, net.IP(packet[48:]).String(), dev.CallSign, dev.SSID, dev.QTH)
 			return
 
 		}
@@ -253,7 +257,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			}
 
 			changeed = true
-			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, dev.udpAddr)
+
 		}
 
 		dev.udpAddr = nrl.UDPAddr
@@ -270,24 +274,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		}
 
-		// for _, vv := range gp.connPool.devConnMap {
-		// 	// if nrl.timeStamp.Sub(vv.LastPacketTime) > 5*time.Second {
-		// 	// 	log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, vv.udpAddr)
-		// 	// 	delete(gp.connPool.devConnMap, kkk)
-		// 	// 	changeed = true
-		// 	// }
-
-		// 	// if kkk != vv.udpAddr.String() {
-		// 	// 	delete(gp.connPool.devConnMap, kkk)
-		// 	// 	changeed = true
-		// 	// }
-
-		// 	//设备第一次上线的时候，转发一次心跳到其他服务器，用于获取设备原始ip地址用于QTH
-		// 	// if !dev.ISOnline && vv.SSID == 200 {
-		// 	// 	packet = append(packet, nrl.UDPAddr.IP...)
-		// 	// 	conn.WriteToUDP(packet, vv.udpAddr)
-		// 	// }
-		// }
 		if changeed {
 			list := []*deviceInfo{}
 			for _, vv := range gp.connPool.devConnMap {
@@ -303,11 +289,33 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 				dev.DevModel = nrl.DevMode
 			}
 
+			//将所有设备信息的IP信息通过心跳发给对方服务器
+			if dev.SSID == 200 {
+				for _, vv := range devCallsignSSIDMap {
+					if vv.ISOnline {
+
+						bytes, err := hex.DecodeString(vv.CPUID)
+						if err != nil {
+							bytes = []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+						}
+
+						pack := encodeNRL21(vv.CallSign, vv.SSID, 2, vv.DevModel, bytes, vv.udpAddr.IP.To4())
+						conn.WriteToUDP(pack, dev.udpAddr)
+						//fmt.Println(pack)
+					}
+
+				}
+			}
+
 			for _, vv := range ServerMap {
 				if vv.udpAddr != nil && vv.ISOnline {
-					packet = append(packet, nrl.UDPAddr.IP...)
-					conn.WriteToUDP(packet, vv.udpAddr)
+					p := append(packet, nrl.UDPAddr.IP.To4()...)
+					conn.WriteToUDP(p, vv.udpAddr)
+					// fmt.Println(packet)
+					// fmt.Println(p)
+					log.Printf("forward hb packet: %v %v %v \n", len(p), vv.udpAddr.String(), nrl.UDPAddr.IP.To4())
 				}
+
 			}
 
 			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
@@ -317,7 +325,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			} else {
 				dev.QTH = "火星"
 			}
-			fmt.Printf("dev online:%v %v-%v %v ", dev.udpAddr.IP.String(), dev.CallSign, dev.SSID, dev.QTH)
+			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.IP.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
 			dev.ISOnline = true
 
@@ -373,7 +381,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			groupid := int(binary.BigEndian.Uint32(packet[49:53]))
 
-			fmt.Printf("dev:%v-%v change group to %v to %v, data:  % X \n", dev.CallSign, dev.SSID, dev.GroupID, groupid, packet)
+			log.Printf("dev:%v-%v change group to %v to %v, data:  % X \n", dev.CallSign, dev.SSID, dev.GroupID, groupid, packet)
 			str, err := changeDevGroup(dev, groupid)
 
 			if err != nil {
@@ -388,7 +396,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			resp := getGroupListForDevice(packet)
 
 			conn.WriteToUDP(resp, nrl.UDPAddr)
-			fmt.Printf("dev:%v-%v download grouplist. size: %v\n", dev.CallSign, dev.SSID, len(resp))
+			log.Printf("dev:%v-%v download grouplist. size: %v\n", dev.CallSign, dev.SSID, len(resp))
 
 		}
 

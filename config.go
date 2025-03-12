@@ -149,7 +149,7 @@ func updatedb() {
 
 	// 逐条执行 SQL 语句并输出日志
 	for _, stmt := range sqlStatements {
-		fmt.Printf("Executing SQL: %s\n", stmt) // 输出当前执行的 SQL
+		log.Printf("Executing SQL: %s\n", stmt) // 输出当前执行的 SQL
 		_, err := db.Exec(stmt)
 		if err != nil {
 			// 如果执行出错，打印错误日志

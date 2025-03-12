@@ -3,7 +3,10 @@
 #hostlist='bd4two.nrlptt.com'
 hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com www.bh1osw.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com '
 
-#hostlist='nrlptt.com www.bh1osw.com bh1osw.nrlptt.com'
+#hostlist='www.bh1osw.com bh1osw.nrlptt.com'
+#hostlist='bh1osw.nrlptt.com'
+
+#hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com  yz.hamoa.cn ham.73ham.com '
 
 
 
