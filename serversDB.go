@@ -9,8 +9,6 @@ import (
 
 //var ServersMap = make(map[int]*Server, 1000) //key 房间号
 
-//var ServersMap sync.Map
-
 type Server struct {
 	ID         int    `json:"id" db:"id"`
 	Name       string `json:"name" db:"name"`
@@ -29,7 +27,7 @@ type Server struct {
 	DNSName string `json:"dns_name" db:"dns_name"` //域名
 	//GroupList  []int  `json:"group_list" `            //服务器负责的群组列表
 	//DevMap       map[int]*deviceInfo `json:"devmap" `                          //key: 设备列表
-	ISOnline     bool   `json:"is_online"`                        //服务器是否在线
+	//ISOnline     bool   `json:"is_online"`                        //服务器是否在线
 	Status       int    `json:"status" db:"status"`               //1 启动  2 关闭
 	OwerID       int    `json:"ower_id" db:"ower_id"`             //谁的服务器
 	OwerCallsign string `json:"ower_callsign" db:"ower_callsign"` //服务器所有者呼号
@@ -56,6 +54,10 @@ func (p *Server) Start() error {
 	log.Printf("UDP connection established for server %d to %s", p.ID, addr)
 
 	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
+
+		if dev.udpSocket != nil {
+			return nil
+		}
 
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr
@@ -107,6 +109,8 @@ func (p *Server) Start() error {
 			p.DevMap[dev.ID] = dev
 
 		}
+
+		// ServerMap[dev.CallSign] = dev
 
 		go dev.sendHeartbear()
 
@@ -189,6 +193,13 @@ func queryServers() (serverlist []*Server) {
 			log.Println("query  server rows err:", err)
 		}
 
+		if pg.Status == 1 {
+			pg.Start()
+
+		} else {
+			pg.Stop()
+		}
+
 		serverlist = append(serverlist, pg)
 
 	}
@@ -197,7 +208,7 @@ func queryServers() (serverlist []*Server) {
 
 }
 
-func getServer(id int) (server *Server) {
+func GetServer(id int) (server *Server) {
 
 	query := `SELECT id,
 		name,
@@ -329,7 +340,7 @@ func addServers(s *Server) error {
 
 func updateServer(s *Server) error {
 
-	oldserver := getServer(s.ID)
+	//oldserver := getServer(s.ID)
 
 	_, err := db.Exec(`update servers set name=?,cpu_type=?,mem_size=?,input_rate=?,output_rate=?,netcard=?,
 	ip_type=?,ip_addr=?,udp_port=?,dns_name=?,server_type=?,ower_id=?,ower_callsign=?,status=?,note=?,join_key=?,update_time=CURRENT_TIMESTAMP where id=?`,
@@ -339,15 +350,15 @@ func updateServer(s *Server) error {
 		log.Println("update server failed, ", err)
 		return err
 	}
-	if oldserver.Status != s.Status {
+	// if oldserver.Status != s.Status {
 
-		if s.Status == 1 {
-			s.Start()
+	// 	if s.Status == 1 {
+	// 		s.Start()
 
-		} else if s.Status == 2 {
-			s.Stop()
-		}
-	}
+	// 	} else if s.Status == 2 {
+	// 		s.Stop()
+	// 	}
+	// }
 
 	//initServers()
 

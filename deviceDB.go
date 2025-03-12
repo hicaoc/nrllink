@@ -71,11 +71,47 @@ func (d *deviceInfo) sendHeartbear() {
 		if d.udpSocket != nil {
 			//发送心跳包
 			d.udpSocket.WriteToUDP(packet, d.udpAddr)
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 2)
 
 		} else {
 			fmt.Print("send hb stoped: device udp socket is nil")
 			break
+		}
+
+	}
+
+}
+
+func checkdeviceOnline() {
+	time.Sleep(10 * time.Second)
+
+	for {
+
+		time.Sleep(2 * time.Second)
+
+		t := time.Now()
+
+		for _, vv := range devCallsignSSIDMap {
+
+			if t.Sub(vv.LastPacketTime) > 6*time.Second && vv.ISOnline {
+				log.Printf("device %v-%v timeout offline %v, %v", vv.CallSign, vv.SSID, vv.GroupID, vv.udpAddr)
+
+				if kk, ok := publicGroupMap[vv.GroupID]; ok {
+					delete(kk.connPool.devConnMap, vv.udpAddr.String())
+
+					list := []*deviceInfo{}
+					for _, vv := range kk.connPool.devConnMap {
+						list = append(list, vv)
+					}
+					kk.connPool.devConnList = list
+
+				}
+
+				vv.ISOnline = false
+				vv.udpAddr = nil
+
+			}
+
 		}
 
 	}

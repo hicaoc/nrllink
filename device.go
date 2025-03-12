@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 )
 
 func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
@@ -39,12 +38,8 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	for _, vv := range devCallsignSSIDMap {
 
-		t := time.Now()
-		if t.Sub(vv.LastPacketTime) > 10*time.Second {
-			vv.ISOnline = false
-		} else {
+		if vv.ISOnline {
 			totalstats.OnlineDevNumber++
-			vv.ISOnline = true
 		}
 
 		dev := *vv

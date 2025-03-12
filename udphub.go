@@ -18,6 +18,8 @@ var userlist sync.Map // callid ,userinfo
 
 var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
 
+var ServerMap = make(map[string]*deviceInfo) //呼号对应的服务器设备
+
 var limitChan = make(chan bool, 1)
 
 var globelconn *net.UDPConn
@@ -63,7 +65,7 @@ func udpProcess(conn *net.UDPConn) {
 
 		if dev, ok := devCallsignSSIDMap[callsignSSID]; ok {
 
-			dev.udpAddr = nrl.UDPAddr
+			//dev.udpAddr = nrl.UDPAddr
 			dev.LastPacketTime = nrl.timeStamp
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
@@ -110,8 +112,8 @@ func udpProcess(conn *net.UDPConn) {
 				SSID:         nrl.SSID,
 				CPUID:        nrl.CPUID,
 				DevModel:     nrl.DevMode,
-				udpAddr:      nrl.UDPAddr,
-				ChanName:     make([]string, 8)})
+				//udpAddr:      nrl.UDPAddr,
+				ChanName: make([]string, 8)})
 
 			if err != nil {
 				fmt.Println("add dev failed, ", err, '\n', nrl)
@@ -215,17 +217,22 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		forwardVoice(nrl, packet, conn, gp)
 	case 2:
 
-		if !dev.ISOnline {
-			dev.ISOnline = true
+		//处理服务器转发的定制心跳，不能响应回去，会循环
 
-			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
+		if len(packet) == 52 {
+
+			fmt.Println("forward source dev ip:", packet[48:], net.IP(packet[48:]).String())
+
+			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
 			s := strings.Join(qth, "-")
 			if !strings.Contains(s, "纯真网络") {
 				dev.QTH = strings.TrimRight(s, "-")
 			} else {
 				dev.QTH = "火星"
 			}
-			fmt.Println("dev online:", dev.udpAddr.IP.String(), qth, s, dev.QTH)
+			fmt.Println("dev online:", dev.udpAddr.String(), qth, s, dev.QTH)
+			return
+
 		}
 
 		//心跳包，用于保存设备在线存活状态， 目前设备1s一次发送
@@ -236,28 +243,52 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		changeed := false
 
-		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
-			//kk.LastPacketTime = nrl.timeStamp
+		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 
-		} else {
+			delete(gp.connPool.devConnMap, dev.udpAddr.String())
 
 			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
+
+			if nrl.SSID == 200 {
+				ServerMap[nrl.CallSign] = dev
+			}
+
 			changeed = true
 			log.Printf("device %v-%v online group %v, %v", nrl.CallSign, nrl.SSID, gp.ID, dev.udpAddr)
 		}
 
-		for kkk, vv := range gp.connPool.devConnMap {
-			if nrl.timeStamp.Sub(vv.LastPacketTime) > 10*time.Second {
-				log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, vv.udpAddr)
-				delete(gp.connPool.devConnMap, kkk)
-				changeed = true
+		dev.udpAddr = nrl.UDPAddr
+
+		//如何是服务器自己发出的和其他服务器连接的心跳包，则更新在线状态，不能继续转发
+		// dev.udpsocket 这个值只有发出心跳包的设备用到
+		if dev.udpSocket == nil {
+
+			if dev.DeviceParm == nil && dev.DevModel < 100 {
+				conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
+			} else {
+				conn.WriteToUDP(packet, nrl.UDPAddr)
 			}
 
-			if kkk != vv.udpAddr.String() {
-				delete(gp.connPool.devConnMap, kkk)
-				changeed = true
-			}
 		}
+
+		// for _, vv := range gp.connPool.devConnMap {
+		// 	// if nrl.timeStamp.Sub(vv.LastPacketTime) > 5*time.Second {
+		// 	// 	log.Printf("device %v-%v timeout offline %v, %v", nrl.CallSign, nrl.SSID, gp.ID, vv.udpAddr)
+		// 	// 	delete(gp.connPool.devConnMap, kkk)
+		// 	// 	changeed = true
+		// 	// }
+
+		// 	// if kkk != vv.udpAddr.String() {
+		// 	// 	delete(gp.connPool.devConnMap, kkk)
+		// 	// 	changeed = true
+		// 	// }
+
+		// 	//设备第一次上线的时候，转发一次心跳到其他服务器，用于获取设备原始ip地址用于QTH
+		// 	// if !dev.ISOnline && vv.SSID == 200 {
+		// 	// 	packet = append(packet, nrl.UDPAddr.IP...)
+		// 	// 	conn.WriteToUDP(packet, vv.udpAddr)
+		// 	// }
+		// }
 		if changeed {
 			list := []*deviceInfo{}
 			for _, vv := range gp.connPool.devConnMap {
@@ -265,23 +296,35 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			}
 			gp.connPool.devConnList = list
 		}
-		//如果设备没有携带型号，则使用用户指定的型号，不更新
-		if nrl.DevMode != 0 {
-			dev.DevModel = nrl.DevMode
-		}
 
-		//如何是服务器自己发出的和其他服务器连接的心跳包，则更新在线状态，不能继续转发
-		// dev.udpsocket 这个值只有发出心跳包的设备用到
-		if dev.udpSocket != nil {
-			return
+		if !dev.ISOnline {
+
+			//如果设备没有携带型号，则使用用户指定的型号，不更新
+			if nrl.DevMode != 0 {
+				dev.DevModel = nrl.DevMode
+			}
+
+			for _, vv := range ServerMap {
+				if vv.udpAddr != nil {
+					packet = append(packet, nrl.UDPAddr.IP...)
+					conn.WriteToUDP(packet, vv.udpAddr)
+				}
+			}
+
+			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
+			s := strings.Join(qth, "-")
+			if !strings.Contains(s, "纯真网络") {
+				dev.QTH = strings.TrimRight(s, "-")
+			} else {
+				dev.QTH = "火星"
+			}
+			fmt.Println("dev online:", dev.udpAddr.IP.String(), qth, s, dev.QTH)
+
+			dev.ISOnline = true
+
 		}
 
 		//原样回复心跳，ssid小于100的设备，尝试获取设备的配置参数
-		if dev.DeviceParm == nil && dev.DevModel < 100 {
-			conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
-		} else {
-			conn.WriteToUDP(packet, nrl.UDPAddr)
-		}
 
 	case 3:
 		//读取设备的配置参数

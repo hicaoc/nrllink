@@ -41,6 +41,10 @@ func main() {
 	logbuffer = make(chan *deviceInfo, 1000)
 	go saveLog()
 
+	queryServers()
+
+	go checkdeviceOnline()
+
 	udpServer()
 
 }
