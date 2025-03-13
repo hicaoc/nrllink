@@ -471,7 +471,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 
 			if nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
 
-				if vv.DevModel == 200 && vv.Status&4 != 4 {
+				if vv.DevModel == 200 && (vv.Status&4 != 4) {
 					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
 					conn.WriteToUDP(newpacket, vv.udpAddr)
 

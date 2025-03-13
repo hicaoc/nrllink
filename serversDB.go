@@ -63,6 +63,8 @@ func (p *Server) Start() error {
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr
 		dev.ISOnline = true
+		dev.DevModel = 200
+		dev.SSID = 200
 
 		go dev.sendHeartbear()
 
