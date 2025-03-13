@@ -117,6 +117,29 @@ func checkdeviceOnline() {
 
 		}
 
+		//u.(*userinfo).Groups[dev.GroupID]
+		userlist.Range(func(k, v any) bool {
+			for _, vv := range v.(*userinfo).Groups {
+
+				for _, vvv := range vv.connPool.devConnMap {
+
+					if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
+						log.Printf("device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+
+						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
+
+						vvv.ISOnline = false
+						vvv.udpAddr = nil
+
+					}
+
+				}
+
+			}
+			return true
+
+		})
+
 	}
 
 }

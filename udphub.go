@@ -222,9 +222,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 	case 2:
 
 		//处理服务器转发的定制心跳，不能响应回去，会循环
-
 		if len(packet) == 52 {
-
 			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
 			s := strings.Join(qth, "-")
 			if !strings.Contains(s, "纯真网络") {
@@ -244,19 +242,24 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			dev.Loged = true
 		}
 
-		changeed := false
-
+		//判断设备是否已经在组内，有可能设备网络重新连接过，udp端口号变化过，需要重新加入组内
 		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 
 			delete(gp.connPool.devConnMap, dev.udpAddr.String())
 
 			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
 
+			//如果是200设备，将设备保存在servermap
 			if nrl.SSID == 200 {
 				ServerMap[nrl.CallSign] = dev
 			}
 
-			changeed = true
+			//组内设备信息发送变化，重新将map转换成list，减少报文转发抖动
+			list := []*deviceInfo{}
+			for _, vv := range gp.connPool.devConnMap {
+				list = append(list, vv)
+			}
+			gp.connPool.devConnList = list
 
 		}
 
@@ -274,14 +277,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		}
 
-		if changeed {
-			list := []*deviceInfo{}
-			for _, vv := range gp.connPool.devConnMap {
-				list = append(list, vv)
-			}
-			gp.connPool.devConnList = list
-		}
-
 		if !dev.ISOnline {
 
 			//如果设备没有携带型号，则使用用户指定的型号，不更新
@@ -289,7 +284,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 				dev.DevModel = nrl.DevMode
 			}
 
-			//将所有设备信息的IP信息通过心跳发给对方服务器
+			//收到200设备第一次上线，将所有设备信息的IP信息通过心跳发给对方服务器
 			if dev.SSID == 200 {
 				for _, vv := range devCallsignSSIDMap {
 					if vv.ISOnline {
@@ -305,19 +300,20 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 					}
 
 				}
-			}
+			} else {
+				//将普通新上线的设备心跳附加IPv4地址转发给所有200的服务器
+				for _, vv := range ServerMap {
+					if vv.udpAddr != nil && vv.ISOnline {
+						p := append(packet, nrl.UDPAddr.IP.To4()...)
+						conn.WriteToUDP(p, vv.udpAddr)
+						log.Printf("forward hb packet: %v %v %v \n", len(p), vv.udpAddr.String(), nrl.UDPAddr.IP.To4())
+					}
 
-			for _, vv := range ServerMap {
-				if vv.udpAddr != nil && vv.ISOnline {
-					p := append(packet, nrl.UDPAddr.IP.To4()...)
-					conn.WriteToUDP(p, vv.udpAddr)
-					// fmt.Println(packet)
-					// fmt.Println(p)
-					log.Printf("forward hb packet: %v %v %v \n", len(p), vv.udpAddr.String(), nrl.UDPAddr.IP.To4())
 				}
 
 			}
 
+			//查询设备qth信息
 			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
 			s := strings.Join(qth, "-")
 			if !strings.Contains(s, "纯真网络") {
@@ -431,26 +427,20 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
 
 		for kk, vv := range gp.connPool.devConnMap {
-			//删除超时的会话
 
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
+			if nrl.UDPAddrStr != kk && ((vv.Status & 2) != 2) {
 
-				if vv.DevModel == 200 && vv.Status&4 != 4 {
+				if vv.DevModel == 200 && ((vv.Status & 4) != 4) {
 					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
 					conn.WriteToUDP(newpacket, vv.udpAddr)
 
 				} else {
-					//fmt.Println("case 2 :", clientAddrStr)
 					conn.WriteToUDP(packet, vv.udpAddr)
 				}
 			} else {
 				//更新自己的时间
-				//vv.LastPacketTime = nrl.timeStamp
 				vv.LastVoiceEndTime = nrl.timeStamp
-				//必须要更新下地址，防止用户端口变化
-				// vv.UDPAddr = n.UDPAddr
-
 			}
 
 		}
@@ -458,7 +448,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
 		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
-		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+		if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 				k.LastCtlEndTime = nrl.timeStamp

@@ -88,6 +88,7 @@ func (p *Server) Start() error {
 			udpSocket: globelconn,
 			udpAddr:   addr,
 			SSID:      200,
+			DevModel:  200,
 			CPUID:     cpuIDHex,
 			Note:      "server"}
 
@@ -103,6 +104,7 @@ func (p *Server) Start() error {
 
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr
+		dev.DevModel = 200
 		dev.ISOnline = true
 
 		devCallsignSSIDMap[p.OwerCallsign+"-200"] = dev
