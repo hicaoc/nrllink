@@ -103,8 +103,15 @@ func checkdeviceOnline() {
 					delete(kk.connPool.devConnMap, vv.udpAddr.String())
 
 					list := []*deviceInfo{}
-					for _, vv := range kk.connPool.devConnMap {
-						list = append(list, vv)
+					for kkk, vvv := range kk.connPool.devConnMap {
+
+						if kkk != vvv.udpAddr.String() {
+							delete(kk.connPool.devConnMap, kkk)
+						} else {
+							list = append(list, vvv)
+
+						}
+
 					}
 					kk.connPool.devConnList = list
 
@@ -121,12 +128,16 @@ func checkdeviceOnline() {
 		userlist.Range(func(k, v any) bool {
 			for _, vv := range v.(*userinfo).Groups {
 
-				for _, vvv := range vv.connPool.devConnMap {
+				for kkk, vvv := range vv.connPool.devConnMap {
 
 					if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
 						log.Printf("device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
 
 						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
+
+						if kkk != vvv.udpAddr.String() {
+							delete(vv.connPool.devConnMap, kkk)
+						}
 
 						vvv.ISOnline = false
 						vvv.udpAddr = nil

@@ -34,6 +34,36 @@ type currentConnPool struct {
 	devConnList   []*deviceInfo
 }
 
+func udpServer() {
+	udpAddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:"+conf.System.Port)
+	if err != nil {
+		fmt.Println(" udp addr or port err:" + err.Error())
+		os.Exit(1)
+	}
+	conn, err := net.ListenUDP("udp", udpAddr)
+	//conn.SetReadBuffer(5000)
+
+	if err != nil {
+		fmt.Println("read from connect failed, err:" + err.Error())
+		os.Exit(1)
+	}
+
+	defer conn.Close()
+
+	globelconn = conn
+
+	//启动服务器互联
+	queryServers()
+
+	log.Println("data parse server started on udp :", udpAddr, conf.System.Port)
+
+	for {
+		limitChan <- true
+
+		udpProcess(conn)
+	}
+}
+
 func udpProcess(conn *net.UDPConn) {
 
 	data := make([]byte, 1460)
@@ -145,36 +175,6 @@ func udpProcess(conn *net.UDPConn) {
 	}
 
 	<-limitChan
-}
-
-func udpServer() {
-	udpAddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:"+conf.System.Port)
-	if err != nil {
-		fmt.Println(" udp addr or port err:" + err.Error())
-		os.Exit(1)
-	}
-	conn, err := net.ListenUDP("udp", udpAddr)
-	//conn.SetReadBuffer(5000)
-
-	if err != nil {
-		fmt.Println("read from connect failed, err:" + err.Error())
-		os.Exit(1)
-	}
-
-	defer conn.Close()
-
-	globelconn = conn
-
-	//启动服务器互联
-	queryServers()
-
-	log.Println("data parse server started on udp :", udpAddr, conf.System.Port)
-
-	for {
-		limitChan <- true
-
-		udpProcess(conn)
-	}
 }
 
 func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
@@ -556,10 +556,10 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
 				if vv.DevModel == 200 {
-					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
-					conn.WriteToUDP(newpacket, vv.udpAddr)
+					return
 
 				} else {
+
 					conn.WriteToUDP(packet, vv.udpAddr)
 				}
 
@@ -605,8 +605,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 
 				if vv.DevModel == 200 {
-					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
-					conn.WriteToUDP(newpacket, vv.udpAddr)
+					return
 
 				} else {
 					conn.WriteToUDP(packet, vv.udpAddr)
