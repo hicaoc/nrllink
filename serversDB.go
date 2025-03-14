@@ -359,12 +359,12 @@ func updateServer(s *Server) error {
 	}
 	// if oldserver.Status != s.Status {
 
-	// 	if s.Status == 1 {
-	// 		s.Start()
+	if s.Status == 1 {
+		s.Start()
 
-	// 	} else if s.Status == 2 {
-	// 		s.Stop()
-	// 	}
+	} else if s.Status == 2 {
+		s.Stop()
+	}
 	// }
 
 	//initServers()
