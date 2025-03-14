@@ -142,6 +142,8 @@ func checkdeviceOnline() {
 					delete(vv.connPool.devConnMap, kkk)
 					change = true
 				}
+
+				//fmt.Println("dev conn pool:", vv.ID, vv.Name, len(vv.connPool.devConnMap), kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
 			}
 
 			//如果群组设备变化过，更新列表
@@ -317,20 +319,11 @@ func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
 
 	if dev, ok := devCallsignSSIDMap[callsignwithssid]; ok {
 
-		t := time.Now()
-		//fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(dev.LastPacketTime) > 10*time.Second {
-			dev.ISOnline = false
-			return *dev, fmt.Errorf("dev offline: %v-%v %v ", dev.CPUID, dev.SSID, callsignwithssid)
+		globelconn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
 
-		} else {
+		time.Sleep(300 * time.Millisecond)
 
-			globelconn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
-
-			time.Sleep(300 * time.Millisecond)
-
-			return *dev, nil
-		}
+		return *dev, nil
 
 	}
 
@@ -344,22 +337,13 @@ func changeDeviceByteParm(callsignssid string, offset int, str string) (res []by
 
 	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
-		t := time.Now()
-		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 5*time.Second {
-			d.ISOnline = false
-			return nil, errors.New("device be offline")
+		d.DeviceParm.data[offset] = byte(val)
+		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		globelconn.WriteToUDP(newpacket, d.udpAddr)
+		time.Sleep(200 * time.Millisecond)
 
-		} else {
-			d.DeviceParm.data[offset] = byte(val)
-			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-			globelconn.WriteToUDP(newpacket, d.udpAddr)
-			time.Sleep(200 * time.Millisecond)
-
-			rescode, _ := jsonextra.Marshal(d)
-			return rescode, nil
-
-		}
+		rescode, _ := jsonextra.Marshal(d)
+		return rescode, nil
 
 	}
 
@@ -420,47 +404,38 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 
 	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
-		t := time.Now()
-		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 5*time.Second {
-			d.ISOnline = false
-			return nil, errors.New("device be offline")
-
-		} else {
-			for _, v := range lip {
-				d.DeviceParm.data[ip.localIPOffset] = v
-				ip.localIPOffset++
-			}
-
-			for _, v := range netmask {
-				d.DeviceParm.data[ip.localNetmaskOffset] = v
-				ip.localNetmaskOffset++
-			}
-
-			for _, v := range gateway {
-				d.DeviceParm.data[ip.gatewayOffset] = v
-				ip.gatewayOffset++
-			}
-
-			for _, v := range dns {
-				d.DeviceParm.data[ip.dnsOffset] = v
-				ip.dnsOffset++
-			}
-
-			for _, v := range ip.destIPValue {
-				d.DeviceParm.data[ip.destIPOffset] = byte(v)
-				ip.destIPOffset++
-			}
-			d.DeviceParm.data[ip.destIPOffset] = 0
-
-			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-			globelconn.WriteToUDP(newpacket, d.udpAddr)
-			time.Sleep(200 * time.Millisecond)
-
-			rescode, _ := jsonextra.Marshal(d)
-			return rescode, nil
-
+		for _, v := range lip {
+			d.DeviceParm.data[ip.localIPOffset] = v
+			ip.localIPOffset++
 		}
+
+		for _, v := range netmask {
+			d.DeviceParm.data[ip.localNetmaskOffset] = v
+			ip.localNetmaskOffset++
+		}
+
+		for _, v := range gateway {
+			d.DeviceParm.data[ip.gatewayOffset] = v
+			ip.gatewayOffset++
+		}
+
+		for _, v := range dns {
+			d.DeviceParm.data[ip.dnsOffset] = v
+			ip.dnsOffset++
+		}
+
+		for _, v := range ip.destIPValue {
+			d.DeviceParm.data[ip.destIPOffset] = byte(v)
+			ip.destIPOffset++
+		}
+		d.DeviceParm.data[ip.destIPOffset] = 0
+
+		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		globelconn.WriteToUDP(newpacket, d.udpAddr)
+		time.Sleep(200 * time.Millisecond)
+
+		rescode, _ := jsonextra.Marshal(d)
+		return rescode, nil
 
 	}
 
@@ -474,24 +449,15 @@ func changeDeviceUint16Parm(callsignssid string, offset int, str string) (res []
 
 	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
-		t := time.Now()
-		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 10*time.Second {
-			d.ISOnline = false
-			return nil, errors.New("device be offline")
+		d.DeviceParm.data[offset+1] = byte(val & 0xFF)
+		d.DeviceParm.data[offset] = byte(val >> 8)
 
-		} else {
-			d.DeviceParm.data[offset+1] = byte(val & 0xFF)
-			d.DeviceParm.data[offset] = byte(val >> 8)
+		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		globelconn.WriteToUDP(newpacket, d.udpAddr)
+		time.Sleep(200 * time.Millisecond)
 
-			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-			globelconn.WriteToUDP(newpacket, d.udpAddr)
-			time.Sleep(200 * time.Millisecond)
-
-			rescode, _ := jsonextra.Marshal(d)
-			return rescode, nil
-
-		}
+		rescode, _ := jsonextra.Marshal(d)
+		return rescode, nil
 
 	}
 
@@ -517,28 +483,19 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 
 		fmt.Println("One w:", string(p))
 
-		t := time.Now()
-		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 5*time.Second {
-			d.ISOnline = false
-			return nil, errors.New("device be offline")
-
-		} else {
-			if len(p) > 32 {
-				p = p[:32]
-			}
-			copy(d.DeviceParm.data[128:], p)
-			d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
-			d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
-
-			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-			globelconn.WriteToUDP(newpacket, d.udpAddr)
-			time.Sleep(200 * time.Millisecond)
-
-			rescode, _ := jsonextra.Marshal(d)
-			return rescode, nil
-
+		if len(p) > 32 {
+			p = p[:32]
 		}
+		copy(d.DeviceParm.data[128:], p)
+		d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
+		d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
+
+		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		globelconn.WriteToUDP(newpacket, d.udpAddr)
+		time.Sleep(200 * time.Millisecond)
+
+		rescode, _ := jsonextra.Marshal(d)
+		return rescode, nil
 
 	}
 
@@ -565,29 +522,20 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 		p = append(p, byte(0x00))
 
-		t := time.Now()
-		// fmt.Println(t.Sub(d.LastPacketTime))
-		if t.Sub(d.LastPacketTime) > 10*time.Second {
-			d.ISOnline = false
-			return nil, errors.New("device be offline")
+		copy(d.DeviceParm.data[192:], p)
 
-		} else {
-			copy(d.DeviceParm.data[192:], p)
+		d.DeviceParm.data[238] = []byte(strconv.Itoa(ctr.TwoVolume))[0]
+		d.DeviceParm.data[239] = []byte(strconv.Itoa(ctr.TwoSavePower))[0]
+		d.DeviceParm.data[240] = []byte(strconv.Itoa(ctr.TwoSQLLevel))[0]
+		d.DeviceParm.data[242] = []byte(strconv.Itoa(ctr.TwoMICLevel))[0]
+		d.DeviceParm.data[244] = []byte(strconv.Itoa(ctr.TwoTOTLevel))[0]
 
-			d.DeviceParm.data[238] = []byte(strconv.Itoa(ctr.TwoVolume))[0]
-			d.DeviceParm.data[239] = []byte(strconv.Itoa(ctr.TwoSavePower))[0]
-			d.DeviceParm.data[240] = []byte(strconv.Itoa(ctr.TwoSQLLevel))[0]
-			d.DeviceParm.data[242] = []byte(strconv.Itoa(ctr.TwoMICLevel))[0]
-			d.DeviceParm.data[244] = []byte(strconv.Itoa(ctr.TwoTOTLevel))[0]
+		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		globelconn.WriteToUDP(newpacket, d.udpAddr)
+		time.Sleep(200 * time.Millisecond)
 
-			newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
-			globelconn.WriteToUDP(newpacket, d.udpAddr)
-			time.Sleep(200 * time.Millisecond)
-
-			rescode, _ := jsonextra.Marshal(d)
-			return rescode, nil
-
-		}
+		rescode, _ := jsonextra.Marshal(d)
+		return rescode, nil
 
 	}
 

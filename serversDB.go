@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 //var ServersMap = make(map[int]*Server, 1000) //key 房间号
@@ -62,6 +63,7 @@ func (p *Server) Start() error {
 
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr
+
 		dev.ISOnline = true
 		dev.DevModel = 200
 		dev.SSID = 200
@@ -131,6 +133,13 @@ func (p *Server) Stop() {
 
 	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
 
+		dev.ISOnline = false
+		dev.udpAddr = nil
+		time.Sleep(1 * time.Second)
+		dev.ISOnline = false
+		time.Sleep(1 * time.Second)
+		dev.ISOnline = false
+		time.Sleep(1 * time.Second)
 		dev.ISOnline = false
 
 		fmt.Println("stop server hearbeard:", p.OwerCallsign, 200)
@@ -204,7 +213,7 @@ func queryServers() (serverlist []*Server) {
 			pg.Start()
 
 		} else {
-			pg.Stop()
+			go pg.Stop()
 		}
 
 		serverlist = append(serverlist, pg)
@@ -363,7 +372,7 @@ func updateServer(s *Server) error {
 		s.Start()
 
 	} else if s.Status == 2 {
-		s.Stop()
+		go s.Stop()
 	}
 	// }
 

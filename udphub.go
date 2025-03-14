@@ -251,6 +251,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
 
+			//非常重要，非常重要，如果没有，设备list就没有初始化
+			gp.connPool.devConnList = append(gp.connPool.devConnList, dev)
+
 			//如果是200设备，将设备保存在servermap
 			if nrl.SSID == 200 {
 				ServerMap[nrl.CallSign] = dev
@@ -294,6 +297,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 				}
 			} else {
+
+				//200设备手工上线
+
 				//将普通新上线的设备心跳附加IPv4地址转发给所有200的服务器
 				for _, vv := range ServerMap {
 					if vv.udpAddr != nil && vv.ISOnline {
@@ -314,7 +320,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			} else {
 				dev.QTH = "火星"
 			}
-			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.IP.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
+			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
 			dev.ISOnline = true
 
@@ -419,10 +425,10 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
 
-		for kk, vv := range gp.connPool.devConnMap {
+		for _, vv := range gp.connPool.devConnMap {
 
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != kk && ((vv.Status & 2) != 2) {
+			if nrl.UDPAddrStr != vv.udpAddr.String() && ((vv.Status & 2) != 2) {
 
 				if vv.DevModel == 200 && ((vv.Status & 4) != 4) {
 					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 2, 200, calculateCpuId(vv.CallSign+"-200"), packet)
@@ -444,12 +450,13 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 		if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 			if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
-				k.LastCtlEndTime = nrl.timeStamp
+				k.LastVoiceEndTime = nrl.timeStamp
 			}
 
 			return
 			//否则重新让新设备抢占语音权，并更新上次报文时间
 		} else {
+
 			gp.connPool.UDPAddr = nrl.UDPAddr
 			gp.connPool.lastVoiceTime = nrl.timeStamp
 
@@ -473,6 +480,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 				}
 
 			} else {
+
 				//更新自己连接池的上次报文接收时间
 				//vv.LastPacketTime = nrl.timeStamp
 				vv.LastVoiceEndTime = nrl.timeStamp
