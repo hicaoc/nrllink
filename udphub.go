@@ -236,6 +236,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		}
 
+		dev.udpAddr = nrl.UDPAddr
+
 		//心跳包，用于保存设备在线存活状态， 目前设备1s一次发送
 		if !dev.Loged && nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds() > 200 {
 			logbuffer <- dev
@@ -245,7 +247,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//判断设备是否已经在组内，有可能设备网络重新连接过，udp端口号变化过，需要重新加入组内
 		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 
-			delete(gp.connPool.devConnMap, dev.udpAddr.String())
+			//如果设备新地址不在组内，需要先删除之前的设备地址key
 
 			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
 
@@ -254,16 +256,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 				ServerMap[nrl.CallSign] = dev
 			}
 
-			//组内设备信息发送变化，重新将map转换成list，减少报文转发抖动
-			list := []*deviceInfo{}
-			for _, vv := range gp.connPool.devConnMap {
-				list = append(list, vv)
-			}
-			gp.connPool.devConnList = list
-
 		}
-
-		dev.udpAddr = nrl.UDPAddr
 
 		//如何是服务器自己发出的和其他服务器连接的心跳包，则更新在线状态，不能继续转发
 		// dev.udpsocket 这个值只有发出心跳包的设备用到

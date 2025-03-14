@@ -89,36 +89,71 @@ func checkdeviceOnline() {
 
 		t := time.Now()
 
-		for _, vv := range devCallsignSSIDMap {
+		// for _, vv := range devCallsignSSIDMap {
 
-			//200的向外连接的设备，不能下线
-			if vv.SSID == 200 && vv.udpSocket != nil {
-				continue
-			}
+		// 	//200的向外连接的设备，不能下线
+		// 	// if vv.SSID == 200 && vv.udpSocket != nil {
+		// 	// 	continue
+		// 	// }
 
-			if t.Sub(vv.LastPacketTime) > 6*time.Second && vv.ISOnline {
-				log.Printf("device offline: %v-%v  %v, %v", vv.CallSign, vv.SSID, vv.GroupID, vv.udpAddr)
+		// 	if t.Sub(vv.LastPacketTime) > 6*time.Second && vv.ISOnline {
+		// 		log.Printf("device offline: %v-%v  %v, %v", vv.CallSign, vv.SSID, vv.GroupID, vv.udpAddr)
 
-				if kk, ok := publicGroupMap[vv.GroupID]; ok {
-					delete(kk.connPool.devConnMap, vv.udpAddr.String())
+		// 		if kk, ok := publicGroupMap[vv.GroupID]; ok {
+		// 			delete(kk.connPool.devConnMap, vv.udpAddr.String())
 
-					list := []*deviceInfo{}
-					for kkk, vvv := range kk.connPool.devConnMap {
+		// 			list := []*deviceInfo{}
+		// 			for kkk, vvv := range kk.connPool.devConnMap {
 
-						if kkk != vvv.udpAddr.String() {
-							delete(kk.connPool.devConnMap, kkk)
-						} else {
-							list = append(list, vvv)
+		// 				if kkk != vvv.udpAddr.String() {
+		// 					delete(kk.connPool.devConnMap, kkk)
+		// 				} else {
+		// 					list = append(list, vvv)
 
-						}
+		// 				}
 
-					}
-					kk.connPool.devConnList = list
+		// 			}
+		// 			kk.connPool.devConnList = list
+
+		// 		}
+
+		// 		vv.ISOnline = false
+		// 		vv.udpAddr = nil
+
+		// 	}
+
+		// }
+
+		for _, vv := range publicGroupMap {
+
+			list := []*deviceInfo{}
+			changed := false
+			for kkk, vvv := range vv.connPool.devConnMap {
+
+				if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
+					log.Printf("device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+
+					delete(vv.connPool.devConnMap, vvv.udpAddr.String())
+
+					vvv.ISOnline = false
+					vvv.udpAddr = nil
+					changed = true
 
 				}
 
-				vv.ISOnline = false
-				vv.udpAddr = nil
+				if kkk != vvv.udpAddr.String() {
+					delete(vv.connPool.devConnMap, kkk)
+					changed = true
+				}
+				//如果本设备未变化，加入列表
+				if !changed {
+					list = append(list, vvv)
+				}
+
+			}
+			//如果群组设备变化过，更新列表
+			if changed {
+				vv.connPool.devConnList = list
 
 			}
 
