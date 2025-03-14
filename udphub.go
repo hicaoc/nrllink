@@ -224,7 +224,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//处理服务器转发的定制心跳，不能响应回去，会循环
 		if len(packet) == 52 {
 			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
-			s := strings.Join(qth, "-")
+			s := strings.Join(qth, "")
 			if !strings.Contains(s, "纯真网络") {
 				dev.QTH = "转-" + strings.Trim(s, "-")
 			} else {
@@ -308,7 +308,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			//查询设备qth信息
 			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
-			s := strings.Join(qth, "-")
+			s := strings.Join(qth, "")
 			if !strings.Contains(s, "纯真网络") {
 				dev.QTH = strings.Trim(s, "-")
 			} else {

@@ -126,35 +126,32 @@ func checkdeviceOnline() {
 
 		for _, vv := range publicGroupMap {
 
-			list := []*deviceInfo{}
-			changed := false
+			change := false
+
 			for kkk, vvv := range vv.connPool.devConnMap {
 
 				if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
 					log.Printf("device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
-
 					delete(vv.connPool.devConnMap, vvv.udpAddr.String())
-
 					vvv.ISOnline = false
 					vvv.udpAddr = nil
-					changed = true
+					change = true
 
-				}
-
-				if kkk != vvv.udpAddr.String() {
+				} else if kkk != vvv.udpAddr.String() {
+					fmt.Println("dev session error delete:", kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
 					delete(vv.connPool.devConnMap, kkk)
-					changed = true
+					change = true
 				}
-				//如果本设备未变化，加入列表
-				if !changed {
+			}
+
+			//如果群组设备变化过，更新列表
+			if change {
+				list := []*deviceInfo{}
+				for _, vvv := range vv.connPool.devConnMap {
 					list = append(list, vvv)
 				}
 
-			}
-			//如果群组设备变化过，更新列表
-			if changed {
 				vv.connPool.devConnList = list
-
 			}
 
 		}
