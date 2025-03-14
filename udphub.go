@@ -226,7 +226,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
 			s := strings.Join(qth, "")
 			if !strings.Contains(s, "纯真网络") {
-				dev.QTH = "转-" + strings.ReplaceAll(s, "-", "")
+				dev.QTH = "转-" + strings.Trim(strings.ReplaceAll(s, "–", ""), "-")
 			} else {
 				dev.QTH = "转-火星"
 			}
@@ -310,7 +310,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
 			s := strings.Join(qth, "")
 			if !strings.Contains(s, "纯真网络") {
-				dev.QTH = strings.ReplaceAll(s, "-","")
+				dev.QTH = strings.Trim(strings.ReplaceAll(s, "–", ""), "-")
 			} else {
 				dev.QTH = "火星"
 			}
