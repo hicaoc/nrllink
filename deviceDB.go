@@ -135,13 +135,13 @@ func checkdeviceOnline() {
 
 						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
 
-						if kkk != vvv.udpAddr.String() {
-							delete(vv.connPool.devConnMap, kkk)
-						}
-
 						vvv.ISOnline = false
 						vvv.udpAddr = nil
 
+					}
+
+					if kkk != vvv.udpAddr.String() {
+						delete(vv.connPool.devConnMap, kkk)
 					}
 
 				}
