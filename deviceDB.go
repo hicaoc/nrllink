@@ -572,7 +572,11 @@ func delDevice(dev *deviceInfo) error {
 		return err
 	}
 
-	delete(devCallsignSSIDMap, dev.CallSignSSID)
+	if d, ok := devCallsignSSIDMap[dev.CallSignSSID]; ok {
+		delete(devCallsignSSIDMap, dev.CallSignSSID)
+		delete(publicGroupMap[dev.GroupID].DevMap, dev.ID)
+		delete(publicGroupMap[dev.GroupID].connPool.devConnMap, d.udpAddr.String())
+	}
 
 	return nil
 
