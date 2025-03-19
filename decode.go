@@ -19,13 +19,18 @@ type NRL21packet struct {
 	Length     uint16       //上层数据长度
 	CPUID      string       //设备唯一标识 长度7字节
 	Password   string       //密码
-	Type       byte         //上层数据类型 一个字节 0:保留， 1：G.711语音，2：心跳  3：设备配置 4：保留，5. 文本消息，6，设备控制设备， 7，设备要求加入组等指令
+	Type       byte         //上层数据类型 一个字节 0:保留， 1：G.711语音，2：心跳  3：设备配置 4：保留，5. 文本消息，6，设备控制设备， 7，设备要求加入组等指令 9:服务器互联语音
 	Status     byte         //设备状态位
 	Count      uint16       //报文计数器2节
 	CallSign   string       //所有者呼号 6字节
 	SSID       byte         //所有者呼号 1字节
 	DevMode    byte         //设备型号
-	DATA       []byte       //上层数据内容
+
+	OriginalCallsign string //原始呼号
+	OriginalSSID     uint8  //原始SSID
+	OriginalIP       net.IP //原始IP
+
+	DATA []byte //上层数据内容
 }
 
 func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
@@ -49,6 +54,13 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.CallSign = string(bytes.TrimRight(d[24:30], string([]byte{13, 0})))
 	n.SSID = d[30]
 	n.DevMode = d[31]
+
+	if n.Type == 9 {
+		n.OriginalCallsign = string(bytes.TrimRight(d[32:38], string([]byte{13, 0})))
+		n.OriginalSSID = d[38]
+		n.OriginalIP = d[39:43]
+	}
+
 	n.DATA = d[48:]
 
 	return nil
@@ -80,7 +92,7 @@ func calculateCpuId(callSign string) []byte {
 
 }
 
-func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, cpuid, data []byte) (packet []byte) {
+func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, cpuid, data []byte) (packet []byte) {
 
 	packet = make([]byte, len(data))
 
@@ -90,6 +102,9 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, cpuid,
 
 	copy(packet[6:11], cpuid)
 
+	// 写入 Type  2
+	packet[20] = packetType
+
 	// 写入 CallSign
 	copy(packet[24:30], callsign)
 
@@ -98,6 +113,15 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, cpuid,
 
 	// 写入 DevMode
 	packet[31] = DevMode
+
+	// 协议原始呼号
+	copy(packet[32:38], originalCallsign)
+
+	// 写入原始SSID
+	packet[38] = originaSSID
+
+	// 写入 IP 地址
+	copy(packet[39:43], originalIP)
 
 	return packet
 
