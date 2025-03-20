@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -17,9 +16,11 @@ import (
 
 var userlist sync.Map // callid ,userinfo
 
-var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //在线设备CPUID列表
+var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //key : callsign+ssid 在线设备CPUID列表
 
 var ServerMap = make(map[string]*deviceInfo) //呼号对应的服务器设备
+
+var QTHmap = make(map[string]string) // callsign+ssid
 
 var limitChan = make(chan bool, 1)
 
@@ -223,13 +224,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		//处理服务器转发的定制心跳，不能响应回去，会循环
 		if len(packet) == 52 {
-			qth, _ := dbip.Find(net.IP(packet[48:]).String(), "CN")
-			s := strings.Join(qth, "")
-			if !strings.Contains(s, "纯真网络") {
-				dev.QTH = "转-" + strings.Trim(strings.ReplaceAll(s, "–", ""), "-")
-			} else {
-				dev.QTH = "转-火星"
-			}
+
+			dev.QTH = getQTH(net.IP(packet[48:]).String())
 
 			log.Printf("forward dev online:%v %v %v-%v %v\n", nrl.UDPAddrStr, net.IP(packet[48:]).String(), dev.CallSign, dev.SSID, dev.QTH)
 			return
@@ -313,13 +309,10 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			}
 
 			//查询设备qth信息
-			qth, _ := dbip.Find(dev.udpAddr.IP.String(), "CN")
-			s := strings.Join(qth, "")
-			if !strings.Contains(s, "纯真网络") {
-				dev.QTH = strings.Trim(strings.ReplaceAll(s, "–", ""), "-")
-			} else {
-				dev.QTH = "火星"
-			}
+
+			dev.QTH = getQTH(dev.udpAddr.IP.String())
+			QTHmap[dev.CallSignSSID] = dev.QTH
+
 			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
 			dev.ISOnline = true
@@ -420,6 +413,13 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
 			return
+		}
+
+		//保存外部设备信息，用于解析QTH
+
+		callsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
+		if _, ok := QTHmap[callsignssid]; !ok {
+			QTHmap[callsignssid] = "转-" + getQTH(net.IP(nrl.OriginalIP).String())
 		}
 
 		//dev.LastPacketTime = nrl.timeStamp

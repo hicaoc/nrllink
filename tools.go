@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Response struct {
@@ -40,6 +41,10 @@ func writeJSONResponse(w http.ResponseWriter, res *Response) error {
 
 func writeJSONResponseData(w http.ResponseWriter, list interface{}, total int) error {
 	return writeJSONResponse(w, &Response{20000, "ok", respData{total, list}})
+}
+
+func writeJSONResponseItem(w http.ResponseWriter, item interface{}) error {
+	return writeJSONResponse(w, &Response{20000, "ok", item})
 }
 
 func checkHttpRequestTokenAndRight(w http.ResponseWriter, req *http.Request, rolelist []string) (*userinfo, []byte) {
@@ -97,4 +102,16 @@ func checkHttpRequest(w http.ResponseWriter, req *http.Request, rolelist []strin
 
 	return u, stb, nil
 
+}
+
+func getQTH(ip string) (qth string) {
+	q, _ := dbip.Find(ip, "CN")
+	s := strings.Join(q, "")
+
+	if !strings.Contains(s, "纯真网络") {
+		qth = "" + strings.Trim(strings.ReplaceAll(s, "–", ""), "-")
+	} else {
+		qth = "火星"
+	}
+	return
 }

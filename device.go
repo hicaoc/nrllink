@@ -71,19 +71,6 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, _ := io.ReadAll(req.Body)
-
-	req.Body.Close()
-
-	stb := &query{}
-	err = jsonextra.Unmarshal(result, &stb)
-
-	if err != nil {
-		log.Println("device list err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备表参数错误"}}`))
-		return
-	}
-
 	mydevicelist := make(map[string]deviceInfo, 10)
 
 	for kk, vv := range devCallsignSSIDMap {
@@ -93,12 +80,79 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	rescode, _ := jsonextra.Marshal(mydevicelist)
+	writeJSONResponseData(w, mydevicelist, len(mydevicelist))
 
-	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(devCallsignSSIDMap), rescode)
+}
 
-	w.Write([]byte(respone))
+func (j *jsonapi) httpDevice(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	if dev, ok := devCallsignSSIDMap[getCallsignSSID(stb.Callsign, stb.SSID)]; ok {
+
+		writeJSONResponseItem(w, dev)
+	} else {
+		w.Write(ResOpErr)
+	}
+
+}
+
+func (j *jsonapi) httpDeviceQTH(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("get device qth parm err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	if qth, ok := QTHmap[getCallsignSSID(stb.Callsign, stb.SSID)]; ok {
+
+		writeJSONResponseItem(w, qth)
+	} else {
+		writeJSONResponseItem(w, "火星")
+	}
+
+}
+
+func (j *jsonapi) httpDeviceQTHs(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	writeJSONResponseItem(w, QTHmap)
 
 }
 

@@ -74,6 +74,119 @@ func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) 
 
 }
 
+func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device list err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	if g, ok := publicGroupMap[stb.GroupID]; ok {
+
+		writeJSONResponseItem(w, g)
+
+	}
+
+}
+
+type minigroup struct {
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	Type            int    `json:"type"`
+	OnlineDevNumber int    `json:"online_dev_number"`
+	TotalDevNumber  int    `json:"total_dev_number"`
+}
+
+func (j *jsonapi) httpGetGroupList(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device list err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	grouplist := make([]minigroup, 0)
+
+	for _, v := range publicGroupMap {
+		g := minigroup{
+			ID:              v.ID,
+			Name:            v.Name,
+			Type:            v.Type,
+			OnlineDevNumber: v.OnlineDevNumber,
+			TotalDevNumber:  v.TotalDevNumber,
+		}
+		grouplist = append(grouplist, g)
+
+	}
+
+	if user, okok := userlist.Load(u.CallSign); okok {
+		gp1 := user.(*userinfo).Groups[1]
+		gp2 := user.(*userinfo).Groups[2]
+		gp3 := user.(*userinfo).Groups[3]
+
+		g1 := minigroup{
+			ID:              1,
+			Name:            gp1.Name,
+			Type:            gp1.Type,
+			OnlineDevNumber: gp1.OnlineDevNumber,
+			TotalDevNumber:  gp1.TotalDevNumber,
+		}
+
+		g2 := minigroup{
+			ID:              2,
+			Name:            gp2.Name,
+			Type:            gp2.Type,
+			OnlineDevNumber: gp2.OnlineDevNumber,
+			TotalDevNumber:  gp2.TotalDevNumber,
+		}
+
+		g3 := minigroup{
+			ID:              3,
+			Name:            gp3.Name,
+			Type:            gp3.Type,
+			OnlineDevNumber: gp3.OnlineDevNumber,
+			TotalDevNumber:  gp3.TotalDevNumber,
+		}
+
+		grouplist = append(grouplist, g1)
+		grouplist = append(grouplist, g2)
+		grouplist = append(grouplist, g3)
+
+	} else {
+		log.Println("user not found")
+	}
+
+	writeJSONResponseItem(w, grouplist)
+
+}
+
 func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 

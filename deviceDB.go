@@ -89,44 +89,10 @@ func checkdeviceOnline() {
 
 		t := time.Now()
 
-		// for _, vv := range devCallsignSSIDMap {
-
-		// 	//200的向外连接的设备，不能下线
-		// 	// if vv.SSID == 200 && vv.udpSocket != nil {
-		// 	// 	continue
-		// 	// }
-
-		// 	if t.Sub(vv.LastPacketTime) > 6*time.Second && vv.ISOnline {
-		// 		log.Printf("device offline: %v-%v  %v, %v", vv.CallSign, vv.SSID, vv.GroupID, vv.udpAddr)
-
-		// 		if kk, ok := publicGroupMap[vv.GroupID]; ok {
-		// 			delete(kk.connPool.devConnMap, vv.udpAddr.String())
-
-		// 			list := []*deviceInfo{}
-		// 			for kkk, vvv := range kk.connPool.devConnMap {
-
-		// 				if kkk != vvv.udpAddr.String() {
-		// 					delete(kk.connPool.devConnMap, kkk)
-		// 				} else {
-		// 					list = append(list, vvv)
-
-		// 				}
-
-		// 			}
-		// 			kk.connPool.devConnList = list
-
-		// 		}
-
-		// 		vv.ISOnline = false
-		// 		vv.udpAddr = nil
-
-		// 	}
-
-		// }
-
 		for _, vv := range publicGroupMap {
 
 			change := false
+			vv.OnlineDevNumber = 0
 
 			for kkk, vvv := range vv.connPool.devConnMap {
 
@@ -141,6 +107,8 @@ func checkdeviceOnline() {
 					fmt.Println("dev session error delete:", kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
 					delete(vv.connPool.devConnMap, kkk)
 					change = true
+				} else {
+					vv.OnlineDevNumber = vv.OnlineDevNumber + 1
 				}
 
 				//fmt.Println("dev conn pool:", vv.ID, vv.Name, len(vv.connPool.devConnMap), kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
@@ -156,11 +124,15 @@ func checkdeviceOnline() {
 				vv.connPool.devConnList = list
 			}
 
+			vv.TotalDevNumber = len(vv.DevMap)
+
 		}
 
 		//u.(*userinfo).Groups[dev.GroupID]
 		userlist.Range(func(k, v any) bool {
 			for _, vv := range v.(*userinfo).Groups {
+
+				vv.OnlineDevNumber = 0
 
 				for kkk, vvv := range vv.connPool.devConnMap {
 
@@ -172,13 +144,14 @@ func checkdeviceOnline() {
 						vvv.ISOnline = false
 						vvv.udpAddr = nil
 
-					}
-
-					if kkk != vvv.udpAddr.String() {
+					} else if kkk != vvv.udpAddr.String() {
 						delete(vv.connPool.devConnMap, kkk)
+					} else {
+						vv.OnlineDevNumber = vv.OnlineDevNumber + 1
 					}
 
 				}
+				vv.TotalDevNumber = len(vv.DevMap)
 
 			}
 			return true

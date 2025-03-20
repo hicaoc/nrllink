@@ -29,6 +29,9 @@ type group struct {
 	Note       string `json:"note" db:"note"`
 	connPool   *currentConnPool
 	DevMap     map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
+	//OutDevMap       map[string]*deviceInfo `json:"out_dev_map"` //callsign+ssid
+	OnlineDevNumber int `json:"online_dev_number"`
+	TotalDevNumber  int `json:"total_dev_number"`
 }
 
 func (p *group) String() string {

@@ -120,6 +120,9 @@ func (j *jsonapi) msghttp() {
 
 	http.HandleFunc("/device/list", j.httpDeviceList)
 
+	http.HandleFunc("/device/get", j.httpDevice)
+	http.HandleFunc("/device/qthmap", j.httpDeviceQTHs)
+	http.HandleFunc("/device/qth", j.httpDeviceQTHs)
 	http.HandleFunc("/device/mydevlist", j.httpMyDeviceList)
 	// http.HandleFunc("/device/binddevice", j.httpBindDevice)
 	http.HandleFunc("/device/update", j.httpUpdateDevice)
@@ -131,6 +134,10 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/device/change", j.httpChangeDeviceParm)
 	http.HandleFunc("/device/change1w", j.httpChange1W)
 	http.HandleFunc("/device/change2w", j.httpChange2W)
+
+	http.HandleFunc("/group/get", j.httpGetGroup)
+
+	http.HandleFunc("/group/list/mini", j.httpGetGroupList)
 
 	http.HandleFunc("/group/list", j.httpPublicGroupList)
 	http.HandleFunc("/group/create", j.httpAddGroup)
@@ -226,11 +233,15 @@ type query struct {
 	ID       string `json:"id"`
 	User     string `json:"user"`
 	Callsign string `json:"callsign"`
+	SSID     uint8  `json:"ssid"`
 
 	CountryName string `json:"country_name"`
 	RegionName  string `json:"region_name"`
 	ISPDomain   string `json:"isp_domain"`
 	AppID       string `json:"appid"`
+
+	GroupID  int `json:"group_id"`
+	DeviceID int `json:"device_id"`
 
 	AreaID        string   `json:"areaid"`
 	QueryType     string   `json:"querytype"`
