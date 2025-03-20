@@ -32,8 +32,10 @@ func main() {
 
 	updatedb()
 
-	initPublicGroup()
 	initAllUserList()
+
+	initPublicGroup()
+
 	initAllDevList()
 
 	go jsonhttp.init()

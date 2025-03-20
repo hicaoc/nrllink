@@ -77,7 +77,7 @@ func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
+	u, err := checktoken(w, req)
 	if err != nil {
 		return
 	}
@@ -95,11 +95,19 @@ func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if g, ok := publicGroupMap[stb.GroupID]; ok {
+	if stb.GroupID <= 3 && stb.GroupID > 0 {
+		if user, okok := userlist.Load(u.CallSign); okok {
+			gp := user.(*userinfo).Groups[stb.GroupID]
+			writeJSONResponseItem(w, gp)
+			return
+		}
 
+	} else if g, ok := publicGroupMap[stb.GroupID]; ok {
 		writeJSONResponseItem(w, g)
+		return
 
 	}
+	w.Write(ResOpErr)
 
 }
 

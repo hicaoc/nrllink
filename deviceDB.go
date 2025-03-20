@@ -220,6 +220,22 @@ func initAllDevList() {
 					kkk.DevList = append(kkk.DevList, dev.ID)
 				}
 
+			} else {
+				if user, okok := userlist.Load(dev.CallSign); okok {
+					gp := user.(*userinfo).Groups[dev.GroupID]
+					gp.DevMap[dev.ID] = dev
+					gp.DevList = append(gp.DevList, dev.ID)
+				} else {
+
+					dev.GroupID = 0
+
+					if kkk, ok := publicGroupMap[dev.GroupID]; ok {
+						kkk.DevMap[dev.ID] = dev
+						kkk.DevList = append(kkk.DevList, dev.ID)
+					}
+
+				}
+
 			}
 
 		}

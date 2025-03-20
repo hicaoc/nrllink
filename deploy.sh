@@ -28,5 +28,5 @@ echo "deploying to $i"
 
 done
 
-scp -p 27949 udphub root@js.nrlptt.com:
+scp -P 27949 udphub root@js.nrlptt.com:
 ssh -p 27949 root@js.nrlptt.com "cd /nrllink; mv udphub udphub.$time ; cp /root/udphub . ; systemctl restart nrllink"

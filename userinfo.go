@@ -45,6 +45,7 @@ func (u *userinfo) userinit() {
 		Name:         "私有房间1",
 		Type:         8,
 		DevMap:       make(map[int]*deviceInfo),
+		DevList:      []int{},
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
 		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
@@ -57,6 +58,7 @@ func (u *userinfo) userinit() {
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
 		DevMap:       make(map[int]*deviceInfo),
+		DevList:      []int{},
 		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 	}
 
@@ -66,6 +68,7 @@ func (u *userinfo) userinit() {
 		Type:         8,
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
+		DevList:      []int{},
 		DevMap:       make(map[int]*deviceInfo),
 		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
 	}
