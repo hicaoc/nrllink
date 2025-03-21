@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -277,36 +276,36 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			}
 
 			//收到200设备第一次上线，并且是透明模式，将所有设备信息的IP信息通过心跳发给对方服务器
-			if dev.SSID == 200 && (dev.Status&4 == 4) {
-				for _, vv := range devCallsignSSIDMap {
-					if vv.ISOnline {
+			// if dev.SSID == 200 && (dev.Status&4 == 4) {
+			// 	for _, vv := range devCallsignSSIDMap {
+			// 		if vv.ISOnline {
 
-						bytes, err := hex.DecodeString(vv.CPUID)
-						if err != nil {
-							bytes = []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-						}
+			// 			bytes, err := hex.DecodeString(vv.CPUID)
+			// 			if err != nil {
+			// 				bytes = []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+			// 			}
 
-						pack := encodeNRL21(vv.CallSign, vv.SSID, 2, vv.DevModel, bytes, vv.udpAddr.IP.To4())
-						conn.WriteToUDP(pack, dev.udpAddr)
-						//fmt.Println(pack)
-					}
+			// 			pack := encodeNRL21(vv.CallSign, vv.SSID, 2, vv.DevModel, bytes, vv.udpAddr.IP.To4())
+			// 			conn.WriteToUDP(pack, dev.udpAddr)
+			// 			//fmt.Println(pack)
+			// 		}
 
-				}
-			} else {
+			// 	}
+			// } else {
 
-				//200设备手工上线
+			// 	//200设备手工上线
 
-				//将普通新上线的设备心跳附加IPv4地址转发给所有200的服务器
-				for _, vv := range ServerMap {
-					if vv.udpAddr != nil && vv.ISOnline && (vv.Status&4 == 4) {
-						p := append(packet, nrl.UDPAddr.IP.To4()...)
-						conn.WriteToUDP(p, vv.udpAddr)
-						log.Printf("forward hb packet: %v %v %v \n", len(p), vv.udpAddr.String(), nrl.UDPAddr.IP.To4())
-					}
+			// 	//将普通新上线的设备心跳附加IPv4地址转发给所有200的服务器
+			// 	for _, vv := range ServerMap {
+			// 		if vv.udpAddr != nil && vv.ISOnline && (vv.Status&4 == 4) {
+			// 			p := append(packet, nrl.UDPAddr.IP.To4()...)
+			// 			conn.WriteToUDP(p, vv.udpAddr)
+			// 			log.Printf("forward hb packet: %v %v %v \n", len(p), vv.udpAddr.String(), nrl.UDPAddr.IP.To4())
+			// 		}
 
-				}
+			// 	}
 
-			}
+			// }
 
 			//查询设备qth信息
 
@@ -503,7 +502,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 
 			if nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
 
-				if vv.DevModel == 200 && (vv.Status&4 != 4) {
+				if vv.DevModel == 200 {
 					//普通设备发给200设备，需要将原始呼号和SSID放到协议头
 					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), calculateCpuId(vv.CallSign+"-200"), packet)
 					conn.WriteToUDP(newpacket, vv.udpAddr)
@@ -547,7 +546,7 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 		if nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
 
 			//转发给其他服务器-200设备，需要使用携带原始信息
-			if vv.DevModel == 200 && (vv.Status&4 != 4) {
+			if vv.DevModel == 200 {
 				newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, []byte(nrl.CPUID), packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
