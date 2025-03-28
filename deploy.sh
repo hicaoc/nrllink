@@ -1,7 +1,7 @@
 #/bin/sh
 
 #hostlist='bd4two.nrlptt.com'
-hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com www.bh1osw.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com '
+hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com '
 
 #hostlist='www.bh1osw.com bh1osw.nrlptt.com'
 #hostlist='bh1osw.nrlptt.com'
@@ -28,5 +28,3 @@ echo "deploying to $i"
 
 done
 
-scp -P 27949 udphub root@js.nrlptt.com:
-ssh -p 27949 root@js.nrlptt.com "cd /nrllink; mv udphub udphub.$time ; cp /root/udphub . ; systemctl restart nrllink"

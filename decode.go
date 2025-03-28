@@ -106,7 +106,14 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, origin
 	packet[20] = packetType
 
 	// 写入 CallSign
-	copy(packet[24:30], callsign)
+	if len(callsign) == 5 {
+		copy(packet[24:29], callsign)
+		packet[29] = 0
+
+	} else {
+		copy(packet[24:30], callsign)
+
+	}
 
 	// 写入 SSID
 	packet[30] = ssid
