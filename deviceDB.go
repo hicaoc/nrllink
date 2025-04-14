@@ -66,7 +66,7 @@ func (d *deviceInfo) sendHeartbear() {
 
 	for {
 
-		if d.ISOnline {
+		if d.udpSocket != nil {
 			//发送心跳包
 			d.udpSocket.WriteToUDP(packet, d.udpAddr)
 			time.Sleep(time.Second * 2)
@@ -275,34 +275,34 @@ func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 
 }
 
-func getDeviceByCpuID(cpuid string) (dev *deviceInfo) {
-	dev = &deviceInfo{}
+// func getDeviceByCpuID(cpuid string) (dev *deviceInfo) {
+// 	dev = &deviceInfo{}
 
-	row := db.QueryRow(`select 
-	id,
-	name,
-	callsign,
-	CAST(ssid AS INTEGER) AS ssid,
-	cpuid,
-	password,gird,dev_type,dev_model,
-	group_id,status,is_certed,chan_name,
-	create_time,update_time,online_time,note,rf_type  
- from  devices   where cpuid=? `, cpuid)
+// 	row := db.QueryRow(`select
+// 	id,
+// 	name,
+// 	callsign,
+// 	CAST(ssid AS INTEGER) AS ssid,
+// 	cpuid,
+// 	password,gird,dev_type,dev_model,
+// 	group_id,status,is_certed,chan_name,
+// 	create_time,update_time,online_time,note,rf_type
+//  from  devices   where cpuid=? `, cpuid)
 
-	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
-		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
-		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
+// 	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+// 		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+// 		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 
-	if err != nil {
-		log.Println("query one device rows err:", err)
-	}
+// 	if err != nil {
+// 		log.Println("query one device rows err:", err)
+// 	}
 
-	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
-	dev.CallSignSSID = callsignSSID
+// 	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
+// 	dev.CallSignSSID = callsignSSID
 
-	return dev
+// 	return dev
 
-}
+// }
 
 func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
 
