@@ -29,9 +29,9 @@ type currentConnPool struct {
 	UDPAddr       *net.UDPAddr
 	lastVoiceTime time.Time
 	lastCtlTime   time.Time
-	allowCALLSSID string
-	devConnMap    map[string]*deviceInfo //key cpuid
-	devConnList   []*deviceInfo
+	//allowCALLSSID []string
+	devConnMap  map[string]*deviceInfo //key cpuid
+	devConnList []*deviceInfo
 }
 
 func udpServer() {
@@ -210,9 +210,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.VoiceTime = dev.VoiceTime + 63
 		totalstats.VoiceTime = totalstats.VoiceTime + 63
 
-		if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
-			return
-		}
+		// if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
+		// 	return
+		// }
 
 		//dev.LastPacketTime = nrl.timeStamp
 		dev.LastVoiceEndTime = nrl.timeStamp
@@ -347,9 +347,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.CtlTime = dev.CtlTime + 63
 		//totalstats.CtlTime = totalstats.CtlTime + 63
 
-		if gp.connPool.allowCALLSSID != "" && nrl.CPUID != gp.connPool.allowCALLSSID {
-			return
-		}
+		// if gp.connPool.allowCALLSSID != "" && nrl.CPUID != gp.connPool.allowCALLSSID {
+		// 	return
+		// }
 
 		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 			dev.udpAddr = nrl.UDPAddr
@@ -410,9 +410,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.VoiceTime = dev.VoiceTime + 63
 		totalstats.VoiceTime = totalstats.VoiceTime + 63
 
-		if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
-			return
-		}
+		// if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
+		// 	return
+		// }
 
 		//保存外部设备信息，用于解析QTH
 

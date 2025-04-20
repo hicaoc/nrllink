@@ -80,7 +80,7 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	writeJSONResponseData(w, mydevicelist, len(mydevicelist))
+	writeJSONResponseItems(w, mydevicelist, len(mydevicelist))
 
 }
 
@@ -210,7 +210,7 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误,数据格式错误"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"设备信息更新错误,数据格式错误"}}`))
 		return
 	}
 
@@ -230,7 +230,7 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备信息更新错误"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"设备信息更新错误,可能组不允许加入"}}`))
 		return
 	}
 	w.Write([]byte(`{"code":20000,"data":{"message":"设备更新成功成功"}}`))
@@ -254,7 +254,7 @@ func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"设备删除错误,数据格式错误"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"设备删除错误,数据格式错误"}}`))
 		return
 	}
 
@@ -371,13 +371,13 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 
 	if err != nil {
 		log.Println("device parm query  err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"查询设备信息错误"}}`))
 		return
 	}
 
 	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
 		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 		return
 
 	}
@@ -390,7 +390,7 @@ func (j *jsonapi) httpQueryDeviceParm(w http.ResponseWriter, req *http.Request) 
 
 	if err != nil {
 		log.Println("device parm query  err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"查询设备信息错误，可能设备不在线，或者固件版本过低"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"查询设备信息错误，可能设备不在线，或者固件版本过低"}}`))
 		return
 
 	}
@@ -450,7 +450,7 @@ outerLoop:
 		case "dcd_select":
 			_, err := changeDeviceByteParm(callsignssid, 0, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备DCD选择失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备DCD选择失败"}}`))
 				return
 			}
 			break outerLoop
@@ -458,7 +458,7 @@ outerLoop:
 		case "ptt_enable":
 			_, err := changeDeviceByteParm(callsignssid, 1, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改使能PTT失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改使能PTT失败"}}`))
 				return
 			}
 			break outerLoop
@@ -467,7 +467,7 @@ outerLoop:
 			_, err := changeDeviceByteParm(callsignssid, 2, v[0])
 
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 			break outerLoop
@@ -475,7 +475,7 @@ outerLoop:
 		case "add_tail_voice":
 			_, err := changeDeviceUint16Parm(callsignssid, 3, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"加尾音失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"加尾音失败"}}`))
 				return
 			}
 			break outerLoop
@@ -483,7 +483,7 @@ outerLoop:
 		case "remove_tail_voice":
 			_, err := changeDeviceUint16Parm(callsignssid, 5, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"消尾音失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"消尾音失败"}}`))
 				return
 			}
 			break outerLoop
@@ -491,7 +491,7 @@ outerLoop:
 		case "ptt_resistive":
 			_, err := changeDeviceByteParm(callsignssid, 7, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 			break outerLoop
@@ -499,7 +499,7 @@ outerLoop:
 		case "monitor_out":
 			_, err := changeDeviceByteParm(callsignssid, 8, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 			break outerLoop
@@ -507,7 +507,7 @@ outerLoop:
 		case "key_func":
 			_, err := changeDeviceByteParm(callsignssid, 9, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 			break outerLoop
@@ -516,7 +516,7 @@ outerLoop:
 			_, err := changeDeviceByteParm(callsignssid, 10, v[0])
 
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 			break outerLoop
@@ -524,7 +524,7 @@ outerLoop:
 		case "allow_relay_control":
 			_, err := changeDeviceByteParm(callsignssid, 11, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
 				return
 			}
 			break outerLoop
@@ -532,7 +532,7 @@ outerLoop:
 		case "voice_bitrate":
 			_, err := changeDeviceByteParm(callsignssid, 12, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"修改语音码率失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"修改语音码率失败"}}`))
 				return
 			}
 			break outerLoop
@@ -542,7 +542,7 @@ outerLoop:
 			ipparm := ipparm{32, req.Form["local_ipaddr"][0], 36, req.Form["gateway"][0], 40, req.Form["netmask"][0], 44, req.Form["dns_ipaddr"][0], 80, req.Form["dest_domainname"][0]}
 			_, err := changeDeviceIPParm(callsignssid, ipparm)
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变IP失败,IP不正确"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"改变IP失败,IP不正确"}}`))
 				return
 			}
 
@@ -559,7 +559,7 @@ outerLoop:
 		case "one_uv_power":
 			_, err := changeDeviceByteParm(callsignssid, 163, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"UV电源开关失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"UV电源开关失败"}}`))
 				return
 			}
 			break outerLoop
@@ -567,7 +567,7 @@ outerLoop:
 		case "moto_channel":
 			_, err := changeDeviceByteParm(callsignssid, 164, v[0])
 			if err != nil {
-				w.Write([]byte(`{"code":20000,"data":{"message":"改变摩托3188/3688信道失败"}}`))
+				w.Write([]byte(`{"code":20001,"data":{"message":"改变摩托3188/3688信道失败"}}`))
 				return
 			}
 			break outerLoop
@@ -684,6 +684,7 @@ func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device parm update err :", err)
+
 		w.Write([]byte(`{"code":20000,"data":{"message":"1W设备参数信息更新错误,数据格式错误"}}`))
 		return
 	}

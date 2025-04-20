@@ -39,7 +39,7 @@ func writeJSONResponse(w http.ResponseWriter, res *Response) error {
 
 }
 
-func writeJSONResponseData(w http.ResponseWriter, list interface{}, total int) error {
+func writeJSONResponseItems(w http.ResponseWriter, list interface{}, total int) error {
 	return writeJSONResponse(w, &Response{20000, "ok", respData{total, list}})
 }
 

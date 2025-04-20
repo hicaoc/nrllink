@@ -12,16 +12,18 @@ import (
 var publicGroupMap = make(map[int]*group, 1000) //key 房间号
 
 type group struct {
-	ID            int    `json:"id" db:"id"`
-	Name          string `json:"name" db:"name"`
-	Type          int    `json:"type" db:"type"`
-	AllowCALLSSID string `json:"allow_callsign_ssid" db:"allow_callsign_ssid"`
-	DevList       []int  `json:"devlist" db:"devlist"`
+	ID                int      `json:"id" db:"id"`
+	Name              string   `json:"name" db:"name"`
+	Type              int      `json:"type" db:"type"`
+	AllowCALLSSIDList []string `json:"allow_callsign_ssid" `
+	AllowCALLSSID     string   `db:"allow_callsign_ssid"`
+	DevList           []int    `json:"devlist" db:"devlist"`
 	//KeepTime     int           `json:"keep_time" db:"keep_time"`
 	Password     string `json:"password" db:"password"`
 	Status       int    `json:"status" db:"status"`
 	OwerID       int    `json:"ower_id" db:"ower_id"`
 	OwerCallsign string `json:"callsign" db:"callsign"`
+
 	//MasterServer int    `json:"master_server" db:"master_server"`
 	//SlaveServer  int    `json:"slave_server" db:"slave_server"`
 	CreateTime string `json:"create_time" db:"create_time"`
@@ -63,6 +65,16 @@ func convertIntArray2Str(gp []int) string {
 	}
 	return strings.Join(res, ",")
 
+}
+
+// Contains checks if a string slice contains a specific string element.
+func Contains(slice []string, element string) bool {
+	for _, item := range slice {
+		if item == element {
+			return true // 找到元素，立即返回 true
+		}
+	}
+	return false // 遍历完整个切片都没找到，返回 false
 }
 
 func initPublicGroup() {
@@ -120,14 +132,20 @@ func initPublicGroup() {
 
 		pg.DevList = convertStr2IntArray(devlist)
 
+		if pg.AllowCALLSSID == "" {
+			pg.AllowCALLSSIDList = []string{}
+		} else {
+			pg.AllowCALLSSIDList = strings.Split(pg.AllowCALLSSID, ",")
+
+		}
+
 		pg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
 
 		pg.DevMap = make(map[int]*deviceInfo, 10)
 
 		// 类型为3的公共组，只能一个设备转发，用于中继收听
-		if pg.Type == 3 {
-			pg.connPool.allowCALLSSID = pg.AllowCALLSSID
-		}
+
+		//pg.connPool.allowCALLSSID = pg.AllowCALLSSIDList
 
 		publicGroupMap[pg.ID] = pg
 
@@ -174,12 +192,33 @@ func getGroup(name string) (pg *group) {
 		log.Println("get group by name err:", err, name)
 		return nil
 	}
+
+	if pg.AllowCALLSSID == "" {
+		pg.AllowCALLSSIDList = []string{}
+	} else {
+		pg.AllowCALLSSIDList = strings.Split(pg.AllowCALLSSID, ",")
+
+	}
+
 	pg.DevList = convertStr2IntArray(devlist)
 	return pg
 
 }
 
 func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
+
+	//检查目标组是否允许此设备加入
+
+	if g, ok := publicGroupMap[groupid]; ok {
+
+		if len(g.AllowCALLSSIDList) > 0 {
+			if !Contains(g.AllowCALLSSIDList, dev.CallSignSSID) {
+				return "", fmt.Errorf("group not allow this callsign")
+			}
+
+		}
+
+	}
 
 	//从之前的组删除
 
@@ -255,6 +294,8 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 func addPublicGroup(pg *group) error {
 
+	pg.AllowCALLSSID = strings.Join(pg.AllowCALLSSIDList, ",")
+
 	//	fmt.Println("user:", e)
 	var devllist = convertIntArray2Str(pg.DevList)
 	query := `INSERT INTO public_groups (name,type,allow_callsign_ssid,callsign,ower_id,password,devlist,
@@ -290,6 +331,8 @@ func addPublicGroup(pg *group) error {
 
 func updatePublicGroup(pg *group) error {
 
+	pg.AllowCALLSSID = strings.Join(pg.AllowCALLSSIDList, ",")
+
 	_, err := db.Exec(`update public_groups set name=?, type=?, allow_callsign_ssid=?, password=?, status=?,
 	 note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,
 		pg.Name, pg.Type, pg.AllowCALLSSID, pg.Password, pg.Status, pg.Note, pg.ID)
@@ -308,14 +351,11 @@ func updatePublicGroup(pg *group) error {
 		p.Note = pg.Note
 		p.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 		p.AllowCALLSSID = pg.AllowCALLSSID
-		p.connPool.allowCALLSSID = pg.AllowCALLSSID
+		p.AllowCALLSSIDList = pg.AllowCALLSSIDList
+		//p.connPool.allowCALLSSID = pg.AllowCALLSSIDList
 		p.Password = pg.Password
 
-		if pg.Type == 3 {
-			p.connPool.allowCALLSSID = pg.AllowCALLSSID
-		} else {
-			p.connPool.allowCALLSSID = ""
-		}
+		//p.connPool.allowCALLSSID = pg.AllowCALLSSIDList
 
 	}
 
