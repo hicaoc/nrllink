@@ -32,6 +32,8 @@ func main() {
 
 	updatedb()
 
+	chatgptInit()
+
 	initAllUserList()
 
 	initPublicGroup()
@@ -42,6 +44,8 @@ func main() {
 
 	logbuffer = make(chan *deviceInfo, 1000)
 	go saveLog()
+
+	go cronGetWxToken()
 
 	go checkdeviceOnline()
 

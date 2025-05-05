@@ -43,16 +43,38 @@ type config struct {
 		LogoURL       string `yaml:"LogoURL" json:"logo_url"`
 	} `yaml:"SystemInfo" json:"systeminfo"`
 
+	OpenAI struct {
+		BaseURL string `yaml:"BaseURL" json:"base_url"`
+		APIKEY  string `yaml:"APIKEY" json:"api_key"`
+		Engine  string `yaml:"Engine" json:"engine"`
+	} `yaml:"OpenAI" json:"openai"`
+
 	WeiXin struct {
 		// signmsgurl     string
 		// rechargemsgurl string
-		PhoneCodeURL string `yaml:"PhoneCodeURL" json:"phone_code_url"`
-		AvatarURL    string `yaml:"AvatarURL" json:"avatar_url"`
-		// accessToken  string
-		ServerURL string `yaml:"ServerURL" json:"server_url"` //本机api url地址
+		MpAppid           string `yaml:"MpAppid" json:"mp_appid"`
+		MpAppSecret       string `yaml:"MpAppSecret" json:"mp_appsecret"`
+		PhoneCodeURL      string `yaml:"PhoneCodeURL" json:"phone_code_url"`
+		AvatarURL         string `yaml:"AvatarURL" json:"avatar_url"`
+		AccessToken       string
+		AppID             string `yaml:"AppID" json:"appid"`
+		AppSecret         string `yaml:"AppSecret" json:"appsecret"`
+		EncodingAESKey    string `yaml:"EncodingAESKey" json:"encodingaeskey"`
+		AesKey            []byte
+		ClickEventMap     map[string]string `yaml:"ClickEventMap" json:"click_event_map"`
+		KeywordsMap       map[string]string `yaml:"KeywordsMap" json:"keywords_map"`
+		WeixinWelcome     string            `yaml:"WeixinWelcome" json:"weixin_welcome"`
+		DefaultKeywords   string            `yaml:"DefaultKeywords" json:"default_keywords"`
+		WeiXinAccessToken *WXBody
+		WeiXinMenu        string `yaml:"WeixinMenu" json:"weixin_menu"`
+		ServerURL         string `yaml:"ServerURL" json:"server_url"` //本机api url地址
 
-		WeixinAPIURL string `yaml:"WeixinAPIURL" json:"weixin_api_url"` //微信URL接口地址
-		Wxmsgurl     string `yaml:"WxMsgURL" json:"wx_msg_url"`         //微信模板消息url
+		WeixinAPIURL       string `yaml:"WeixinAPIURL" json:"weixin_api_url"` //微信URL接口地址
+		Wxmsgurl           string `yaml:"WxMsgURL" json:"wx_msg_url"`         //微信模板消息url
+		TypePhoneCodeID    string
+		TypeLoginSuccessID string
+
+		TypeLoginFailID string
 
 		AlarmModeID string `yaml:"AlarmModeID" json:"alarm_mode_id"` //告警通知模板ID
 

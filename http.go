@@ -8,6 +8,7 @@ import (
 	// _ "net/http/pprof"
 	// "github.com/jmoiron/sqlx"
 
+	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 
 	"golang.org/x/net/websocket"
@@ -101,18 +102,17 @@ func sethttphead(w http.ResponseWriter) {
 
 func (j *jsonapi) msghttp() {
 
-	// fs := http.FileServer(http.Dir(conf.topnpath))
+	router := mux.NewRouter()
 
-	// http.Handle("/topn/files/", http.StripPrefix("/topn/files", fs))
+	router.HandleFunc("/api/msg/weixin", j.httpWXMsg)               //微信公众号接口
+	router.HandleFunc("/weixinreturn/msgstatus", j.httpWXMsgReturn) //微信回调
+	router.HandleFunc("/weixin/phonecode", j.httpPhoneCode)         //crm自己处理操作员的过来的绑定请求
+	router.HandleFunc("/weixin/mpphonecode", j.httpMPPhoneCode)     //crm自己处理微信小程序后端的过来的绑定请求
+	router.HandleFunc("/weixin/wxmsg", j.httpgetWeiXinMsg)          //查询微信用户发过来的消息
+	router.HandleFunc("/api/getwxmsg", j.httpGetWeiXinMsgContent)
 
-	// http.HandleFunc("/user/totalstats", j.httpUserTotalStats)
-	// http.HandleFunc("/user/topnstats", j.httpTopNStats)
-	// http.HandleFunc("/user/topnappstats", j.httpTopNAppStats)
-	// http.HandleFunc("/user/topnaccountlist", j.httpTopNUserlist)
-
-	// http.HandleFunc("/user/queryuser", j.httpqueryuser)
-	// //http.HandleFunc("/user/usertimeline", j.httpUserTimeline)
-	// http.HandleFunc("/user/datelist", j.httpUserDataList)
+	//小程序登录
+	router.HandleFunc("/api/weixin/wxlogin/teacher", j.httpMPuserLogin)
 
 	http.HandleFunc("/platform/info", j.httpplatforminfo)
 	http.HandleFunc("/platform/list", j.httpplatformList)
@@ -123,6 +123,8 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/device/get", j.httpDevice)
 	http.HandleFunc("/device/qthmap", j.httpDeviceQTHs)
 	http.HandleFunc("/device/qth", j.httpDeviceQTHs)
+	http.HandleFunc("/device/qth2", j.httpDeviceQTH)
+
 	http.HandleFunc("/device/mydevlist", j.httpMyDeviceList)
 	// http.HandleFunc("/device/binddevice", j.httpBindDevice)
 	http.HandleFunc("/device/update", j.httpUpdateDevice)
@@ -220,15 +222,6 @@ func (j *jsonapi) msghttp() {
 
 }
 
-// type queryparm struct {
-// 	Area      string `json:"area"`
-// 	QueryType string `json:"querytype"`
-// 	AppID     string `json:"appid"`
-// 	IPgroupID int    `json:"ipgroup_id"`
-// 	BasID     string `json:"basid"`
-// 	Date      string `json:"date"`
-// }
-
 type query struct {
 	ID       string `json:"id"`
 	User     string `json:"user"`
@@ -278,22 +271,6 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 	var s string
 	var p string
 	var sort string
-
-	// t := reflect.TypeOf(q)
-	// v := reflect.ValueOf(q)
-
-	// for i := 0; i < t.NumField(); i++ {
-
-	// 	if v.Field(i).String() != "" && t.Field(i).Name != "Page" && t.Field(i).Name != "Sort" && t.Field(i).Name != "Limit" {
-	// 		fmt.Println("s:", s, len(s))
-	// 		if s != "" {
-	// 			s = s + " and " + t.Field(i).Tag.Get("json") + "='" + v.Field(i).String() + "'"
-	// 		} else {
-	// 			s = s + " " + t.Field(i).Tag.Get("json") + "='" + v.Field(i).String() + "'"
-	// 		}
-	// 	}
-
-	// }
 
 	if q.ID != "" {
 		s = " id = " + q.ID

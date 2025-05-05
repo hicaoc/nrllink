@@ -459,7 +459,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 		for _, vv := range gp.connPool.devConnMap {
 
 			//报文转发给其它设备，不包含自己
-			if nrl.UDPAddrStr != vv.udpAddr.String() && ((vv.Status & 2) != 2) {
+			if vv.udpAddr != nil && nrl.UDPAddrStr != vv.udpAddr.String() && ((vv.Status & 2) != 2) {
 
 				if vv.DevModel == 200 && ((vv.Status & 4) != 4) {
 					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), calculateCpuId(vv.CallSign+"-200"), packet)
@@ -500,7 +500,7 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 			// 	continue
 			// }
 
-			if nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
+			if vv.udpAddr != nil && nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
 
 				if vv.DevModel == 200 {
 					//普通设备发给200设备，需要将原始呼号和SSID放到协议头
@@ -543,7 +543,7 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 
 	for _, vv := range gp.connPool.devConnList {
 
-		if nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
+		if vv.udpAddr != nil && nrl.UDPAddrStr != vv.udpAddr.String() && (vv.Status&2) != 2 {
 
 			//转发给其他服务器-200设备，需要使用携带原始信息
 			if vv.DevModel == 200 {
@@ -676,7 +676,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 			// 	continue
 			// }
 
-			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
+			if vv.udpAddr != nil && nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 
 				if vv.DevModel == 200 {
 					return

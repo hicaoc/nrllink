@@ -549,6 +549,20 @@ func addDevice(dev *deviceInfo) error {
 
 }
 
+func offlineDevice(dev string) {
+
+	log.Println("offlineDevice:", dev)
+
+	if d, ok := devCallsignSSIDMap[dev]; ok {
+
+		//delete(publicGroupMap[d.GroupID].connPool.devConnMap, d.udpAddr.String())
+		d.udpAddr = nil
+
+	} else {
+		log.Println("device is not found", dev)
+	}
+}
+
 func delDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
@@ -618,19 +632,6 @@ func updateDevice(e *deviceInfo) error {
 	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,
 	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
 		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
-	if err != nil {
-		log.Println("update device failed, ", err)
-		return err
-	}
-
-	return nil
-
-}
-
-func updateDeviceCallsignSSIDByCPuid(callsign, cpuid string, ssid byte) error {
-
-	_, err := db.Exec(`update devices set callsign=?, ssid=? where cpuid=?`,
-		callsign, strconv.Itoa(int(ssid)), cpuid)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err

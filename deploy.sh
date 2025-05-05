@@ -1,7 +1,7 @@
 #/bin/sh
 
 #hostlist='bd4two.nrlptt.com'
-hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com '
+hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com bg1vif.nrlptt.com'
 
 #hostlist='ptt.nrlptt.com bh1osw.nrlptt.com'
 
@@ -10,6 +10,8 @@ hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nr
 #hostlist='ham.73ham.com'
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
+
+hostlist='js.nrlptt.com'
 
 time=`date "+%Y%m%d%H%M%S"`
 

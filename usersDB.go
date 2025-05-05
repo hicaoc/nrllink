@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	//"github.com/lib/pq"
@@ -37,14 +38,16 @@ type userinfo struct {
 	UpdateTime   string   `db:"update_time" json:"update_time"`
 	CreateTime   string   `db:"create_time" json:"create_time"`
 
-	Routes        string `json:"routes" db:"routes"`
-	Status        int    `json:"status" db:"status"`
-	LastLoginTime string `json:"last_login_time" db:"last_login_time"`
-	LastLoginIP   string `json:"last_login_ip" db:"last_login_ip"`
-	LoginErrTimes int    `json:"login_err_times" db:"login_err_times"`
-	AlarmMsg      bool   `json:"alarm_msg" db:"alarm_msg"`
-	NickName      string `json:"nickname" db:"nickname"`
-	OpenID        string `json:"openid" db:"openid"`
+	Routes        string        `json:"routes" db:"routes"`
+	Status        int           `json:"status" db:"status"`
+	LastLoginTime string        `json:"last_login_time" db:"last_login_time"`
+	LastLoginIP   string        `json:"last_login_ip" db:"last_login_ip"`
+	LoginErrTimes int           `json:"login_err_times" db:"login_err_times"`
+	AlarmMsg      bool          `json:"alarm_msg" db:"alarm_msg"`
+	NickName      string        `json:"nickname" db:"nickname"`
+	OpenID        string        `json:"openid" db:"openid"`
+	TalkDuration  time.Duration `json:"talk_duration"`
+	TalkTimes     int           `json:"talk_times"`
 }
 
 type role struct {
@@ -487,6 +490,22 @@ func updateUser(e *userinfo) error {
 
 	e.userinit()
 	userlist.Store(e.CallSign, e)
+
+	return nil
+
+}
+
+func updateweixininfo(e wxUserInfo, studentid int) error {
+
+	//'25001'||to_char(now(),'YYMMDDHHMMSS')||to_char(id,'fm00000')||to_char(ceil(random()*(100-1)+1),'fm00')+
+
+	//卡号自动生成， 校区编号+年月日时分秒+学员ID+随机数
+
+	_, err := db.Exec(`UPDATE students set openid=?,avatar=?,nickname=?,update_time=now() where id=?`, e.OpenID, e.Headimgurl, e.NickName, studentid)
+	if err != nil {
+		log.Println("update Student weixin phonecode, ", err)
+		return err
+	}
 
 	return nil
 

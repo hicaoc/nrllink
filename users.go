@@ -584,11 +584,29 @@ func (j *jsonapi) httpoplogout(w http.ResponseWriter, req *http.Request) {
 
 	sethttphead(w)
 
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
 	result, _ := io.ReadAll(req.Body)
 	//fmt.Println("adminlogin result:", string(result))
 	req.Body.Close()
 
-	log.Println("logout:", result)
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("logout  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"退出登录错误"}}`))
+		return
+	}
+
+	if stb.SSID == 100 {
+		offlineDevice(getCallsignSSID(u.CallSign, 100))
+	}
+
+	log.Println("logout:", result, string(result))
 
 	//	if _, ok := checkcookie(req); ok {
 	//req.ParseForm()
