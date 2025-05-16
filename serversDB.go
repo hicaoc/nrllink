@@ -210,12 +210,12 @@ func queryServers() (serverlist []*Server) {
 			log.Println("query  server rows err:", err)
 		}
 
-		if pg.Status == 1 {
-			pg.Start()
+		// if pg.Status == 1 {
+		// 	pg.Start()
 
-		} else {
-			go pg.Stop()
-		}
+		// } else {
+		// 	go pg.Stop()
+		// }
 
 		serverlist = append(serverlist, pg)
 
