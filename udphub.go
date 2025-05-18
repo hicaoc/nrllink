@@ -53,7 +53,11 @@ func udpServer() {
 	globelconn = conn
 
 	//启动服务器互联
-	queryServers()
+	for _, v := range queryServers() {
+		if v.Status == 1 {
+			v.Start()
+		}
+	}
 
 	log.Println("data parse server started on udp :", udpAddr, conf.System.Port)
 
