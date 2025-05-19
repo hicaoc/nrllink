@@ -93,6 +93,12 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 
 	rows, err := db.Query(query)
 
+	if err != nil {
+		log.Println("查询注册用户列表错误: ", err, "\n", query)
+		return nil, 0
+
+	}
+
 	for rows.Next() {
 
 		r := reguser{}
