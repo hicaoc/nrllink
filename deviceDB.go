@@ -96,19 +96,18 @@ func checkdeviceOnline() {
 
 			for kkk, vvv := range vv.connPool.devConnMap {
 
-				if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
-					log.Printf("device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+				switch {
+				case t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline || kkk != vvv.udpAddr.String():
+					log.Printf("public room device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+					delete(vv.connPool.devConnMap, kkk)
 					delete(vv.connPool.devConnMap, vvv.udpAddr.String())
 					vvv.ISOnline = false
 					vvv.udpAddr = nil
 					change = true
 
-				} else if kkk != vvv.udpAddr.String() {
-					fmt.Println("dev session error delete:", kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
-					delete(vv.connPool.devConnMap, kkk)
-					change = true
-				} else {
+				default:
 					vv.OnlineDevNumber = vv.OnlineDevNumber + 1
+
 				}
 
 				//fmt.Println("dev conn pool:", vv.ID, vv.Name, len(vv.connPool.devConnMap), kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
@@ -136,18 +135,17 @@ func checkdeviceOnline() {
 
 				for kkk, vvv := range vv.connPool.devConnMap {
 
-					if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
-						log.Printf("device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
-
+					switch {
+					case t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline || kkk != vvv.udpAddr.String():
+						log.Printf("privite room device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+						delete(vv.connPool.devConnMap, kkk)
 						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
-
 						vvv.ISOnline = false
 						vvv.udpAddr = nil
 
-					} else if kkk != vvv.udpAddr.String() {
-						delete(vv.connPool.devConnMap, kkk)
-					} else {
+					default:
 						vv.OnlineDevNumber = vv.OnlineDevNumber + 1
+
 					}
 
 				}
@@ -557,6 +555,7 @@ func offlineDevice(dev string) {
 
 		//delete(publicGroupMap[d.GroupID].connPool.devConnMap, d.udpAddr.String())
 		d.udpAddr = nil
+		d.ISOnline = false
 
 	} else {
 		log.Println("device is not found", dev)
