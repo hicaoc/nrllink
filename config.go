@@ -23,12 +23,12 @@ type config struct {
 	} `yaml:"System" json:"system"`
 
 	Web struct {
-		Path     string `yaml:"Path" json:"path"`
-		Port     string `yaml:"Port" json:"port"`
-		TokenKey string `yaml:"Token_Key" json:"token_key"`
-		ICP      string `yaml:"ICP" json:"icp"`
-		SSLCrt   string `yaml:"SSLCrt" json:"ssl_crt"`
-		SSLKey   string `yaml:"SSLKey" json:"ssl_key"`
+		Path string `yaml:"Path" json:"path"`
+		Port string `yaml:"Port" json:"port"`
+		//TokenKey string `yaml:"Token_Key" json:"token_key"`
+		ICP    string `yaml:"ICP" json:"icp"`
+		SSLCrt string `yaml:"SSLCrt" json:"ssl_crt"`
+		SSLKey string `yaml:"SSLKey" json:"ssl_key"`
 	} `yaml:"Web" json:"web" `
 
 	PlatformList []struct {

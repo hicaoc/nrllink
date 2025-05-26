@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+var TokenKey = RandString(32)
 
 // 定义你的签名密钥
 //var jwtKey = []byte("BKWEUaKinE1te2ujmPGA")
@@ -32,7 +35,7 @@ func GenerateToken(username string, roles []string) (string, error) {
 
 	// 创建 token 并签名
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(conf.Web.TokenKey))
+	tokenString, err := token.SignedString(TokenKey)
 	if err != nil {
 		return "", err
 	}
@@ -45,11 +48,11 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 
 	// 解析和验证 token
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(conf.Web.TokenKey), nil
+		return []byte(TokenKey), nil
 	})
 
 	if err != nil {
@@ -61,4 +64,14 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+func RandString(len int) []byte {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	bytes := make([]byte, len)
+	for i := range len {
+		b := r.Intn(26) + 65
+		bytes[i] = byte(b)
+	}
+	return bytes
 }
