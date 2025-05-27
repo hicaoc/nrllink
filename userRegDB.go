@@ -68,7 +68,7 @@ func createRegUser(e *reguser) error {
 		return err
 	}
 
-	fmt.Println(id)
+	log.Println("插入注册用户数据到数据库", id)
 
 	return nil
 

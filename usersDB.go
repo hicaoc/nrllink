@@ -495,6 +495,24 @@ func updateUser(e *userinfo) error {
 
 }
 
+func updateUseravatar(e *userinfo) error {
+
+	_, err := db.Exec(`update users set avatar=?,   update_time=CURRENT_TIMESTAMP  where id=?`,
+		e.Avatar, e.ID)
+	if err != nil {
+		log.Println("update user failed, ", err)
+		return err
+	}
+
+	if u, okok := userlist.Load(e.CallSign); okok {
+		u.(*userinfo).Avatar = e.Avatar
+
+	}
+
+	return nil
+
+}
+
 func updateweixininfo(e wxUserInfo, studentid int) error {
 
 	//'25001'||to_char(now(),'YYMMDDHHMMSS')||to_char(id,'fm00000')||to_char(ceil(random()*(100-1)+1),'fm00')+

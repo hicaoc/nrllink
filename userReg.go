@@ -151,31 +151,33 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 保存文件路径
-	var opCertPath, licensePath string
+	var licensePath string
 
-	// 处理上传的操作证文件
-	opCertFile, opCertHeader, err := r.FormFile("certificate")
-	if err == nil {
-		defer opCertFile.Close()
-		opCertPath = filepath.Join(uploadDir, callsign+"_certificate"+filepath.Ext(opCertHeader.Filename))
-		if err := saveFile(opCertFile, opCertPath); err != nil {
-			w.Write(ResOpErr)
-			return
-		}
-	}
+	// // 处理上传的操作证文件
+	// opCertFile, opCertHeader, err := r.FormFile("certificate")
+	// if err == nil {
+	// 	defer opCertFile.Close()
+	// 	opCertPath = filepath.Join(uploadDir, callsign+"_certificate"+filepath.Ext(opCertHeader.Filename))
+	// 	if err := saveFile(opCertFile, opCertPath); err != nil {
+	// 		w.Write(ResOpErr)
+	// 		return
+	// 	}
+	// }
 
 	// 处理上传的电台执照文件
 	licenseFile, licenseHeader, err := r.FormFile("license")
 	if err == nil {
+		log.Println("注册信息licenseFile：", err)
 		defer licenseFile.Close()
 		licensePath = filepath.Join(uploadDir, callsign+"_license"+filepath.Ext(licenseHeader.Filename))
 		if err := saveFile(licenseFile, licensePath); err != nil {
+			log.Println("注册信息licensePath：", err)
 			w.Write(ResOpErr)
 			return
 		}
 	}
 
-	fmt.Println("opCertPath:", opCertPath)
+	//fmt.Println("opCertPath:", opCertPath)
 	fmt.Println("licensePath:", licensePath)
 
 	reguser := &reguser{
@@ -185,7 +187,7 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		Address:     address,
 		Mail:        mail,
 		Password:    password,
-		OpCertPath:  opCertPath,
+		OpCertPath:  licensePath,
 		LicensePath: licensePath,
 		CreateTime:  time.Now().Format("2006-01-02 15:04:05"),
 		UpdateTime:  time.Now().Format("2006-01-02 15:04:05"),

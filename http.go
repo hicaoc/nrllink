@@ -36,6 +36,7 @@ type platforminfo struct {
 	ICP      string `json:"icp"`
 	Mail     string `json:"mail"`
 	Callsign string `json:"callsign"`
+	Language string `json:"language"`
 }
 
 var totalstats = totalStats{}
@@ -70,6 +71,7 @@ func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 	p := platforminfo{
 		Name:     conf.SystemInfo.PlatformName,
 		LogoURL:  conf.SystemInfo.LogoURL,
+		Language: conf.SystemInfo.Language,
 		Version:  "v2.0.0",
 		ICP:      conf.Web.ICP,
 		Mail:     "caoc@live.com",
@@ -180,6 +182,8 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/user/detail", j.httpUserDetail)
 	http.HandleFunc("/user/create", j.httpAddUser)
 	http.HandleFunc("/user/update", j.httpUpdateUser)
+	http.HandleFunc("/user/update/avatar", j.httpUpdateUserAvatar)
+
 	http.HandleFunc("/user/password", j.httpUpdateUserPassword)
 	http.HandleFunc("/user/delete", j.httpDeleteUser)
 

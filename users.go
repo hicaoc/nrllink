@@ -225,6 +225,43 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (j *jsonapi) httpUpdateUserAvatar(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &userinfo{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("update user  err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		return
+	}
+
+	stb.CallSign = u.CallSign
+
+	// if checkrole(stb, []string{"admin"}) {
+	// 	w.Write([]byte("{"code":20000,"data":{"message":"内置账号，无法修改"}}"))
+	// 	return
+	// }
+
+	//stb.Area = u.Area
+	updateUseravatar(stb)
+
+	addOperatorLog(stb.String(), "修改用户头像成功", u)
+
+	w.Write([]byte(`{"code":20000,"data":{"message":"头像更新成功"}}`))
+
+}
+
 func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
