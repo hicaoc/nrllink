@@ -216,7 +216,16 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
 		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
+		return
+
+	}
+
+	dev := getDevice(stb.CallSign, stb.SSID)
+
+	if !checkrole(u, []string{"admin"}) && stb.Priority != dev.Priority {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误，只有管理员可以修改设备优先级"}}`))
 		return
 
 	}

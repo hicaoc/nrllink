@@ -23,7 +23,8 @@ type deviceInfo struct {
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
 	CallSign        string `json:"callsign" db:"callsign"`             //所有者呼号
-	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者呼号
+	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者SSID
+	Priority        int    `json:"priority" db:"priority"`             //优先级 默认100， 数字大优先
 	CallSignSSID    string `json:"callsignssid"`                       //callsign+ssid
 	GroupID         int    `json:"group_id" db:"group_id"`             //内置群租编号
 	GroupPassword   string `json:"group_password" db:"group_password"` //加入组的密码
@@ -170,7 +171,8 @@ func initAllDevList() {
 	id,
 	name,
 	callsign,
-	CAST(ssid AS INTEGER) AS ssid,	
+	CAST(ssid AS INTEGER) AS ssid,
+	priority,	
 	cpuid,
 	password,
 	gird,
@@ -194,7 +196,7 @@ func initAllDevList() {
 	for rows.Next() {
 
 		dev := &deviceInfo{}
-		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 			&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 			&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 		if err != nil {
@@ -255,14 +257,14 @@ func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 	dev = &deviceInfo{}
 
 	row := db.QueryRow(`select id,name,callsign,
-	CAST(ssid AS INTEGER) AS ssid,		
+	CAST(ssid AS INTEGER) AS ssid,		priority,
 
 	cpuid,password,gird,dev_type,dev_model,
 	group_id,status,is_certed,chan_name,
 	create_time,update_time,online_time,note,rf_type  
  from  devices   where callsign=? and ssid=?`, callsign, ssid)
 
-	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 
@@ -596,6 +598,7 @@ func updateDevice(e *deviceInfo) error {
 		d.DevType = e.DevType
 		d.DevModel = e.DevModel
 		d.Status = e.Status
+		d.Priority = e.Priority
 		d.Note = e.Note
 		d.Password = e.Password
 		d.RFType = e.RFType
@@ -632,9 +635,9 @@ func updateDevice(e *deviceInfo) error {
 
 	}
 
-	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,
+	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
 	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
+		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err

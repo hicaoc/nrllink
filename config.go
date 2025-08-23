@@ -125,10 +125,11 @@ func (c *config) init() {
 	// }
 
 	if *oo != "" {
-		if *oo == "json" {
+		switch *oo {
+		case "json":
 			j, _ := jsonextra.MarshalIndent(conf, "", "    ")
 			fmt.Println(string(j))
-		} else if *oo == "yaml" {
+		case "yaml":
 			j, _ := yaml.Marshal(conf)
 			fmt.Println(string(j))
 
@@ -163,12 +164,13 @@ func getDB() *sql.DB {
 
 func updatedb() {
 	sqlStatements := []string{
-		"ALTER TABLE devices ADD COLUMN callsign TEXT DEFAULT '';",
-		"ALTER TABLE public_groups ADD COLUMN allow_callsign_ssid TEXT DEFAULT '';",
-		"CREATE UNIQUE INDEX idx_ssid_callsign ON devices (ssid, callsign);",
-		"CREATE UNIQUE INDEX idx_name_unique ON public_groups(name);",
-		"CREATE UNIQUE INDEX idx_phone_unique ON users(phone);",
-		"CREATE UNIQUE INDEX idx_callsign_unique ON users(callsign);",
+		//"ALTER TABLE devices ADD COLUMN callsign TEXT DEFAULT '';",
+		"ALTER TABLE devices ADD COLUMN priority INTEGER DEFAULT 100;",
+		//"ALTER TABLE public_groups ADD COLUMN allow_callsign_ssid TEXT DEFAULT '';",
+		//"CREATE UNIQUE INDEX idx_ssid_callsign ON devices (ssid, callsign);",
+		//"CREATE UNIQUE INDEX idx_name_unique ON public_groups(name);",
+		//"CREATE UNIQUE INDEX idx_phone_unique ON users(phone);",
+		//"CREATE UNIQUE INDEX idx_callsign_unique ON users(callsign);",
 	}
 
 	// 逐条执行 SQL 语句并输出日志

@@ -66,6 +66,7 @@ func (p *Server) Start() error {
 		//dev.ISOnline = true
 		dev.DevModel = 200
 		dev.SSID = 200
+		dev.Priority = 100
 
 		go dev.sendHeartbear()
 
@@ -91,6 +92,7 @@ func (p *Server) Start() error {
 			udpSocket: globelconn,
 			udpAddr:   addr,
 			SSID:      200,
+			Priority:  100,
 			DevModel:  200,
 			CPUID:     cpuIDHex,
 			Note:      "server"}
@@ -369,10 +371,11 @@ func updateServer(s *Server) error {
 	}
 	// if oldserver.Status != s.Status {
 
-	if s.Status == 1 {
+	switch s.Status {
+	case 1:
 		s.Start()
 
-	} else if s.Status == 2 {
+	case 2:
 		go s.Stop()
 	}
 	// }

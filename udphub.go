@@ -29,6 +29,8 @@ type currentConnPool struct {
 	UDPAddr       *net.UDPAddr
 	lastVoiceTime time.Time
 	lastCtlTime   time.Time
+	lastPriority  int
+
 	//allowCALLSSID []string
 	devConnMap  map[string]*deviceInfo //key cpuid
 	devConnList []*deviceInfo
@@ -193,8 +195,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//fmt.Println("recived G.711 voice ")
 		// fmt.Println(connpool.allowDEV, n.CPUID, n.CallSign)
 
-		if (dev.Status & 1) == 1 {
+		//设备状态为禁发
 
+		if (dev.Status & 1) == 1 {
 			return
 		}
 
@@ -222,7 +225,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.LastVoiceEndTime = nrl.timeStamp
 		dev.LastCtlEndTime = nrl.timeStamp
 
-		forwardVoice(nrl, packet, conn, gp)
+		forwardVoice(nrl, dev, packet, conn, gp)
 	case 2:
 
 		//处理服务器转发的定制心跳，不能响应回去，会循环
@@ -438,7 +441,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 }
 
-func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
+func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UDPConn, gp *group) {
 
 	numbs := len(gp.connPool.devConnMap)
 
@@ -481,19 +484,30 @@ func forwardVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group)
 
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
-		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
-		if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+		//语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音，
+		if nrl.Status&0x01 == 0 {
+			return
+		}
 
-			if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
-				k.LastVoiceEndTime = nrl.timeStamp
-			}
+		//如果设备的优先级小于上次语音包设备优先级，如果是自己的包，优先级相等，条件不符合，继续其他判断
+		//如果当前有会话，并且会话结束时间没超过200毫秒， 那么不转发其它设备报文
+		//如果上次语言发送者不等于当前语音发送者 并且，当前时间和上次语音时间间隔小于200毫秒 不转发设备过来的语音包
+		if dev.Priority <= gp.connPool.lastPriority && (nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond {
+
+			dev.LastVoiceEndTime = nrl.timeStamp
+			// if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
+			// 	k.LastVoiceEndTime = nrl.timeStamp
+			// }
 
 			return
-			//否则重新让新设备抢占语音权，并更新上次报文时间
+
 		} else {
+
+			//否则重新让新设备抢占语音权，并更新上次报文时间
 
 			gp.connPool.UDPAddr = nrl.UDPAddr
 			gp.connPool.lastVoiceTime = nrl.timeStamp
+			gp.connPool.lastPriority = dev.Priority
 
 		}
 

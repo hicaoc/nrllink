@@ -1,7 +1,7 @@
 #/bin/sh
 
 #hostlist='bd4two.nrlptt.com'
-hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com bg1vif.nrlptt.com yc.njmobile.cn'
+hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com bg1vif.nrlptt.com usa.nrlptt.com yc.njmobile.cn'
 
 #hostlist='ptt.nrlptt.com bh1osw.nrlptt.com'
 
@@ -11,7 +11,9 @@ hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nr
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
 
-#hostlist='js.nrlptt.com'
+hostlist='js.nrlptt.com'
+
+#hostlist='usa.nrlptt.com'
 
 
 #hostlist='nrlptt.com'
