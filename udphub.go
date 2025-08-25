@@ -149,6 +149,7 @@ func udpProcess(conn *net.UDPConn) {
 				SSID:         nrl.SSID,
 				CPUID:        nrl.CPUID,
 				DevModel:     nrl.DevMode,
+				Priority:     100,
 				//udpAddr:      nrl.UDPAddr,
 				ChanName: make([]string, 8)})
 
@@ -492,7 +493,9 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 		//如果设备的优先级小于上次语音包设备优先级，如果是自己的包，优先级相等，条件不符合，继续其他判断
 		//如果当前有会话，并且会话结束时间没超过200毫秒， 那么不转发其它设备报文
 		//如果上次语言发送者不等于当前语音发送者 并且，当前时间和上次语音时间间隔小于200毫秒 不转发设备过来的语音包
-		if dev.Priority <= gp.connPool.lastPriority && (nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond {
+		if dev.Priority <= gp.connPool.lastPriority &&
+			nrl.UDPAddrStr != gp.connPool.UDPAddr.String() &&
+			nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond {
 
 			dev.LastVoiceEndTime = nrl.timeStamp
 			// if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
