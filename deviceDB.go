@@ -592,6 +592,14 @@ func delDevice(dev *deviceInfo) error {
 
 func updateDevice(e *deviceInfo) error {
 
+	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
+	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
+		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
+	if err != nil {
+		log.Println("update device failed, ", err)
+		return err
+	}
+
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]; ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
@@ -633,14 +641,6 @@ func updateDevice(e *deviceInfo) error {
 
 		}
 
-	}
-
-	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
-	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
-	if err != nil {
-		log.Println("update device failed, ", err)
-		return err
 	}
 
 	return nil

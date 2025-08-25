@@ -11,7 +11,7 @@ hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nr
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
 
-hostlist='js.nrlptt.com'
+#hostlist='js.nrlptt.com'
 
 #hostlist='usa.nrlptt.com'
 

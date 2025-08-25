@@ -223,11 +223,8 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	dev := getDevice(stb.CallSign, stb.SSID)
 
-	if !checkrole(u, []string{"admin"}) && stb.Priority != dev.Priority {
-		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误，只有管理员可以修改设备优先级"}}`))
-		return
-
+	if !checkrole(u, []string{"admin"}) {
+		stb.Priority = dev.Priority
 	}
 
 	// if stb.CallSign != u.CallSign {
