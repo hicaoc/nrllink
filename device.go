@@ -502,7 +502,7 @@ outerLoop:
 			}
 			break outerLoop
 
-		case "monitor_out":
+		case "monitor":
 			_, err := changeDeviceByteParm(callsignssid, 8, v[0])
 			if err != nil {
 				w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误"}}`))
