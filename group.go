@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // var CanSpeekerDev = &connPoll{}
@@ -89,20 +90,27 @@ func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 	stb := &query{}
 	err = jsonextra.Unmarshal(result, &stb)
 
+	if err != nil || stb.GroupID == "" {
+		log.Println("device list err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	groupid, err := strconv.Atoi(stb.GroupID)
 	if err != nil {
 		log.Println("device list err :", err)
 		w.Write(ResParmErr)
 		return
 	}
 
-	if stb.GroupID <= 3 && stb.GroupID > 0 {
+	if groupid <= 3 && groupid > 0 {
 		if user, okok := userlist.Load(u.CallSign); okok {
-			gp := user.(*userinfo).Groups[stb.GroupID]
+			gp := user.(*userinfo).Groups[groupid]
 			writeJSONResponseItem(w, gp)
 			return
 		}
 
-	} else if g, ok := publicGroupMap[stb.GroupID]; ok {
+	} else if g, ok := publicGroupMap[groupid]; ok {
 		writeJSONResponseItem(w, g)
 		return
 

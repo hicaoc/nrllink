@@ -88,6 +88,8 @@ func (d *deviceInfo) sendHeartbear() {
 func checkdeviceOnline() {
 	time.Sleep(10 * time.Second)
 
+	totalstats.OnlineDevNumber = 0
+
 	for {
 
 		time.Sleep(5 * time.Second)
@@ -130,6 +132,8 @@ func checkdeviceOnline() {
 
 			vv.TotalDevNumber = len(vv.DevMap)
 
+			totalstats.OnlineDevNumber = totalstats.OnlineDevNumber + vv.OnlineDevNumber
+
 		}
 
 		//u.(*userinfo).Groups[dev.GroupID]
@@ -155,6 +159,7 @@ func checkdeviceOnline() {
 
 				}
 				vv.TotalDevNumber = len(vv.DevMap)
+				totalstats.OnlineDevNumber = totalstats.OnlineDevNumber + vv.OnlineDevNumber
 
 			}
 			return true
@@ -251,6 +256,87 @@ func initAllDevList() {
 func (d *deviceInfo) String() string {
 	return fmt.Sprintf("%v,%v-%v,%v,%v,%v", d.LastVoiceEndTime.Format("2006-01-02 15:04:05"), d.CallSign, d.SSID, d.ID, d.GroupID, d.LastVoiceDuration/1000+1)
 
+}
+
+func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
+
+	devlist := []*deviceInfo{}
+
+	query := fmt.Sprintf(`	select 
+	id,
+	name,
+	callsign,
+	CAST(ssid AS INTEGER) AS ssid,
+	priority,
+	cpuid,
+	password,
+	gird,
+	dev_type,
+	dev_model,
+	group_id,
+	status,
+	is_certed,
+	chan_name,
+	create_time,
+	update_time,
+	online_time,
+	note,
+	rf_type  
+ from  devices  %v  %v  %v  `, w, sort, p)
+
+	//fmt.Println(query)
+
+	rows, err := db.Query(query)
+
+	if err != nil {
+		log.Println("查询设备列表错误: ", err, "\n", query)
+		return nil, 0
+
+	}
+
+	for rows.Next() {
+
+		dev := &deviceInfo{}
+
+		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+			&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+			&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
+		if err != nil {
+			log.Println("getDevicelist err :", err, "\n", query)
+			continue
+		}
+
+		d := getDeviceFromMap(getCallsignSSID(dev.CallSign, dev.SSID))
+
+		if d != nil {
+
+			dev = d
+
+		}
+
+		devlist = append(devlist, dev)
+	}
+
+	var t int
+	q := fmt.Sprintf(`SELECT count(*) as total FROM devices  %v  `, w)
+	//fmt.Println(q)
+	row := db.QueryRow(q)
+	err = row.Scan(&t)
+	if err != nil {
+		log.Println(" 查询用户列表total错误 err:", err, t)
+		return nil, 0
+	}
+	//fmt.Println(emp)
+	return devlist, t
+	//fmt.Println(emp)
+
+}
+
+func getDeviceFromMap(callsignssid string) (dev *deviceInfo) {
+	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
+		return d
+	}
+	return nil
 }
 
 func getDevice(callsign string, ssid byte) (dev *deviceInfo) {

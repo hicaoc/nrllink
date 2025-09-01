@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	// _ "net/http/pprof"
 	// "github.com/jmoiron/sqlx"
@@ -121,6 +122,7 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/platform/totalstats", j.httpTotalStats)
 
 	http.HandleFunc("/device/list", j.httpDeviceList)
+	http.HandleFunc("/device/db/list", j.httpDevicesList)
 
 	http.HandleFunc("/device/get", j.httpDevice)
 	http.HandleFunc("/device/qthmap", j.httpDeviceQTHs)
@@ -237,8 +239,8 @@ type query struct {
 	ISPDomain   string `json:"isp_domain"`
 	AppID       string `json:"appid"`
 
-	GroupID  int `json:"group_id"`
-	DeviceID int `json:"device_id"`
+	GroupID  string `json:"group_id"`
+	DeviceID int    `json:"device_id"`
 
 	AreaID        string   `json:"areaid"`
 	QueryType     string   `json:"querytype"`
@@ -338,11 +340,23 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 	}
 
 	if q.Callsign != "" {
+
+		q.Callsign = strings.ToUpper(q.Callsign)
+
 		if s != "" {
 			s = s + " and callsign='" + q.Callsign + "'"
 		} else {
 			s = " callsign='" + q.Callsign + "'"
 		}
+	}
+
+	if q.GroupID != "" {
+		if s != "" {
+			s = s + " and group_id =" + q.GroupID + " "
+		} else {
+			s = " group_id = " + q.GroupID + " "
+		}
+
 	}
 
 	if q.Role != "" {

@@ -7,6 +7,48 @@ import (
 	"net/http"
 )
 
+func (j *jsonapi) httpDevicesList(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("user list err :", err)
+		w.Write(ResParmErr)
+		return
+	}
+
+	// oplist := []operater{}
+	// for _, v := range operatermap {
+	// 	oplist = append(oplist, v)
+	// }
+	//fmt.Println(u.CurrentArea)
+	//stb.CurrentArea = strconv.Itoa(u.CurrentArea)
+	//员工漫游修改位常驻
+
+	emplist, total := getDevicelist(queryToWhere("", *stb))
+
+	//emplist = selectuser()
+
+	rescode, _ := jsonextra.Marshal(emplist)
+
+	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
+		total, rescode)
+
+	w.Write([]byte(respone))
+
+}
+
 func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
