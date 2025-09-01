@@ -88,13 +88,12 @@ func (d *deviceInfo) sendHeartbear() {
 func checkdeviceOnline() {
 	time.Sleep(10 * time.Second)
 
-	totalstats.OnlineDevNumber = 0
-
 	for {
 
 		time.Sleep(5 * time.Second)
 
 		t := time.Now()
+		totalstats.OnlineDevNumber = 0
 
 		for _, vv := range publicGroupMap {
 
