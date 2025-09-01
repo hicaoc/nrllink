@@ -91,7 +91,7 @@ func udpProcess(conn *net.UDPConn) {
 
 		if err != nil {
 
-			log.Printf("from %v, decode err % X:", remoteaddr, data[:n])
+			log.Printf("from %v, decode err %v  % X:", remoteaddr, err, data[:n])
 			continue
 			//break
 			// <-limitChan
@@ -155,7 +155,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			if err != nil {
 				fmt.Println("add dev failed, ", err, '\n', nrl)
-				break
+				continue
 			}
 			//}
 

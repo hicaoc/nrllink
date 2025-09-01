@@ -621,7 +621,27 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 
 }
 
+func IsCallSign(s string) bool {
+	for i := 0; i < len(s); i++ {
+		char := s[i] // Get the byte value of the character
+
+		// Check if the character is an uppercase letter (A-Z)
+		isUpper := char >= 'A' && char <= 'Z'
+
+		// Check if the character is a digit (0-9)
+		isDigit := char >= '0' && char <= '9'
+
+		// If the character is neither an uppercase letter nor a digit, return false
+		if !isUpper && !isDigit {
+			return false
+		}
+	}
+	return true // All characters are uppercase or digits
+}
+
 func addDevice(dev *deviceInfo) error {
+
+ 
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,callsign,ssid,cpuid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)

@@ -52,6 +52,11 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.Status = d[21]
 	n.Count = binary.BigEndian.Uint16(d[21:23])
 	n.CallSign = string(bytes.TrimRight(d[24:30], string([]byte{13, 0})))
+
+	if !IsCallSign(n.CallSign) {
+		return errors.New("callsign error")
+	}
+
 	n.SSID = d[30]
 	n.DevMode = d[31]
 
