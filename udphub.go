@@ -32,7 +32,7 @@ type currentConnPool struct {
 	lastPriority  int
 
 	//allowCALLSSID []string
-	devConnMap  map[string]*deviceInfo //key cpuid
+	devConnMap  map[string]*deviceInfo //key udpaddr
 	devConnList []*deviceInfo
 }
 
