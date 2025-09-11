@@ -150,13 +150,13 @@ func (j *jsonapi) httpGetGroupList(w http.ResponseWriter, req *http.Request) {
 
 	grouplist := make([]minigroup, 0)
 
-	for _, v := range publicGroupMap {
+	if g, ok := publicGroupMap[0]; ok {
 		g := minigroup{
-			ID:              v.ID,
-			Name:            v.Name,
-			Type:            v.Type,
-			OnlineDevNumber: v.OnlineDevNumber,
-			TotalDevNumber:  v.TotalDevNumber,
+			ID:              g.ID,
+			Name:            g.Name,
+			Type:            g.Type,
+			OnlineDevNumber: g.OnlineDevNumber,
+			TotalDevNumber:  g.TotalDevNumber,
 		}
 		grouplist = append(grouplist, g)
 
@@ -197,6 +197,21 @@ func (j *jsonapi) httpGetGroupList(w http.ResponseWriter, req *http.Request) {
 
 	} else {
 		log.Println("user not found")
+	}
+
+	for _, v := range publicGroupMap {
+
+		if v.ID != 0 {
+			g := minigroup{
+				ID:              v.ID,
+				Name:            v.Name,
+				Type:            v.Type,
+				OnlineDevNumber: v.OnlineDevNumber,
+				TotalDevNumber:  v.TotalDevNumber,
+			}
+			grouplist = append(grouplist, g)
+		}
+
 	}
 
 	writeJSONResponseItem(w, grouplist)

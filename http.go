@@ -146,6 +146,7 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/group/list/mini", j.httpGetGroupList)
 
 	http.HandleFunc("/group/list", j.httpPublicGroupList)
+	http.HandleFunc("/group/device/list", j.httpGroupDeviceList)
 	http.HandleFunc("/group/create", j.httpAddGroup)
 	http.HandleFunc("/group/update", j.httpUpdateGroup)
 	http.HandleFunc("/group/delete", j.httpDeleteGroup)

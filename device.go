@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func (j *jsonapi) httpDevicesList(w http.ResponseWriter, req *http.Request) {
@@ -100,6 +101,78 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
 		len(devCallsignSSIDMap), rescode)
+
+	w.Write([]byte(respone))
+
+}
+
+func (j *jsonapi) httpGroupDeviceList(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &query{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil || stb.GroupID == "" {
+		log.Println("device list err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询群组设备列表参数错误"}}`))
+		return
+	}
+
+	grolupid, err := strconv.Atoi(stb.GroupID)
+	if err != nil {
+		log.Println("device list err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"查询群组设备列表参数错误，群组ID错误"}}`))
+		return
+
+	}
+
+	onlinedevlist := make([]*deviceInfo, 0)
+	offlinedevlist := make([]*deviceInfo, 0)
+
+	if grolupid < 1000 && grolupid > 0 {
+		if user, okok := userlist.Load(u.CallSign); okok {
+			for _, v := range user.(*userinfo).Groups[grolupid].DevMap {
+				if v.ISOnline {
+					onlinedevlist = append(onlinedevlist, v)
+				} else {
+					offlinedevlist = append(offlinedevlist, v)
+				}
+
+			}
+
+		}
+
+	} else {
+
+		if g, ok := publicGroupMap[grolupid]; ok {
+
+			for _, v := range g.DevMap {
+				if v.ISOnline {
+					onlinedevlist = append(onlinedevlist, v)
+				} else {
+					offlinedevlist = append(offlinedevlist, v)
+				}
+
+			}
+
+		}
+	}
+
+	devlist := append(onlinedevlist, offlinedevlist...)
+
+	rescode, _ := jsonextra.Marshal(devlist)
+
+	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
+		len(devlist), rescode)
 
 	w.Write([]byte(respone))
 
