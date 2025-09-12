@@ -670,12 +670,15 @@ outerLoop:
 			addOperatorLog(callsignssid+":"+ipparm.String(), "修改地址成功", u)
 			break outerLoop
 
-		// case "ssid":
-		// 	_, err := changeDeviceByteParm(callsignssid, 64, v[0])
-		// 	if err != nil {
-		// 		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备SSID失败"}}`))
-		// 		return
-		// 	}
+		case "newcallsignssid":
+
+			_, err := changeDeviceCallsignSSIDParm(callsignssid, v[0])
+			if err != nil {
+				w.Write([]byte(`{"code":20000,"data":{"message":"修改设备呼号SSID失败"}}`))
+				return
+			}
+			addOperatorLog(callsignssid+":"+v[0], "修改呼号SSID成功", u)
+			break outerLoop
 
 		case "one_uv_power":
 			_, err := changeDeviceByteParm(callsignssid, 163, v[0])

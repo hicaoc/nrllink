@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -429,6 +430,40 @@ func changeDeviceByteParm(callsignssid string, offset int, str string) (res []by
 
 }
 
+func changeDeviceCallsignSSIDParm(callsignssid string, newcallsignssid string) (res []byte, err error) {
+
+	s := strings.Split(newcallsignssid, "-")
+
+	callsign := s[0]
+	ssid, _ := strconv.Atoi(s[1])
+
+	if !IsCallSign(callsign) || len(callsign) > 6 || len(callsign) < 3 || ssid > 255 {
+		return nil, errors.New("callsign or ssid error")
+	}
+
+	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
+
+		d.DeviceParm.data[64] = byte(ssid)
+		copy(d.DeviceParm.data[65:71], callsign)
+		if len(callsign) == 5 {
+			d.DeviceParm.data[70] = 0
+		}
+		if len(callsign) == 4 {
+			d.DeviceParm.data[69] = 0
+		}
+		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		globelconn.WriteToUDP(newpacket, d.udpAddr)
+		time.Sleep(200 * time.Millisecond)
+
+		rescode, _ := jsonextra.Marshal(d)
+		return rescode, nil
+
+	}
+
+	return nil, errors.New("device is not found")
+
+}
+
 type ipparm struct {
 	localIPOffset      int
 	localIPValue       string
@@ -622,6 +657,7 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 }
 
 func IsCallSign(s string) bool {
+
 	for i := 0; i < len(s); i++ {
 		char := s[i] // Get the byte value of the character
 
@@ -640,8 +676,6 @@ func IsCallSign(s string) bool {
 }
 
 func addDevice(dev *deviceInfo) error {
-
- 
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,callsign,ssid,cpuid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
