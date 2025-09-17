@@ -45,14 +45,6 @@ func (c *TCPClient) Connect() error {
 	}
 	c.conn = conn
 
-	passcode := conf.APRS.Passcode
-
-	if conf.APRS.Passcode == 0 {
-		passcode = GenerateAPRSPasscode(conf.APRS.CallSign)
-	}
-
-	c.Send(fmt.Sprintf("user %s pass %d vers NRL 1.0\n", conf.APRS.CallSign, passcode))
-
 	go c.readMessages()
 	return nil
 }
@@ -131,8 +123,13 @@ func (a *Aprs) startLocationWatch() {
 	// 模拟获取位置信息
 	// 在实际应用中，这里应该使用适当的位置服务API
 
-	// 立即发送第一次位置
-	a.sendAprsPosition()
+	passcode := conf.APRS.Passcode
+
+	if conf.APRS.Passcode == 0 {
+		passcode = GenerateAPRSPasscode(conf.APRS.CallSign)
+	}
+
+	a.tcpClient.Send(fmt.Sprintf("user %s pass %d vers NRL 1.0\n", conf.APRS.CallSign, passcode))
 
 	// 启动定时发送（每分钟一次）
 	a.Timer = time.NewTicker(60 * time.Second)
