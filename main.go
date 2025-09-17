@@ -49,6 +49,8 @@ func main() {
 
 	go checkdeviceOnline()
 
+	go NewAPRS().OnLoad()
+
 	udpServer()
 
 }

@@ -51,6 +51,21 @@ type config struct {
 		Engine  string `yaml:"Engine" json:"engine"`
 	} `yaml:"OpenAI" json:"openai"`
 
+	APRS struct {
+		APRSServerHost string `yaml:"APRSServerHost" json:"aprs_server_host"`
+		APRSServerPort string `yaml:"APRSServerPort" json:"aprs_server_port"`
+		SelfAddress    string `yaml:"SelfAddress" json:"self_address"`
+		SelfPort       string `yaml:"SelfPort" json:"self_port"`
+
+		CallSign string `yaml:"CallSign" json:"callsign"`
+		SSID     string `yaml:"SSID" json:"ssid"`
+		Passcode int    `yaml:"Passcode" json:"passcode"`
+
+		Latitude  float64 `yaml:"Latitude" json:"latitude"`
+		Longitude float64 `yaml:"Longitude" json:"longitude"`
+		Altitude  string  `yaml:"Altitude" json:"altitude"`
+	} `yaml:"APRS" json:"aprs"`
+
 	WeiXin struct {
 		// signmsgurl     string
 		// rechargemsgurl string

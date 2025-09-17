@@ -14,6 +14,21 @@ SystemInfo:
     Name: NRL无线电网络互联系统
     NameShorthand: 火链
     LogoURL: http://ham.bi4qzw.com/logo.svg
+OpenAI:
+    BaseURL: ""
+    APIKEY: ""
+    Engine: ""
+APRS:
+    APRSServerHost: "asia.aprs2.net"
+    APRSServerPort: "14580"
+    SelfAddress: "js.nrlptt.com"
+    SelfPort: "60050"
+    CallSign: "BA4RN"
+    SSID: "10"
+    Passcode: 0
+    Latitude: 118.2511
+    Longitude: 32.0615513
+    Altitude: "000027"
 WeiXin:
     PhoneCodeURL: ""
     AvatarURL: https://ham.bi4qzw.com/images/logo.png
