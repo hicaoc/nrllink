@@ -34,6 +34,7 @@ type group struct {
 	//OutDevMap       map[string]*deviceInfo `json:"out_dev_map"` //callsign+ssid
 	OnlineDevNumber int `json:"online_dev_number"`
 	TotalDevNumber  int `json:"total_dev_number"`
+	Recorder        int `json:"recored"`
 }
 
 func (p *group) String() string {

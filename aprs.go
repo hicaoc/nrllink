@@ -62,11 +62,15 @@ func (a *Aprs) startLocationWatch() {
 
 	time.Sleep(time.Second * 10)
 
+	a.sendAprsPosition()
+	a.sendAprsPosition2()
 	// 启动定时发送（每分钟一次）
 	a.Timer = time.NewTicker(60 * time.Second)
 	go func() {
 		for range a.Timer.C {
 			a.sendAprsPosition()
+
+			a.sendAprsPosition2()
 		}
 	}()
 }
@@ -74,12 +78,11 @@ func (a *Aprs) startLocationWatch() {
 func (a *Aprs) sendAprsPosition() {
 
 	// 构造APRS数据包
-	aprsPacket := a.formatAprsPacket(conf.SystemInfo.PlatformName, conf.APRS.CallSign, conf.APRS.SSID, conf.APRS.SelfAddress, conf.APRS.SelfPort,
-		conf.APRS.Longitude, conf.APRS.Latitude, conf.APRS.Altitude, totalstats.OnlineDevNumber, len(devCallsignSSIDMap))
+	aprsPacket := a.formatAprsPacket(conf.APRS.CallSign, conf.APRS.SSID, conf.APRS.SelfAddress, conf.APRS.SelfPort,
+		conf.APRS.Longitude, conf.APRS.Latitude, conf.APRS.Altitude)
 
 	// 发送数据
 	err := a.tcpClient.Send(aprsPacket)
-
 	fmt.Printf("APRS:发送APRS位置: %s", aprsPacket)
 
 	if err != nil {
@@ -91,12 +94,37 @@ func (a *Aprs) sendAprsPosition() {
 
 }
 
-func (a *Aprs) formatAprsPacket(name, callSign, ssid, address, port string, lat, lon float64, altitude string, onlineNumber, total int) string {
+func (a *Aprs) sendAprsPosition2() {
+
+	// 构造APRS数据包
+
+	aprsPacket2 := a.formatAprsPackettwo(conf.SystemInfo.PlatformName, conf.APRS.CallSign, conf.APRS.SSID,
+		totalstats.OnlineDevNumber, len(devCallsignSSIDMap))
+
+	err := a.tcpClient.Send(aprsPacket2)
+	fmt.Printf("APRS:发送附加信息: %s", aprsPacket2)
+
+	if err != nil {
+		fmt.Printf("APRS:发送附加信息失败: %v\n", err)
+		a.Status = "发送失败"
+	} else {
+		a.Status = "位置已发送"
+	}
+
+}
+
+func (a *Aprs) formatAprsPacket(callSign, ssid, address, port string, lat, lon float64, altitude string) string {
 	latStr := a.decToAprs(lat, true)
 	lonStr := a.decToAprs(lon, false)
 
-	return fmt.Sprintf("%s-%s>NRLSRV,TCPIP*:!%s/%sI000/000/A=%s @udp://%s:%s,%d,%d,%s,NRL模拟互联服务器\n",
-		callSign, ssid, latStr, lonStr, altitude, address, port, onlineNumber, total, name)
+	return fmt.Sprintf("%s-%s>NRLSRV,TCPIP*:!%s/%sI000/000/A=%s @udp://%s:%s,NRL互联服务器\n",
+		callSign, ssid, latStr, lonStr, altitude, address, port)
+}
+
+func (a *Aprs) formatAprsPackettwo(name, callSign, ssid string, onlineNumber, total int) string {
+
+	return fmt.Sprintf("%s-%s>NRLSRV,TCPIP*:>在线:%d,高峰:%d,%s\n",
+		callSign, ssid, onlineNumber, total, name)
 }
 
 func (a *Aprs) handleTcpMessage(message []byte) {
