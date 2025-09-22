@@ -24,13 +24,9 @@ func (a *Aprs) OnLoad() {
 	}
 
 	// 初始化TCP客户端
-	a.tcpClient = NewTCPClient(a.handleTcpMessage)
-	err := a.tcpClient.Connect(conf.APRS.APRSServerHost, conf.APRS.APRSServerPort)
-	if err != nil {
-		fmt.Printf("APRS:TCP连接失败: %v\n", err)
-		a.Status = "TCP连接失败"
-		return
-	}
+	a.tcpClient = NewTCPClient(conf.APRS.APRSServerHost, conf.APRS.APRSServerPort, a.handleTcpMessage)
+
+	a.tcpClient.Connect()
 
 	// 启动位置监听
 	a.startLocationWatch()
@@ -58,7 +54,19 @@ func (a *Aprs) startLocationWatch() {
 		passcode = GenerateAPRSPasscode(conf.APRS.CallSign)
 	}
 
-	a.tcpClient.Send(fmt.Sprintf("user %s pass %d vers NRL 1.0\n", conf.APRS.CallSign, passcode))
+	for {
+		err := a.tcpClient.Send(fmt.Sprintf("user %s pass %d vers NRL 1.0\n", conf.APRS.CallSign, passcode))
+
+		if err != nil {
+			fmt.Printf("APRS:认证失败: %v\n", err)
+			time.Sleep(time.Second * 10)
+			continue
+		} else {
+			fmt.Println("APRS:认证成功")
+			break
+		}
+
+	}
 
 	time.Sleep(time.Second * 10)
 

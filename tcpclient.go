@@ -4,34 +4,54 @@ import (
 	"bufio"
 	"log"
 	"net"
+	"time"
 )
 
-func NewTCPClient(onMessage func(message []byte)) *TCPClient {
+func NewTCPClient(host, port string, onMessage func(message []byte)) *TCPClient {
 	return &TCPClient{
+		host:      host,
+		port:      port,
 		onMessage: onMessage,
 	}
 }
 
 type TCPClient struct {
+	host      string
+	port      string
 	conn      net.Conn
 	onMessage func(message []byte)
 }
 
-func (c *TCPClient) Connect(host, port string) error {
+func (c *TCPClient) Connect() {
 
-	conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
-	if err != nil {
-		return err
+	for {
+
+		conn, err := net.Dial("tcp", net.JoinHostPort(c.host, c.port))
+		if err != nil {
+			log.Println("无法连接到TCP服务器:", err)
+			time.Sleep(5 * time.Second)
+			continue
+		} else {
+			c.conn = conn
+			log.Println("已连接到TCP服务器")
+			break
+		}
+
 	}
-	c.conn = conn
 
 	go c.readMessages()
-	return nil
+
 }
 
 func (c *TCPClient) Send(message string) error {
+
 	_, err := c.conn.Write([]byte(message))
-	return err
+	if err != nil {
+		c.conn.Close()
+		c.Connect()
+		return err
+	}
+	return nil
 }
 
 func (c *TCPClient) Close() error {
