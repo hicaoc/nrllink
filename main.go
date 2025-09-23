@@ -51,6 +51,8 @@ func main() {
 
 	go NewAPRS().OnLoad()
 
+	go findNRL()
+
 	udpServer()
 
 }

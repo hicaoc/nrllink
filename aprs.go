@@ -11,6 +11,7 @@ type Aprs struct {
 	Status    string
 	Timer     *time.Ticker
 	tcpClient *TCPClient
+	errorChan chan error
 }
 
 func NewAPRS() *Aprs {
@@ -23,13 +24,29 @@ func (a *Aprs) OnLoad() {
 		return
 	}
 
-	// 初始化TCP客户端
-	a.tcpClient = NewTCPClient(conf.APRS.APRSServerHost, conf.APRS.APRSServerPort, a.handleTcpMessage)
+	a.errorChan = make(chan error, 1)
 
-	a.tcpClient.Connect()
+	for {
 
-	// 启动位置监听
-	a.startLocationWatch()
+		a.tcpClient = NewTCPClient(conf.APRS.APRSServerHost, conf.APRS.APRSServerPort, a.handleTcpMessage)
+		a.tcpClient.Connect()
+
+		a.Login()
+
+		time.Sleep(time.Second * 5)
+
+		// 重新启动 ticker
+		a.startLocationWatch()
+
+		err := <-a.errorChan
+
+		a.tcpClient.Close()
+
+		time.Sleep(time.Second * 5)
+		fmt.Printf("APRS 发送错误，重新初始化TCP连接: %v\n", err)
+
+	}
+
 }
 
 func (a *Aprs) OnUnload() {
@@ -47,6 +64,25 @@ func (a *Aprs) startLocationWatch() {
 	// 模拟获取位置信息
 	// 在实际应用中，这里应该使用适当的位置服务API
 
+	a.sendAprsPosition()
+
+	// 启动定时发送（每分钟一次）
+	a.Timer = time.NewTicker(60 * time.Second)
+	go func() {
+		for range a.Timer.C {
+			err := a.sendAprsPosition()
+			if err != nil {
+				a.errorChan <- fmt.Errorf("发送APRS位置失败: %v", err)
+				fmt.Printf("发送APRS位置失败: %v\n", err)
+				return // ✅ 主动退出 goroutine
+			}
+		}
+	}()
+
+}
+
+func (a *Aprs) Login() {
+
 	//认证
 	passcode := conf.APRS.Passcode
 
@@ -63,27 +99,14 @@ func (a *Aprs) startLocationWatch() {
 			continue
 		} else {
 			fmt.Println("APRS:认证成功")
-			break
+			return
 		}
 
 	}
 
-	time.Sleep(time.Second * 10)
-
-	a.sendAprsPosition()
-	a.sendAprsPosition2()
-	// 启动定时发送（每分钟一次）
-	a.Timer = time.NewTicker(60 * time.Second)
-	go func() {
-		for range a.Timer.C {
-			a.sendAprsPosition()
-
-			a.sendAprsPosition2()
-		}
-	}()
 }
 
-func (a *Aprs) sendAprsPosition() {
+func (a *Aprs) sendAprsPosition() error {
 
 	// 构造APRS数据包
 	aprsPacket := a.formatAprsPacket(conf.APRS.CallSign, conf.APRS.SSID, conf.APRS.SelfAddress, conf.APRS.SelfPort,
@@ -96,28 +119,25 @@ func (a *Aprs) sendAprsPosition() {
 	if err != nil {
 		fmt.Printf("APRS:发送APRS位置失败: %v\n", err)
 		a.Status = "发送失败"
+		return err
 	} else {
 		a.Status = "位置已发送"
 	}
 
-}
-
-func (a *Aprs) sendAprsPosition2() {
-
-	// 构造APRS数据包
-
 	aprsPacket2 := a.formatAprsPackettwo(conf.SystemInfo.PlatformName, conf.APRS.CallSign, conf.APRS.SSID,
 		totalstats.OnlineDevNumber, len(devCallsignSSIDMap))
 
-	err := a.tcpClient.Send(aprsPacket2)
+	err = a.tcpClient.Send(aprsPacket2)
 	fmt.Printf("APRS:发送附加信息: %s", aprsPacket2)
 
 	if err != nil {
 		fmt.Printf("APRS:发送附加信息失败: %v\n", err)
 		a.Status = "发送失败"
+		return err
 	} else {
 		a.Status = "位置已发送"
 	}
+	return nil
 
 }
 
@@ -125,8 +145,11 @@ func (a *Aprs) formatAprsPacket(callSign, ssid, address, port string, lat, lon f
 	latStr := a.decToAprs(lat, true)
 	lonStr := a.decToAprs(lon, false)
 
-	return fmt.Sprintf("%s-%s>NRLSRV,TCPIP*:!%s/%sI000/000/A=%s @udp://%s:%s,NRL互联服务器\n",
-		callSign, ssid, latStr, lonStr, altitude, address, port)
+	// return fmt.Sprintf("%s-%s>NRLSRV,TCPIP*:!%s/%sI000/000/A=%s @udp://%s:%s,NRL互联服务器\n",
+	// 	callSign, ssid, latStr, lonStr, altitude, address, port)
+
+	return fmt.Sprintf("%s-%s>NRLSRV,TCPIP*:!%s/%sI @udp://%s:%s,NRL互联服务器\n",
+		callSign, ssid, latStr, lonStr, address, port)
 }
 
 func (a *Aprs) formatAprsPackettwo(name, callSign, ssid string, onlineNumber, total int) string {

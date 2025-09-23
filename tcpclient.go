@@ -47,8 +47,7 @@ func (c *TCPClient) Send(message string) error {
 
 	_, err := c.conn.Write([]byte(message))
 	if err != nil {
-		c.conn.Close()
-		c.Connect()
+
 		return err
 	}
 	return nil
@@ -61,13 +60,13 @@ func (c *TCPClient) Close() error {
 	return nil
 }
 
-func (c *TCPClient) readMessages() {
+func (c *TCPClient) readMessages() error {
 	reader := bufio.NewReader(c.conn)
 	for {
 		message, err := reader.ReadBytes('\n')
 		if err != nil {
 			log.Printf("读取TCP消息错误: %v\n", err)
-			return
+			return err
 		}
 		if c.onMessage != nil {
 			c.onMessage(message)

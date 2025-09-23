@@ -185,7 +185,7 @@ func (r *Recorder) Stop() {
 	fmt.Printf("[%s] 录音器停止。\n", r.speakerCallsign)
 }
 
-func main2() {
+func main2_aprs() {
 	// 示例用法
 	baseOutputDir := "recordings"
 	if err := os.MkdirAll(baseOutputDir, 0755); err != nil {
