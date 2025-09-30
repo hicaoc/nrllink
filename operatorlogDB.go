@@ -68,7 +68,7 @@ func addOperatorLog(Content string, EventType string, emp *userinfo) {
 
 	//fmt.Println(query)
 
-	_, err := db.Exec(query, Content, EventType, emp.Name, emp.ID)
+	_, err := db.Exec(query, Content, EventType, emp.Name+"-"+emp.CallSign, emp.ID)
 
 	if err != nil {
 		log.Println("记录日记错误: ", err, "\n", query)

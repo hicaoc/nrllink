@@ -336,16 +336,31 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	dev := getDevice(stb.CallSign, stb.SSID)
-
-	if !checkrole(u, []string{"admin"}) {
-		stb.Priority = dev.Priority
-	}
-
 	// if stb.CallSign != u.CallSign {
 	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
 	// 	return
 	// }
+
+	dev := getDevice(stb.CallSign, stb.SSID)
+
+	switch {
+	case dev.Status != stb.Status:
+		content := fmt.Sprintf("%s状态从%d修改为%d", dev.CallSignSSID, dev.Status, stb.Status)
+		addOperatorLog(content, "修改设备状态", u)
+	case dev.Priority != stb.Priority:
+		content := fmt.Sprintf("%s优先级从%d修改为%d", dev.CallSignSSID, dev.Priority, stb.Priority)
+		addOperatorLog(content, "修改设备优先级", u)
+	case dev.GroupID != stb.GroupID:
+		content := fmt.Sprintf("%s房间从%d修改为%d", dev.CallSignSSID, dev.GroupID, stb.GroupID)
+		addOperatorLog(content, "修改设备房间", u)
+	default:
+		addOperatorLog(dev.CallSignSSID, "修改设备参数", u)
+
+	}
+
+	if !checkrole(u, []string{"admin"}) {
+		stb.Priority = dev.Priority
+	}
 
 	err = updateDevice(stb)
 
@@ -391,6 +406,8 @@ func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
+	addOperatorLog(stb.CallSignSSID, "删除设备", u)
+
 	err = delDevice(stb)
 
 	if err != nil {
@@ -429,6 +446,10 @@ func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Requ
 		return
 
 	}
+
+	dev := getDevice(stb.CallSign, stb.SSID)
+	content := fmt.Sprintf("%s房间从%d修改为%d", dev.CallSignSSID, dev.GroupID, stb.GroupID)
+	addOperatorLog(content, "修改设备房间", u)
 
 	// if stb.CallSign != u.CallSign {
 	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
@@ -703,6 +724,8 @@ outerLoop:
 
 	}
 
+	addOperatorLog(callsignssid, "修改设备参数", u)
+
 	w.Write([]byte(`{"code":20000,"data":{"message":"修改成功"}}`))
 
 	//w.Write(r)
@@ -780,6 +803,7 @@ func (j *jsonapi) httpChange1W(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
+	addOperatorLog(getCallsignSSID(stb.CallSign, stb.SSID), "修改设备参数", u)
 	_, err = changeDevice1W(stb)
 
 	if err != nil {
@@ -824,6 +848,8 @@ func (j *jsonapi) httpChange2W(w http.ResponseWriter, req *http.Request) {
 	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
 	// 	return
 	// }
+
+	addOperatorLog(getCallsignSSID(stb.CallSign, stb.SSID), "修改设备参数", u)
 
 	_, err = changeDevice2W(stb)
 

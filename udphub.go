@@ -425,8 +425,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//保存外部设备信息，用于解析QTH
 
 		callsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
+		cs := getCallsignSSID(nrl.CallSign, nrl.SSID)
 		if _, ok := QTHmap[callsignssid]; !ok {
-			QTHmap[callsignssid] = "转-" + getQTH(net.IP(nrl.OriginalIP).String())
+			QTHmap[callsignssid] = cs + "-" + getQTH(net.IP(nrl.OriginalIP).String())
 		}
 
 		//dev.LastPacketTime = nrl.timeStamp
