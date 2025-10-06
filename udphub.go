@@ -456,10 +456,10 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 }
 
 func update200QTH(callsignssid string, nrl *NRL21packet) {
-	cs := getCallsignSSID(nrl.CallSign, nrl.SSID)
-	q2 := cs + "-" + getQTH(nrl.OriginalIP.String())
-	QTHmap[callsignssid] = q2
-	QTHmapNew[callsignssid] = qth{callsignssid, q2, time.Now()}
+
+	q := getCallsignSSID(nrl.CallSign, nrl.SSID) + "-" + getQTH(nrl.OriginalIP.String())
+	QTHmap[callsignssid] = q
+	QTHmapNew[callsignssid] = qth{callsignssid, q, time.Now()}
 
 }
 
