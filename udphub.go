@@ -19,11 +19,18 @@ var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //key : callsign+ssi
 
 var ServerMap = make(map[string]*deviceInfo) //呼号对应的服务器设备
 
-var QTHmap = make(map[string]string) // callsign+ssid
-
 var limitChan = make(chan bool, 1)
 
 var globelconn *net.UDPConn
+
+type qth struct {
+	QTH          string
+	CallSignSSID string
+	JoinTime     time.Time
+}
+
+var QTHmapNew = make(map[string]qth) // callsign+ssid
+var QTHmap = make(map[string]string)
 
 type currentConnPool struct {
 	UDPAddr       *net.UDPAddr
@@ -319,6 +326,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			dev.QTH = getQTH(dev.udpAddr.IP.String())
 			QTHmap[dev.CallSignSSID] = dev.QTH
+			QTHmapNew[dev.CallSignSSID] = qth{dev.CallSignSSID, dev.QTH, time.Now()}
 
 			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
@@ -425,9 +433,13 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//保存外部设备信息，用于解析QTH
 
 		callsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
-		cs := getCallsignSSID(nrl.CallSign, nrl.SSID)
-		if _, ok := QTHmap[callsignssid]; !ok {
-			QTHmap[callsignssid] = cs + "-" + getQTH(net.IP(nrl.OriginalIP).String())
+
+		if q, ok := QTHmapNew[callsignssid]; !ok {
+			update200QTH(callsignssid, nrl)
+
+		} else if time.Since(q.JoinTime) > 10*time.Minute {
+			update200QTH(callsignssid, nrl)
+
 		}
 
 		//dev.LastPacketTime = nrl.timeStamp
@@ -440,6 +452,14 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//conn.WriteToUDP(packet, n.Addr)
 
 	}
+
+}
+
+func update200QTH(callsignssid string, nrl *NRL21packet) {
+	cs := getCallsignSSID(nrl.CallSign, nrl.SSID)
+	q2 := cs + "-" + getQTH(nrl.OriginalIP.String())
+	QTHmap[callsignssid] = q2
+	QTHmapNew[callsignssid] = qth{callsignssid, q2, time.Now()}
 
 }
 
