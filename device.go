@@ -232,17 +232,17 @@ func (j *jsonapi) httpDevice(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDeviceQTH(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
-	if err != nil {
-		return
-	}
+	// _, err := checktoken(w, req)
+	// if err != nil {
+	// 	return
+	// }
 
 	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
 	stb := &query{}
-	err = jsonextra.Unmarshal(result, &stb)
+	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("get device qth parm err :", err)
@@ -250,7 +250,7 @@ func (j *jsonapi) httpDeviceQTH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if qth, ok := QTHmap[getCallsignSSID(stb.Callsign, stb.SSID)]; ok {
+	if qth, ok := QTHmapNew[getCallsignSSID(stb.Callsign, stb.SSID)]; ok {
 
 		writeJSONResponseItem(w, qth)
 	} else {
@@ -268,6 +268,18 @@ func (j *jsonapi) httpDeviceQTHs(w http.ResponseWriter, req *http.Request) {
 	}
 
 	writeJSONResponseItem(w, QTHmap)
+
+}
+
+func (j *jsonapi) httpDeviceQTHs2(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	_, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	writeJSONResponseItem(w, QTHmapNew)
 
 }
 

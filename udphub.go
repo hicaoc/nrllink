@@ -24,9 +24,10 @@ var limitChan = make(chan bool, 1)
 var globelconn *net.UDPConn
 
 type qth struct {
-	QTH          string
-	CallSignSSID string
-	JoinTime     time.Time
+	QTH          string    `json:"qth"`
+	CallSignSSID string    `json:"callsign_ssid"`
+	JoinTime     time.Time `json:"join_time"`
+	Name         string    `json:"name"`
 }
 
 var QTHmapNew = make(map[string]qth) // callsign+ssid
@@ -326,7 +327,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			dev.QTH = getQTH(dev.udpAddr.IP.String())
 			QTHmap[dev.CallSignSSID] = dev.QTH
-			QTHmapNew[dev.CallSignSSID] = qth{dev.CallSignSSID, dev.QTH, time.Now()}
+			QTHmapNew[dev.CallSignSSID] = qth{dev.QTH, dev.CallSignSSID, time.Now(), dev.Name}
 
 			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
@@ -457,9 +458,13 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 func update200QTH(callsignssid string, nrl *NRL21packet) {
 
-	q := getCallsignSSID(nrl.CallSign, nrl.SSID) + "-" + getQTH(nrl.OriginalIP.String())
-	QTHmap[callsignssid] = q
-	QTHmapNew[callsignssid] = qth{callsignssid, q, time.Now()}
+	QTHmap[callsignssid] = getCallsignSSID(nrl.CallSign, nrl.SSID) + "-" + getQTH(nrl.OriginalIP.String())
+	QTHmapNew[callsignssid] = qth{
+		getQTH(nrl.OriginalIP.String()),
+		callsignssid,
+		time.Now(),
+		getCallsignSSID(nrl.CallSign, nrl.SSID),
+	}
 
 }
 
