@@ -433,13 +433,13 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		//保存外部设备信息，用于解析QTH
 
-		callsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
+		Originalcallsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
 
-		if q, ok := QTHmapNew[callsignssid]; !ok {
-			update200QTH(callsignssid, nrl)
+		if q, ok := QTHmapNew[Originalcallsignssid]; !ok {
+			update200QTH(Originalcallsignssid, nrl, dev)
 
 		} else if time.Since(q.JoinTime) > 10*time.Minute {
-			update200QTH(callsignssid, nrl)
+			update200QTH(Originalcallsignssid, nrl, dev)
 
 		}
 
@@ -456,14 +456,18 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 }
 
-func update200QTH(callsignssid string, nrl *NRL21packet) {
+func update200QTH(Originalcallsignssid string, nrl *NRL21packet, dev *deviceInfo) {
 
-	QTHmap[callsignssid] = getCallsignSSID(nrl.CallSign, nrl.SSID) + "-" + getQTH(nrl.OriginalIP.String())
-	QTHmapNew[callsignssid] = qth{
-		getQTH(nrl.OriginalIP.String()),
-		callsignssid,
+	callsignssid := getCallsignSSID(nrl.CallSign, nrl.SSID)
+	originalqth := getQTH(nrl.OriginalIP.String())
+
+	QTHmap[Originalcallsignssid] = callsignssid + "-" + originalqth
+
+	QTHmapNew[Originalcallsignssid] = qth{
+		originalqth,
+		Originalcallsignssid,
 		time.Now(),
-		getCallsignSSID(nrl.CallSign, nrl.SSID),
+		callsignssid + "-" + dev.Name,
 	}
 
 }
