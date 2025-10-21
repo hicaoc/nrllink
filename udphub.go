@@ -278,6 +278,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			if dev.DeviceParm == nil && dev.DevModel < 100 {
 				conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
+				at := &ATcommand{CallSign: dev.CallSign, SSID: dev.SSID, Type: 0x01, ATcommand: "AT+READ"}
+				queryDeviceAT(at)
+
 			} else {
 				conn.WriteToUDP(packet, nrl.UDPAddr)
 			}
@@ -447,6 +450,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.LastVoiceEndTime = nrl.timeStamp
 		dev.LastCtlEndTime = nrl.timeStamp
 		forwardServerVoice(nrl, packet, conn, gp)
+
+	case 11: //AT  01 读取，02写入多条 0x0d,0x0a分割，03读取所有，
+
+		at := decodeATPacket(dev.CallSign, dev.SSID, nrl.DATA)
+		fmt.Println(at)
+		dev.LastATcommand = at
 
 	default:
 		fmt.Println("unknow data:", nrl.Type, nrl)

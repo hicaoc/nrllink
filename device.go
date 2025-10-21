@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (j *jsonapi) httpDevicesList(w http.ResponseWriter, req *http.Request) {
@@ -505,6 +506,75 @@ func (j *jsonapi) httpRoomList(w http.ResponseWriter, req *http.Request) {
 		len(u.DevList), rescode)
 
 	w.Write([]byte(respone))
+
+}
+
+func (j *jsonapi) httpDeviceAT(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+
+	req.Body.Close()
+
+	stb := &ATcommand{}
+	err = jsonextra.Unmarshal(result, &stb)
+
+	if err != nil {
+		log.Println("device parm update err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"AT数据格式错误"}}`))
+		return
+	}
+
+	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
+		log.Println("device parm query  err")
+		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
+		return
+
+	}
+
+	// if stb.CallSign != u.CallSign {
+	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
+	// 	return
+	// }
+
+	addOperatorLog(getCallsignSSID(stb.CallSign, stb.SSID), "AT修改设备参数", u)
+
+	var dev *deviceInfo
+
+	switch stb.Type {
+	case 0x02:
+		dev, err = changeDeviceAT(stb)
+
+		if err != nil {
+			w.Write([]byte(`{"code":20000,"data":{"message":"AT写入命令失败"}}`))
+			return
+		}
+
+	case 0x01:
+		dev, err = queryDeviceAT(stb)
+
+		if err != nil {
+			w.Write([]byte(`{"code":20000,"data":{"message":"AT读取命令失败"}}`))
+			return
+		}
+
+	}
+
+	time.Sleep(200 * time.Millisecond)
+
+	rescode, _ := jsonextra.Marshal(dev)
+
+	respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)
+
+	w.Write([]byte(respone))
+
+	//w.Write([]byte(`{"code":20000,"data":{"message":"AT命令完成"}}`))
+	//w.Write(res)
 
 }
 

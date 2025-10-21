@@ -56,8 +56,9 @@ type deviceInfo struct {
 	LastCtlEndTime   time.Time `json:"last_ctl_end_time"`   //最后控制时间
 	LastCtlDuration  int       `json:"last_ctl_duration"`   //上次控制持续时长  秒
 
-	Note       string   `json:"note" db:"note"` //设备上线时间
-	DeviceParm *control `json:"device_parm"`
+	Note          string     `json:"note" db:"note"` //设备上线时间
+	DeviceParm    *control   `json:"device_parm"`
+	LastATcommand *ATcommand `json:"last_atcommand"`
 }
 
 func (d *deviceInfo) sendHeartbear() {
@@ -549,6 +550,42 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 
 		rescode, _ := jsonextra.Marshal(d)
 		return rescode, nil
+
+	}
+
+	return nil, errors.New("device is not found")
+
+}
+
+func queryDeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
+
+	if d, ok := devCallsignSSIDMap[getCallsignSSID(at.CallSign, at.SSID)]; ok {
+
+		atcommand := append([]byte{0x01}, []byte(at.ATcommand)...)
+
+		packet := encodeNRL21(at.CallSign, at.SSID, 11, 11, []byte{}, []byte(atcommand))
+
+		globelconn.WriteToUDP(packet, d.udpAddr)
+
+		return d, nil
+
+	}
+
+	return nil, errors.New("device is not found")
+
+}
+
+func changeDeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
+
+	if d, ok := devCallsignSSIDMap[getCallsignSSID(at.CallSign, at.SSID)]; ok {
+
+		atcommand := append([]byte{0x02}, []byte(at.String())...)
+
+		packet := encodeNRL21(at.CallSign, at.SSID, 11, 11, []byte{}, []byte(atcommand))
+
+		globelconn.WriteToUDP(packet, d.udpAddr)
+
+		return d, nil
 
 	}
 

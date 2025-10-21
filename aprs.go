@@ -66,8 +66,16 @@ func (a *Aprs) startLocationWatch() {
 
 	a.sendAprsPosition()
 
+	time.Sleep(time.Minute)
+
+	a.sendAprsPosition()
+
+	time.Sleep(5 * time.Minute)
+
+	a.sendAprsPosition()
+
 	// 启动定时发送（每分钟一次）
-	a.Timer = time.NewTicker(60 * time.Second)
+	a.Timer = time.NewTicker(10 * time.Minute)
 	go func() {
 		for range a.Timer.C {
 			err := a.sendAprsPosition()

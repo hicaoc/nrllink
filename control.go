@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 //  类型=01 音频包  48+500字节
@@ -72,6 +73,42 @@ type control struct {
 	TwoTOTLevel      int    `json:"two_tot_level"`      //0xF4
 
 	data []byte //原始
+}
+
+type ATcommand struct {
+	CallSign  string            `json:"callsign"`
+	SSID      byte              `json:"ssid"`
+	Type      byte              `json:"type"` //0x01 查询AT   0x02 写入AT
+	ATcommand string            `json:"atcommand"`
+	Data      string            `json:"data"`
+	ATMap     map[string]string `json:"atmap"`
+}
+
+func (c *ATcommand) String() string {
+	return fmt.Sprintf("%s=%s", c.ATcommand, c.Data)
+}
+
+func decodeATPacket(callsign string, ssid byte, data []byte) *ATcommand {
+
+	c := &ATcommand{CallSign: callsign, SSID: ssid}
+
+	at := bytes.SplitAfterN(data[1:], []byte{'='}, 2)
+
+	c.Type = data[0]
+	c.ATcommand = string(at[0])
+	c.Data = string(at[1])
+
+	if c.Type == 0x03 || c.ATcommand == "AT+READ" {
+		c.ATMap = make(map[string]string)
+		for _, v := range strings.Split(c.Data, "\r\n") {
+			kv := strings.SplitN(v, "=", 2)
+			c.ATMap[string(kv[0])] = string(kv[1])
+		}
+
+	}
+
+	return c
+
 }
 
 func decodeControlPacket(data []byte) *control {

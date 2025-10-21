@@ -19,7 +19,7 @@ type NRL21packet struct {
 	Length     uint16       //上层数据长度
 	CPUID      string       //设备唯一标识 长度7字节
 	Password   string       //密码
-	Type       byte         //上层数据类型 一个字节 0:保留， 1：G.711语音，2：心跳  3：设备配置 4：保留，5. 文本消息，6，设备控制设备， 7，设备要求加入组等指令 9:服务器互联语音
+	Type       byte         //上层数据类型 一个字节 0:保留， 1：G.711语音，2：心跳  3：设备配置 4：保留，5. 文本消息，6，设备控制设备， 7，设备要求加入组等指令 9:服务器互联语音,11 AT透传
 	Status     byte         //设备状态位
 	Count      uint16       //报文计数器2节
 	CallSign   string       //所有者呼号 6字节
