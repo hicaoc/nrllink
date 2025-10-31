@@ -142,6 +142,17 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := getuser(phone)
+
+	if err != nil {
+		w.Write(ResOpErr)
+	}
+
+	if user != nil {
+		w.Write(ResUserAleadyExits)
+		return
+	}
+
 	// 创建上传目录（按年月分割）
 	currentMonth := time.Now().Format("2006-01")
 	uploadDir := filepath.Join(conf.System.LicensePath, currentMonth)

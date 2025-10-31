@@ -22,6 +22,7 @@ var ResOK, _ = jsonextra.Marshal(Response{20000, "操作成功", nil})
 var ResOpErr, _ = jsonextra.Marshal(Response{20001, "操作失败", nil})
 var ResRightErr, _ = jsonextra.Marshal(Response{20001, "权限不足", nil})
 var ResParmErr, _ = jsonextra.Marshal(Response{20001, "参数错误", nil})
+var ResUserAleadyExits, _ = jsonextra.Marshal(Response{20001, "用户已经存在", nil})
 
 var ResTokenErr, _ = jsonextra.Marshal(Response{50008, "令牌错误，可能是登录超时，请重新登录", nil})
 var ResAccountErr, _ = jsonextra.Marshal(Response{50008, "账号错误", nil})
