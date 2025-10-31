@@ -142,11 +142,11 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := getuser(phone)
+	user, _ := getuser(phone)
 
-	if err != nil {
-		w.Write(ResOpErr)
-	}
+	// if err != nil {
+	// 	w.Write(ResOpErr)
+	// }
 
 	if user != nil {
 		w.Write(ResUserAleadyExits)

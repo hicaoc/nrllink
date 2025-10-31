@@ -112,7 +112,7 @@ func (j *jsonapi) httpWXMsg(w http.ResponseWriter, req *http.Request) {
 
 			if err != nil {
 				//log.Println("V1001_SIGN_TIMES get stu info err:", err)
-				msg, err := MakeTextResponseBody(wxrequest.ToUserName, wxrequest.FromUserName, "未查询到相关信息,可能需要先绑定校区")
+				msg, err := MakeTextResponseBody(wxrequest.ToUserName, wxrequest.FromUserName, "未查询到相关信息,可能需要先绑定")
 				if err != nil {
 					log.Println("send respons err,gen resp msg err :", err)
 				}

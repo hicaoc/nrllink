@@ -236,7 +236,7 @@ func getuser(username string) (*userinfo, error) {
 		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime)
 	if err != nil {
 		log.Println("getuser by username err :", err, "\n", query)
-		return r, err
+		return nil, err
 	}
 
 	r.Roles = strings.Split(roles, ",")
