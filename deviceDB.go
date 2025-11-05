@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -94,6 +96,9 @@ func checkdeviceOnline() {
 
 		time.Sleep(5 * time.Second)
 
+		onlineMap := make(map[int]*deviceInfo, 100)
+		//offlinelist := []*deviceInfo{}
+
 		t := time.Now()
 		totalstats.OnlineDevNumber = 0
 
@@ -112,9 +117,12 @@ func checkdeviceOnline() {
 					vvv.ISOnline = false
 					vvv.udpAddr = nil
 					change = true
+					//offlinelist = append(offlinelist, vvv)
 
 				default:
 					vv.OnlineDevNumber = vv.OnlineDevNumber + 1
+
+					onlineMap[vvv.ID] = vvv
 
 				}
 
@@ -152,9 +160,11 @@ func checkdeviceOnline() {
 						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
 						vvv.ISOnline = false
 						vvv.udpAddr = nil
+						//offlinelist = append(offlinelist, vvv)
 
 					default:
 						vv.OnlineDevNumber = vv.OnlineDevNumber + 1
+						onlineMap[vvv.ID] = vvv
 
 					}
 
@@ -166,6 +176,9 @@ func checkdeviceOnline() {
 			return true
 
 		})
+
+		onlinedevMap = onlineMap
+		//offlineDevList = offlinelist
 
 	}
 
@@ -259,9 +272,9 @@ func (d *deviceInfo) String() string {
 
 }
 
-func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
+func getDevicelist(w string, p string, sort string) ([]deviceInfo, int) {
 
-	devlist := []*deviceInfo{}
+	devlist := []deviceInfo{}
 
 	query := fmt.Sprintf(`	select 
 	id,
@@ -315,7 +328,7 @@ func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 
 		}
 
-		devlist = append(devlist, dev)
+		devlist = append(devlist, *dev)
 	}
 
 	var t int
@@ -330,6 +343,51 @@ func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 	//fmt.Println(emp)
 	return devlist, t
 	//fmt.Println(emp)
+
+}
+
+func getOnlineDevicelist(limit, page int, callsign string, groupid string, sortstr string) ([]deviceInfo, int) {
+
+	devlist := make([]deviceInfo, 0)
+
+	if limit <= 0 || page <= 0 {
+		return devlist, 0
+	}
+
+	callsign = strings.ToUpper(callsign)
+
+	for _, v := range onlinedevMap {
+
+		match := true
+		yes, _ := regexp.MatchString(callsign, v.CallSign)
+		if callsign != "" && !yes {
+			match = false
+		}
+
+		if groupid != "" {
+			gid, err := strconv.Atoi(groupid)
+			if err != nil || v.GroupID != gid {
+				match = false
+			}
+		}
+
+		if match {
+			devlist = append(devlist, *v)
+		}
+
+	}
+
+	sort.Slice(devlist, func(i, j int) bool {
+		if sortstr == "+id" {
+			return devlist[i].ID < devlist[j].ID
+		}
+		return devlist[i].ID > devlist[j].ID
+	})
+
+	begin := min(limit*(page-1), len(devlist))
+	end := min(limit*page, len(devlist))
+
+	return devlist[begin:end], len(devlist)
 
 }
 

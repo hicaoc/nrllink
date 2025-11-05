@@ -277,6 +277,7 @@ type query struct {
 	Sort          string   `json:"sort"`
 	Status        string   `json:"status"`
 	NotStatus     string   `json:"note_status"`
+	IsOnline      bool     `json:"isonline"`
 	IsDeleted     string   `json:"isdeleted"`
 	Path          string   `json:"path"`
 }

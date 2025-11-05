@@ -17,6 +17,9 @@ var userlist sync.Map // callid ,userinfo
 
 var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //key : callsign+ssid 在线设备CPUID列表
 
+var onlinedevMap = make(map[int]*deviceInfo, 1000) //所有设备列表
+//var offlineDevList devlist
+
 var ServerMap = make(map[string]*deviceInfo) //呼号对应的服务器设备
 
 var limitChan = make(chan bool, 1)

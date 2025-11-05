@@ -38,7 +38,15 @@ func (j *jsonapi) httpDevicesList(w http.ResponseWriter, req *http.Request) {
 	//stb.CurrentArea = strconv.Itoa(u.CurrentArea)
 	//员工漫游修改位常驻
 
-	emplist, total := getDevicelist(queryToWhere("", *stb))
+	var emplist []deviceInfo
+
+	total := 0
+	if stb.IsOnline {
+		emplist, total = getOnlineDevicelist(stb.Limit, stb.Page, stb.Callsign, stb.GroupID, stb.Sort)
+	} else {
+		emplist, total = getDevicelist(queryToWhere("", *stb))
+
+	}
 
 	//emplist = selectuser()
 
