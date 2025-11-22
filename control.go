@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -85,26 +86,32 @@ type ATcommand struct {
 }
 
 func (c *ATcommand) String() string {
-	return fmt.Sprintf("%s=%s", c.ATcommand, c.Data)
+	return fmt.Sprintf("%s=%s\r\n", c.ATcommand, c.Data)
 }
 
 func decodeATPacket(callsign string, ssid byte, data []byte) *ATcommand {
 
 	c := &ATcommand{CallSign: callsign, SSID: ssid}
 
-	at := bytes.SplitAfterN(data[1:], []byte{'='}, 2)
+	//at := bytes.SplitAfterN(data[1:], []byte{'='}, 2)
 
 	c.Type = data[0]
-	c.ATcommand = string(at[0])
-	c.Data = string(at[1])
+	//c.ATcommand = string(at[0])
 
-	if c.Type == 0x03 || c.ATcommand == "AT+READ" {
+	c.Data = string(data[1:])
+
+	if c.Type == 0x02 {
 		c.ATMap = make(map[string]string)
-		for _, v := range strings.Split(c.Data, "\r\n") {
+		for v := range strings.SplitSeq(c.Data[1:], "\r\n") {
 			kv := strings.SplitN(v, "=", 2)
+			if len(kv) != 2 {
+				continue
+			}
 			c.ATMap[string(kv[0])] = string(kv[1])
 		}
 
+	} else {
+		log.Println("AT command type error:", callsign, ssid, data)
 	}
 
 	return c

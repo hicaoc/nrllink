@@ -615,29 +615,11 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 
 }
 
-func queryDeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
+func DeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
 
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(at.CallSign, at.SSID)]; ok {
 
-		atcommand := append([]byte{0x01}, []byte(at.ATcommand)...)
-
-		packet := encodeNRL21(at.CallSign, at.SSID, 11, 11, []byte{}, []byte(atcommand))
-
-		globelconn.WriteToUDP(packet, d.udpAddr)
-
-		return d, nil
-
-	}
-
-	return nil, errors.New("device is not found")
-
-}
-
-func changeDeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
-
-	if d, ok := devCallsignSSIDMap[getCallsignSSID(at.CallSign, at.SSID)]; ok {
-
-		atcommand := append([]byte{0x02}, []byte(at.String())...)
+		atcommand := append([]byte{0x01}, []byte(at.String())...)
 
 		packet := encodeNRL21(at.CallSign, at.SSID, 11, 11, []byte{}, []byte(atcommand))
 

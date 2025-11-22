@@ -534,13 +534,13 @@ func (j *jsonapi) httpDeviceAT(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		log.Println("device parm update err :", err)
-		w.Write([]byte(`{"code":20000,"data":{"message":"AT数据格式错误"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"AT数据格式错误"}}`))
 		return
 	}
 
 	if !checkrole(u, []string{"admin"}) && u.CallSign != stb.CallSign {
 		log.Println("device parm query  err")
-		w.Write([]byte(`{"code":20000,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
+		w.Write([]byte(`{"code":20001,"data":{"message":"修改设备信息错误，不是本人，或者权限不够！"}}`))
 		return
 
 	}
@@ -554,30 +554,18 @@ func (j *jsonapi) httpDeviceAT(w http.ResponseWriter, req *http.Request) {
 
 	var dev *deviceInfo
 
-	switch stb.Type {
-	case 0x02:
-		dev, err = changeDeviceAT(stb)
+	dev, err = DeviceAT(stb)
 
-		if err != nil {
-			w.Write([]byte(`{"code":20000,"data":{"message":"AT写入命令失败"}}`))
-			return
-		}
-
-	case 0x01:
-		dev, err = queryDeviceAT(stb)
-
-		if err != nil {
-			w.Write([]byte(`{"code":20000,"data":{"message":"AT读取命令失败"}}`))
-			return
-		}
-
+	if err != nil {
+		w.Write([]byte(`{"code":20001,"data":{"message":"AT命令执行失败"}}`))
+		return
 	}
 
 	time.Sleep(200 * time.Millisecond)
 
 	rescode, _ := jsonextra.Marshal(dev)
 
-	respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)
+	respone := fmt.Sprintf(`{"code":20000,"data":{"message":"AT执行成功","items":%s}}`, rescode)
 
 	w.Write([]byte(respone))
 
