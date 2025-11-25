@@ -82,6 +82,7 @@ type ATcommand struct {
 	Type      byte              `json:"type"` //0x01 查询AT   0x02 写入AT
 	ATcommand string            `json:"atcommand"`
 	Data      string            `json:"data"`
+	Version   string            `json:"version"`
 	ATMap     map[string]string `json:"atmap"`
 }
 
@@ -93,17 +94,32 @@ func decodeATPacket(callsign string, ssid byte, data []byte) *ATcommand {
 
 	c := &ATcommand{CallSign: callsign, SSID: ssid}
 
+	if len(data) < 2 { //AT命令长度小于2
+		log.Println("AT command error:", callsign, ssid, data)
+		c.Version = "NRL AT ERROR"
+		return c
+	}
+
 	//at := bytes.SplitAfterN(data[1:], []byte{'='}, 2)
 
 	c.Type = data[0]
+
 	//c.ATcommand = string(at[0])
 
-	c.Data = string(data[1:])
-
 	if c.Type == 0x02 {
+
 		c.ATMap = make(map[string]string)
-		for v := range strings.SplitSeq(c.Data[1:], "\r\n") {
+		for v := range strings.SplitSeq(string(data[1:]), "\r\n") {
+
+			fmt.Println("AT command line:", v)
+
+			if strings.HasPrefix(v, "NRL") {
+				c.Version = v
+				continue
+			}
+
 			kv := strings.SplitN(v, "=", 2)
+
 			if len(kv) != 2 {
 				continue
 			}

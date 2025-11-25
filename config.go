@@ -12,6 +12,8 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+var PlatformList []Platformitem
+
 type Platformitem struct {
 	Name   string `yaml:"Name" json:"name"` // 对应 YAML 和 JSON 的 name 字段
 	Host   string `yaml:"Host" json:"host"` // 对应 YAML 和 JSON 的 host 字段
@@ -154,6 +156,8 @@ func (c *config) init() {
 		}
 		os.Exit(0)
 	}
+
+	PlatformList = conf.PlatformList
 
 }
 

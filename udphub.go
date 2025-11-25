@@ -281,8 +281,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			if dev.DeviceParm == nil && dev.DevModel < 100 {
 				conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
-				at := &ATcommand{CallSign: dev.CallSign, SSID: dev.SSID, Type: 0x01, ATcommand: "AT+READ"}
-				DeviceAT(at)
 
 			} else {
 				conn.WriteToUDP(packet, nrl.UDPAddr)
@@ -336,6 +334,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			QTHmapNew[dev.CallSignSSID] = qth{dev.QTH, dev.CallSignSSID, time.Now(), dev.Name}
 
 			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
+
+			at := &ATcommand{CallSign: dev.CallSign, SSID: dev.SSID, Type: 0x01, ATcommand: "AT+READ=123"}
+			DeviceAT(at)
 
 			dev.ISOnline = true
 

@@ -105,6 +105,7 @@ func (a *APRSTV) GetNRL() {
 	uri, err := url.Parse(apiURL)
 	if err != nil {
 		fmt.Println("Error parsing URL:", err)
+		conf.PlatformList = PlatformList
 		return
 	}
 	uri.RawQuery = params.Encode() // 自动编码
@@ -113,6 +114,7 @@ func (a *APRSTV) GetNRL() {
 	resp, err := http.Post(uri.String(), "", nil)
 	if err != nil {
 		fmt.Println("Request failed:", err)
+		conf.PlatformList = PlatformList
 		return
 	}
 	defer resp.Body.Close()
@@ -121,6 +123,7 @@ func (a *APRSTV) GetNRL() {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
+		conf.PlatformList = PlatformList
 		return
 	}
 
@@ -131,6 +134,7 @@ func (a *APRSTV) GetNRL() {
 	err = json.Unmarshal(body, &apiResponse)
 	if err != nil {
 		fmt.Println("Error unmarshaling JSON response:", err)
+		conf.PlatformList = PlatformList
 		return
 	}
 
@@ -138,6 +142,11 @@ func (a *APRSTV) GetNRL() {
 
 	totalstats.PlatformDevOnline = 0
 	totalstats.PlatformDevTotal = 0
+
+	if len(apiResponse.Data) == 0 {
+		conf.PlatformList = PlatformList
+		return
+	}
 
 	// 打印解析后的数据
 	for _, item := range apiResponse.Data {

@@ -617,6 +617,8 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 
 func DeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
 
+	 
+
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(at.CallSign, at.SSID)]; ok {
 
 		atcommand := append([]byte{0x01}, []byte(at.String())...)
