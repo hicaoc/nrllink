@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
@@ -213,6 +214,10 @@ func (j *jsonapi) httpGetGroupList(w http.ResponseWriter, req *http.Request) {
 		}
 
 	}
+
+	sort.Slice(grouplist, func(i, j int) bool {
+		return grouplist[i].ID < grouplist[j].ID
+	})
 
 	writeJSONResponseItem(w, grouplist)
 
