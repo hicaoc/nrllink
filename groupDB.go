@@ -89,8 +89,7 @@ func (p *group) mixPCM() {
 
 			select {
 			case g711 := <-vv.pcmG711Chan:
-				data := g711[0]
-				for i, v := range data {
+				for i, v := range g711[0][:500] {
 					ori := int(alaw2linear(v))
 					pcm[i] += ori
 					vv.pcmBuffer[i] = ori

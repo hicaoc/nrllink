@@ -538,7 +538,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 		}
 
 		//房间类型为会议室的时候，需要将语音进行混音，语音先放入缓存，等待其他设备的语音包
-		if gp.Type == 7 {
+		if gp.Type == 7 && nrl.Type == 1 {
 			// 必须拷贝数据，因为 udphub 的读取缓冲区是重复使用的。
 			// 如果不拷贝，后续到达的报文会覆盖还在管道中等待处理的旧报文内容。
 			voiceData := make([]byte, len(nrl.DATA))
