@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,10 +12,26 @@ import (
 
 var publicGroupMap = make(map[int]*group, 1000) //key 房间号
 
+/*
+export const groupTypeOptions = [
+  { id: 0, name: '公共房间' },
+  { id: 1, name: '中继互联' },
+  { id: 2, name: '设备互联' },
+  // { id: 3, name: '守听' },
+  { id: 4, name: '数模互联' },
+  { id: 5, name: '俱乐部' },
+  { id: 6, name: '车友会' },
+  { id: 7, name: '会议组' },
+  { id: 8, name: '私人房间' },
+  { id: 100, name: '其他' }
+]
+
+*/
+
 type group struct {
 	ID                int      `json:"id" db:"id"`
 	Name              string   `json:"name" db:"name"`
-	Type              int      `json:"type" db:"type"`
+	Type              int      `json:"type" db:"type"` //1: 私人房间 2：公共房间 3：中继房间 7:会议房间（多人讲话）
 	AllowCALLSSIDList []string `json:"allow_callsign_ssid" `
 	AllowCALLSSID     string   `db:"allow_callsign_ssid"`
 	DevList           []int    `json:"devlist" db:"devlist"`
@@ -35,12 +52,114 @@ type group struct {
 	OnlineDevNumber int `json:"online_dev_number"`
 	TotalDevNumber  int `json:"total_dev_number"`
 	Recorder        int `json:"recored"`
+	Timer           *time.Timer
+	ticker          *time.Ticker
 }
 
 func (p *group) String() string {
 
 	return fmt.Sprintf("id:%v,name:%v,type:%v,status:%v", p.ID, p.Name, p.Type, p.Status)
 
+}
+
+func (p *group) mixPCM() {
+	pcm := make([]int, 500)
+	globalG711 := make([]byte, 500)
+	newG711 := make([]byte, 500)
+
+	log.Println("mixPCM:", "p:", p)
+
+	for range p.ticker.C {
+		numbs := 0
+		for i := range pcm {
+			pcm[i] = 0
+		}
+
+		devCount := len(p.connPool.devConnList)
+		if devCount <= 2 {
+			continue
+		}
+
+		// 1. Collect voices and identify speakers
+		for _, vv := range p.connPool.devConnList {
+			for i := range vv.pcmBuffer {
+				vv.pcmBuffer[i] = 0
+			}
+			vv.speaking = false
+
+			select {
+			case g711 := <-vv.pcmG711Chan:
+				data := g711[0]
+				for i, v := range data {
+					ori := int(alaw2linear(v))
+					pcm[i] += ori
+					vv.pcmBuffer[i] = ori
+				}
+				vv.speaking = true
+				numbs++
+			default:
+			}
+		}
+
+		if numbs >= 2 {
+			// 2. Pre-calculate global mix (for listeners)
+			for i, v := range pcm {
+				if v > 32767 {
+					v = 32767
+				} else if v < -32768 {
+					v = -32768
+				}
+				globalG711[i] = Linear2Alaw(int16(v))
+			}
+
+			// 3. Send to everyone
+			for _, vv := range p.connPool.devConnList {
+				if vv.udpAddr == nil {
+					continue
+				}
+
+				var outData []byte
+				if vv.speaking {
+					// Speaker: needs custom mix (Global - Self)
+					for i, v := range pcm {
+						v -= vv.pcmBuffer[i]
+						if v > 32767 {
+							v = 32767
+						} else if v < -32768 {
+							v = -32768
+						}
+						newG711[i] = Linear2Alaw(int16(v))
+					}
+					outData = newG711
+				} else {
+					// Listener: just take the pre-calculated global mix
+					outData = globalG711
+				}
+
+				newpacket := encodeNRL21(vv.CallSign, 201, 1, 201, calculateCpuId(vv.CallSign+"-201"), outData)
+				globelconn.WriteToUDP(newpacket, vv.udpAddr)
+			}
+
+		} else if numbs == 1 {
+			// Single speaker: encode once and broadcast to everyone (echo for speaker)
+			for i, v := range pcm {
+				if v > 32767 {
+					v = 32767
+				} else if v < -32768 {
+					v = -32768
+				}
+				newG711[i] = Linear2Alaw(int16(v))
+			}
+
+			for _, vv := range p.connPool.devConnList {
+				if vv.udpAddr == nil {
+					continue
+				}
+				newpacket := encodeNRL21(vv.CallSign, 201, 1, 201, calculateCpuId(vv.CallSign+"-201"), newG711)
+				globelconn.WriteToUDP(newpacket, vv.udpAddr)
+			}
+		}
+	}
 }
 
 func convertStr2IntArray(str string) []int {
@@ -66,16 +185,6 @@ func convertIntArray2Str(gp []int) string {
 	}
 	return strings.Join(res, ",")
 
-}
-
-// Contains checks if a string slice contains a specific string element.
-func Contains(slice []string, element string) bool {
-	for _, item := range slice {
-		if item == element {
-			return true // 找到元素，立即返回 true
-		}
-	}
-	return false // 遍历完整个切片都没找到，返回 false
 }
 
 func initPublicGroup() {
@@ -150,6 +259,14 @@ func initPublicGroup() {
 
 		publicGroupMap[pg.ID] = pg
 
+		if pg.Type == 7 {
+			if pg.ticker == nil {
+				pg.ticker = time.NewTicker(62500 * time.Microsecond)
+				go pg.mixPCM()
+			}
+
+		}
+
 		fmt.Println("pg:", pg)
 
 	}
@@ -213,7 +330,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 	if g, ok := publicGroupMap[groupid]; ok {
 
 		if len(g.AllowCALLSSIDList) > 0 {
-			if !Contains(g.AllowCALLSSIDList, dev.CallSignSSID) {
+			if !slices.Contains(g.AllowCALLSSIDList, dev.CallSignSSID) {
 				return "", fmt.Errorf("group not allow this callsign")
 			}
 
@@ -346,6 +463,25 @@ func updatePublicGroup(pg *group) error {
 	if p, ok := publicGroupMap[pg.ID]; ok {
 
 		p.Name = pg.Name
+
+		//类型从其他改成7，需要启动mixPCM
+		if pg.Type == 7 && p.Type != 7 {
+			if p.ticker == nil {
+				p.ticker = time.NewTicker(62500 * time.Microsecond)
+				go p.mixPCM()
+			}
+
+		}
+		//从7改为其他 需要停止mixPCM
+		if pg.Type != 7 && p.Type == 7 {
+			if p.ticker != nil {
+				p.ticker.Stop()
+				p.ticker = nil
+
+			}
+
+		}
+
 		p.Type = pg.Type
 
 		p.Status = pg.Status

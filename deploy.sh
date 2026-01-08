@@ -4,7 +4,7 @@
 
 #bh4tdv.nrlptt.com
 
-hostlist='nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com bg1vif.nrlptt.com usa.nrlptt.com nrl.bd4two.site'
+hostlist='nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com yz.hamoa.cn ham.73ham.com js.nrlptt.com bg1vif.nrlptt.com usa.nrlptt.com nrl.bd4two.site yz.hamuv.com'
 
 #hostlist='ptt.nrlptt.com bh1osw.nrlptt.com'
 
@@ -14,7 +14,7 @@ hostlist='nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.n
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
 
-#hostlist='js.nrlptt.com'
+hostlist='js.nrlptt.com'
 
 #hostlist='usa.nrlptt.com'
 
@@ -27,7 +27,7 @@ hostlist='nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.n
 #hostlist='bh4tdv.nrlptt.com'
 
 #hostlist='nrlptt.bd4vki.xyz'
-
+#hostlist='yz.hamuv.com'
 #ostlist='bd4vki.nrlptt.com'
 
 time=`date "+%Y%m%d%H%M%S"`

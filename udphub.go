@@ -162,7 +162,9 @@ func udpProcess(conn *net.UDPConn) {
 				DevModel:     nrl.DevMode,
 				Priority:     100,
 				//udpAddr:      nrl.UDPAddr,
-				ChanName: make([]string, 8)})
+				ChanName:  make([]string, 8),
+				pcmBuffer: make([]int, 500),
+			})
 
 			if err != nil {
 				fmt.Println("add dev failed, ", err, '\n', nrl)
@@ -494,6 +496,8 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 		numbs = 3
 	}
 
+	//log.Println("PCMMIX: ", dev.CallSignSSID, "numbs", dev.GroupID, numbs, "type", gp.Type, "gp.ID", gp.ID, "gp.Name", gp.Name)
+
 	switch numbs {
 
 	case 0:
@@ -530,6 +534,21 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 
 		//语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音，
 		if nrl.Status&0x01 == 0 {
+			return
+		}
+
+		//房间类型为会议室的时候，需要将语音进行混音，语音先放入缓存，等待其他设备的语音包
+		if gp.Type == 7 {
+			// 必须拷贝数据，因为 udphub 的读取缓冲区是重复使用的。
+			// 如果不拷贝，后续到达的报文会覆盖还在管道中等待处理的旧报文内容。
+			voiceData := make([]byte, len(nrl.DATA))
+			copy(voiceData, nrl.DATA)
+			select {
+			case dev.pcmG711Chan <- [][]byte{voiceData}:
+				//log.Println("PCMMIX: ", dev.CallSignSSID, "dev.PcmG711Chan", len(dev.pcmG711Chan))
+			default:
+				//fmt.Println("PCMMIX: ", dev.CallSignSSID, "dev.PcmG711Chan full")
+			}
 			return
 		}
 
@@ -590,7 +609,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 }
 func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+	if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Microsecond) || nrl.Status&0x01 == 0 {
 
 		if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 			k.LastVoiceEndTime = nrl.timeStamp
@@ -682,6 +701,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 	case 1: //只有一个设备，缺省为环路测试，报文原样返回
 		//fmt.Println("case 1 :", clientAddrStr)
 		conn.WriteToUDP(packet, nrl.UDPAddr)
+
 		gp.connPool.UDPAddr = nrl.UDPAddr
 		gp.connPool.lastCtlTime = nrl.timeStamp
 
@@ -694,7 +714,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 			if nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 				//fmt.Println("case 2 :", clientAddrStr)
 				if vv.DevModel == 200 {
-					return
+					continue
 
 				} else {
 
@@ -730,7 +750,6 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 		} else {
 			gp.connPool.UDPAddr = nrl.UDPAddr
 			gp.connPool.lastCtlTime = nrl.timeStamp
-
 		}
 
 		for kk, vv := range gp.connPool.devConnMap {
@@ -743,7 +762,7 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 			if vv.udpAddr != nil && nrl.UDPAddrStr != kk && (vv.Status&2) != 2 {
 
 				if vv.DevModel == 200 {
-					return
+					continue
 
 				} else {
 					conn.WriteToUDP(packet, vv.udpAddr)

@@ -58,9 +58,13 @@ type deviceInfo struct {
 	LastCtlEndTime   time.Time `json:"last_ctl_end_time"`   //最后控制时间
 	LastCtlDuration  int       `json:"last_ctl_duration"`   //上次控制持续时长  秒
 
-	Note          string     `json:"note" db:"note"` //设备上线时间
-	DeviceParm    *control   `json:"device_parm"`
-	LastATcommand *ATcommand `json:"last_atcommand"`
+	Note          string        `json:"note" db:"note"` //设备上线时间
+	DeviceParm    *control      `json:"device_parm"`
+	LastATcommand *ATcommand    `json:"last_atcommand"`
+	pcmG711Chan   chan [][]byte //g711数据缓存通道
+	pcmBuffer     []int
+	speaking      bool
+	//ticker        *time.Ticker
 }
 
 func (d *deviceInfo) sendHeartbear() {
@@ -116,6 +120,7 @@ func checkdeviceOnline() {
 					delete(vv.connPool.devConnMap, vvv.udpAddr.String())
 					vvv.ISOnline = false
 					vvv.udpAddr = nil
+
 					change = true
 					//offlinelist = append(offlinelist, vvv)
 
@@ -135,7 +140,6 @@ func checkdeviceOnline() {
 				for _, vvv := range vv.connPool.devConnMap {
 					list = append(list, vvv)
 				}
-
 				vv.connPool.devConnList = list
 			}
 
@@ -160,6 +164,7 @@ func checkdeviceOnline() {
 						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
 						vvv.ISOnline = false
 						vvv.udpAddr = nil
+
 						//offlinelist = append(offlinelist, vvv)
 
 					default:
@@ -169,6 +174,7 @@ func checkdeviceOnline() {
 					}
 
 				}
+
 				vv.TotalDevNumber = len(vv.DevMap)
 				totalstats.OnlineDevNumber = totalstats.OnlineDevNumber + vv.OnlineDevNumber
 
@@ -225,6 +231,9 @@ func initAllDevList() {
 		callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
 		dev.CallSignSSID = callsignSSID
 
+		dev.pcmG711Chan = make(chan [][]byte, 3)
+		dev.pcmBuffer = make([]int, 500)
+
 		devCallsignSSIDMap[callsignSSID] = dev
 
 		if kk, ok := publicGroupMap[dev.GroupID]; ok {
@@ -241,6 +250,7 @@ func initAllDevList() {
 				if kkk, ok := publicGroupMap[dev.GroupID]; ok {
 					kkk.DevMap[dev.ID] = dev
 					kkk.DevList = append(kkk.DevList, dev.ID)
+
 				}
 
 			} else {
@@ -248,6 +258,7 @@ func initAllDevList() {
 					gp := user.(*userinfo).Groups[dev.GroupID]
 					gp.DevMap[dev.ID] = dev
 					gp.DevList = append(gp.DevList, dev.ID)
+
 				} else {
 
 					dev.GroupID = 0
@@ -255,6 +266,7 @@ func initAllDevList() {
 					if kkk, ok := publicGroupMap[dev.GroupID]; ok {
 						kkk.DevMap[dev.ID] = dev
 						kkk.DevList = append(kkk.DevList, dev.ID)
+
 					}
 
 				}
@@ -616,8 +628,6 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 }
 
 func DeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
-
-	 
 
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(at.CallSign, at.SSID)]; ok {
 
