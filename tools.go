@@ -8,14 +8,14 @@ import (
 )
 
 type Response struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
 
 type respData struct {
-	Total int         `json:"total"`
-	Items interface{} `json:"items"`
+	Total int `json:"total"`
+	Items any `json:"items"`
 }
 
 var ResOK, _ = jsonextra.Marshal(Response{20000, "操作成功", nil})

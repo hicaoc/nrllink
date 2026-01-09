@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/ipipdotnet/ipdb-go"
 	"github.com/json-iterator/go/extra"
@@ -27,6 +28,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	QTHmap["MEETLY-201"] = "会议模式"
+	QTHmapNew["MEETLY-201"] = qth{"会议模式", "MEETLY-201", time.Now(), "多人同时讲话"}
 
 	db = getDB()
 

@@ -174,7 +174,7 @@ func (a *APRSTV) GetNRL() {
 
 		conf.PlatformList = append(conf.PlatformList, p)
 
-		fmt.Printf("name:%s, Ower:%s, host:%s, port:%s, online:%d, total:%d,\n", name, item.Scall, host, port, online, total)
+		//fmt.Printf("name:%s, Ower:%s, host:%s, port:%s, online:%d, total:%d,\n", name, item.Scall, host, port, online, total)
 	}
 
 }

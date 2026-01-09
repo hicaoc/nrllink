@@ -135,7 +135,7 @@ func (p *group) mixPCM() {
 					outData = globalG711
 				}
 
-				newpacket := encodeNRL21(vv.CallSign, 201, 1, 201, calculateCpuId(vv.CallSign+"-201"), outData)
+				newpacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), outData)
 				globelconn.WriteToUDP(newpacket, vv.udpAddr)
 			}
 
@@ -154,7 +154,7 @@ func (p *group) mixPCM() {
 				if vv.udpAddr == nil {
 					continue
 				}
-				newpacket := encodeNRL21(vv.CallSign, 201, 1, 201, calculateCpuId(vv.CallSign+"-201"), newG711)
+				newpacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), newG711)
 				globelconn.WriteToUDP(newpacket, vv.udpAddr)
 			}
 		}

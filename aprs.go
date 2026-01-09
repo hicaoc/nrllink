@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -122,7 +121,7 @@ func (a *Aprs) sendAprsPosition() error {
 
 	// 发送数据
 	err := a.tcpClient.Send(aprsPacket)
-	fmt.Printf("APRS:发送APRS位置: %s", aprsPacket)
+	//fmt.Printf("APRS:发送APRS位置: %s", aprsPacket)
 
 	if err != nil {
 		fmt.Printf("APRS:发送APRS位置失败: %v\n", err)
@@ -136,7 +135,7 @@ func (a *Aprs) sendAprsPosition() error {
 		totalstats.OnlineDevNumber, len(devCallsignSSIDMap))
 
 	err = a.tcpClient.Send(aprsPacket2)
-	fmt.Printf("APRS:发送附加信息: %s", aprsPacket2)
+	//fmt.Printf("APRS:发送附加信息: %s", aprsPacket2)
 
 	if err != nil {
 		fmt.Printf("APRS:发送附加信息失败: %v\n", err)
@@ -167,7 +166,7 @@ func (a *Aprs) formatAprsPackettwo(name, callSign, ssid string, onlineNumber, to
 }
 
 func (a *Aprs) handleTcpMessage(message []byte) {
-	fmt.Printf("APRS:收到TCP消息: %s\n", bytes.TrimSpace(message))
+	//fmt.Printf("APRS:收到TCP消息: %s\n", bytes.TrimSpace(message))
 	a.Status = "收到服务器响应"
 
 	// 2秒后清除状态
