@@ -66,42 +66,70 @@ func (p *group) mixPCM() {
 	pcm := make([]int, 500)
 	globalG711 := make([]byte, 500)
 	newG711 := make([]byte, 500)
+	data := make([]byte, 500)
+
+	globalPacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), data)
+	speakerPacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), data)
+	speakerB_Packet := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), data)
 
 	log.Println("mixPCM:", "p:", p)
 
+	type activeSpeaker struct {
+		dev     *deviceInfo
+		rawG711 []byte
+	}
+	speakers := make([]activeSpeaker, 0, 10)
+
 	for range p.ticker.C {
-		numbs := 0
+		speakers = speakers[:0]
 		for i := range pcm {
 			pcm[i] = 0
 		}
 
-		devCount := len(p.connPool.devConnList)
-		if devCount <= 2 {
+		if len(p.connPool.devConnList) <= 2 {
 			continue
 		}
 
-		// 1. Collect voices and identify speakers
+		// 1. 收集发言者数据
 		for _, vv := range p.connPool.devConnList {
-			for i := range vv.pcmBuffer {
-				vv.pcmBuffer[i] = 0
-			}
 			vv.speaking = false
-
 			select {
 			case g711 := <-vv.pcmG711Chan:
-				for i, v := range g711[0][:500] {
-					ori := int(alaw2linear(v))
-					pcm[i] += ori
-					vv.pcmBuffer[i] = ori
-				}
+				raw := g711[0][:500]
 				vv.speaking = true
-				numbs++
+				speakers = append(speakers, activeSpeaker{vv, raw})
 			default:
 			}
 		}
 
-		if numbs >= 2 {
-			// 2. Pre-calculate global mix (for listeners)
+		numbs := len(speakers)
+		if numbs == 0 {
+			continue
+		}
+
+		// 2. 策略优化
+		if numbs == 1 {
+			// --- 单人发言直通 (Bypass) ---
+			// 直接透传原始字节，音质无损
+			copy(globalPacket[48:], speakers[0].rawG711)
+
+			for _, vv := range p.connPool.devConnList {
+				if vv.udpAddr == nil || vv.speaking {
+					continue
+				}
+				globelconn.WriteToUDP(globalPacket, vv.udpAddr)
+			}
+		} else {
+			// --- 多人混音处理 ---
+			for _, s := range speakers {
+				for i, v := range s.rawG711 {
+					ori := int(alaw2linear(v))
+					pcm[i] += ori
+					s.dev.pcmBuffer[i] = ori
+				}
+			}
+
+			// 计算全局混合音（给普通听众）
 			for i, v := range pcm {
 				if v > 32767 {
 					v = 32767
@@ -110,52 +138,48 @@ func (p *group) mixPCM() {
 				}
 				globalG711[i] = Linear2Alaw(int16(v))
 			}
+			copy(globalPacket[48:], globalG711)
 
-			// 3. Send to everyone
-			for _, vv := range p.connPool.devConnList {
-				if vv.udpAddr == nil {
-					continue
-				}
+			if numbs == 2 {
+				// --- 双人对讲互传优化 ---
+				copy(speakerPacket[48:], speakers[1].rawG711)   // A 听 B
+				copy(speakerB_Packet[48:], speakers[0].rawG711) // B 听 A
 
-				var outData []byte
-				if vv.speaking {
-					// Speaker: needs custom mix (Global - Self)
-					for i, v := range pcm {
-						v -= vv.pcmBuffer[i]
-						if v > 32767 {
-							v = 32767
-						} else if v < -32768 {
-							v = -32768
-						}
-						newG711[i] = Linear2Alaw(int16(v))
+				for _, vv := range p.connPool.devConnList {
+					if vv.udpAddr == nil {
+						continue
 					}
-					outData = newG711
-				} else {
-					// Listener: just take the pre-calculated global mix
-					outData = globalG711
+					switch vv.CallSignSSID {
+					case speakers[0].dev.CallSignSSID:
+						globelconn.WriteToUDP(speakerPacket, vv.udpAddr)
+					case speakers[1].dev.CallSignSSID:
+						globelconn.WriteToUDP(speakerB_Packet, vv.udpAddr)
+					default:
+						globelconn.WriteToUDP(globalPacket, vv.udpAddr)
+					}
 				}
-
-				newpacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), outData)
-				globelconn.WriteToUDP(newpacket, vv.udpAddr)
-			}
-
-		} else if numbs == 1 {
-			// Single speaker: encode once and broadcast to everyone (echo for speaker)
-			for i, v := range pcm {
-				if v > 32767 {
-					v = 32767
-				} else if v < -32768 {
-					v = -32768
+			} else {
+				// --- 3人及以上标准混音 ---
+				for _, vv := range p.connPool.devConnList {
+					if vv.udpAddr == nil {
+						continue
+					}
+					if vv.speaking {
+						for i, v := range pcm {
+							v -= vv.pcmBuffer[i]
+							if v > 32767 {
+								v = 32767
+							} else if v < -32768 {
+								v = -32768
+							}
+							newG711[i] = Linear2Alaw(int16(v))
+						}
+						copy(speakerPacket[48:], newG711)
+						globelconn.WriteToUDP(speakerPacket, vv.udpAddr)
+					} else {
+						globelconn.WriteToUDP(globalPacket, vv.udpAddr)
+					}
 				}
-				newG711[i] = Linear2Alaw(int16(v))
-			}
-
-			for _, vv := range p.connPool.devConnList {
-				if vv.udpAddr == nil {
-					continue
-				}
-				newpacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), newG711)
-				globelconn.WriteToUDP(newpacket, vv.udpAddr)
 			}
 		}
 	}

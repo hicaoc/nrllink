@@ -8,7 +8,33 @@ const (
 
 )
 
+var (
+	alaw2linearTable [256]int16
+	linear2alawTable [65536]byte
+)
+
+func init() {
+	// Initialize Alaw to Linear table
+	for i := range 256 {
+		alaw2linearTable[i] = rawAlaw2linear(byte(i))
+	}
+
+	// Initialize Linear to Alaw table
+	for i := range 65536 {
+		linear2alawTable[i] = rawLinear2Alaw(int16(i))
+	}
+}
+
 func alaw2linear(code byte) int16 {
+	return alaw2linearTable[code]
+}
+
+func Linear2Alaw(sample int16) byte {
+	return linear2alawTable[uint16(sample)]
+}
+
+// Internal version of alaw2linear for table generation
+func rawAlaw2linear(code byte) int16 {
 	code ^= 0x55
 
 	sign := int16(code & 0x80)
@@ -28,8 +54,8 @@ func alaw2linear(code byte) int16 {
 	return -(sample << 3)
 }
 
-// Linear2Alaw converts a 16-bit linear PCM sample to an 8-bit A-law sample.
-func Linear2Alaw(sample int16) byte {
+// Internal version of Linear2Alaw for table generation
+func rawLinear2Alaw(sample int16) byte {
 	var sign byte
 	if sample < 0 {
 		if sample == -32768 {
