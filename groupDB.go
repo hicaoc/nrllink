@@ -461,6 +461,13 @@ func addPublicGroup(pg *group) error {
 	if _, ok := publicGroupMap[newpg.ID]; !ok {
 		newpg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
 		newpg.DevMap = make(map[int]*deviceInfo, 10)
+		if newpg.Type == 7 {
+			if newpg.ticker == nil {
+				newpg.ticker = time.NewTicker(62500 * time.Microsecond)
+				go newpg.mixPCM()
+			}
+
+		}
 		publicGroupMap[newpg.ID] = newpg
 	}
 
@@ -530,6 +537,14 @@ func deletePublicGroup(pg *group) error {
 		log.Println("delete public group failed, ", err)
 		return err
 	}
+
+	if _, ok := publicGroupMap[pg.ID]; ok {
+		if pg.ticker != nil {
+			pg.ticker.Stop()
+			pg.ticker = nil
+		}
+	}
+
 	delete(publicGroupMap, pg.ID)
 
 	return nil
