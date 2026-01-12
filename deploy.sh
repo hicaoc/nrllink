@@ -10,7 +10,7 @@ hostlist='nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.n
 
 #hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com   ham.73ham.com '
 
-hostlist='ham.73ham.com'
+#hostlist='ham.73ham.com'
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
 

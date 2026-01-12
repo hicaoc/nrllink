@@ -97,6 +97,20 @@ func calculateCpuId(callSign string) []byte {
 
 }
 
+func NRL21SetCallsignSSID(callsign string, ssid byte, packet []byte) []byte {
+	copy(packet[24:30], callsign)
+
+	if len(callsign) == 5 {
+		packet[29] = 0
+	}
+
+	// 写入 SSID
+	packet[30] = ssid
+
+	return packet
+
+}
+
 func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, cpuid, data []byte) (packet []byte) {
 
 	packet = make([]byte, len(data))
