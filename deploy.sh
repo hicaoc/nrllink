@@ -32,6 +32,7 @@ hostlist='nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.n
 
 time=`date "+%Y%m%d%H%M%S"`
 
+scp udphub root@192.168.35.40:nrllink/nrllink/
 #go build 
 
 for i in $hostlist ; do     

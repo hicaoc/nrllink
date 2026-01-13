@@ -119,7 +119,7 @@ func udpProcess(conn *net.UDPConn) {
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
 			//  没有加入公共组的设备，使用用户内置连接池
-			if dev.GroupID > 0 && dev.GroupID < 1000 {
+			if dev.GroupID > 0 && dev.GroupID <= 3 {
 
 				if u, okok := userlist.Load(dev.CallSign); okok {
 
@@ -130,13 +130,16 @@ func udpProcess(conn *net.UDPConn) {
 
 				}
 
-			} else {
+			} else if dev.GroupID >= 1000 || dev.GroupID == 0 {
 
 				//否则使用公共群组连接池
 				if p, ok := publicGroupMap[dev.GroupID]; ok {
 
 					NRL21parser(nrl, data[:n], dev, conn, p)
 				}
+			} else {
+
+				log.Printf("dev:%v, nrl:%v, dev.GroupID error:%v", dev, nrl, dev.GroupID)
 			}
 
 		} else {
@@ -538,7 +541,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 		}
 
 		//房间类型为会议室的时候，需要将语音进行混音，语音先放入缓存，等待其他设备的语音包
-		if gp.Type == 7 && nrl.Type == 1 {
+		if gp.Type == 7 && nrl.Type == 1 && len(nrl.DATA) == 500 {
 			// 必须拷贝数据，因为 udphub 的读取缓冲区是重复使用的。
 			// 如果不拷贝，后续到达的报文会覆盖还在管道中等待处理的旧报文内容。
 			voiceData := make([]byte, len(nrl.DATA))
