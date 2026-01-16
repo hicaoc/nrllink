@@ -177,6 +177,9 @@ func udpProcess(conn *net.UDPConn) {
 
 			d := getDevice(nrl.CallSign, nrl.SSID)
 
+			d.pcmG711Chan = make(chan [][]byte, 3)
+			d.pcmBuffer = make([]int, 500)
+
 			devCallsignSSIDMap[callsignSSID] = d
 
 			if p, ok := publicGroupMap[d.GroupID]; ok {
@@ -534,6 +537,10 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 		}
 
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
+
+		if dev.CallSign == "BH4RPN" {
+			fmt.Println("case 3:", dev.CallSignSSID, "numbs", numbs, "type", gp.Type, "gp.ID", gp.ID, "gp.Name", gp.Name)
+		}
 
 		//语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音，
 		if nrl.Status&0x01 == 0 {
