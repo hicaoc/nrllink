@@ -343,7 +343,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
-			at := &ATcommand{CallSign: dev.CallSign, SSID: dev.SSID, Type: 0x01, ATcommand: "AT+READ=123"}
+			at := &ATcommand{CallSign: dev.CallSign, SSID: dev.SSID, Type: 0x01, ATcommand: "AT+READ", Data: "123"}
 			DeviceAT(at)
 
 			dev.ISOnline = true
@@ -359,7 +359,14 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 	case 4:
 
-	case 5: //文本消息
+	case 5: //文本消息,其他多媒体
+
+		/**
+			[text]adsfkafdaasdfasfd
+		    [img]https://xxx.oss.aliyun.com/adafasdfasdfasdfasfd
+		    [video]https://asfdfasdfasfdasdfasdfasdf
+		    [file]https://adfasldfasdfasdfas//*
+		*/
 
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 
