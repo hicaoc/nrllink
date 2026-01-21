@@ -82,10 +82,6 @@ func (p *Server) Start() error {
 
 		fmt.Println("start device", p.OwerCallsign, 200)
 
-		cpuid := calculateCpuId(p.OwerCallsign + "-200")
-
-		cpuIDHex := fmt.Sprintf("%x", cpuid)
-
 		dev = &deviceInfo{
 			Name:      p.IPAddr + ":" + p.UDPPort,
 			CallSign:  p.OwerCallsign,
@@ -94,7 +90,7 @@ func (p *Server) Start() error {
 			SSID:      200,
 			Priority:  100,
 			DevModel:  200,
-			CPUID:     cpuIDHex,
+			DMRID:     "",
 			Note:      "server"}
 
 		err = addDevice(dev)

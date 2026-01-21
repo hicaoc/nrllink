@@ -15,7 +15,7 @@ import (
 
 var userlist sync.Map // callid ,userinfo
 
-var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //key : callsign+ssid 在线设备CPUID列表
+var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //key : callsign+ssid 在线设备列表
 
 var onlinedevMap = make(map[int]*deviceInfo, 1000) //所有设备列表
 //var offlineDevList devlist
@@ -118,12 +118,14 @@ func udpProcess(conn *net.UDPConn) {
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
+			packet := NRL21SetDevDMRID(dev.DMRID, data[:n])
+
 			//  没有加入公共组的设备，使用用户内置连接池
 			if dev.GroupID > 0 && dev.GroupID <= 3 {
 
 				if u, okok := userlist.Load(dev.CallSign); okok {
 
-					NRL21parser(nrl, data[:n], dev, conn, u.(*userinfo).Groups[dev.GroupID])
+					NRL21parser(nrl, packet, dev, conn, u.(*userinfo).Groups[dev.GroupID])
 				} else {
 
 					fmt.Println("dev:", dev, nrl)
@@ -144,26 +146,15 @@ func udpProcess(conn *net.UDPConn) {
 
 		} else {
 
-			//升级用，先用cpuid加载下设备尝试
-			// dev := getDeviceByCpuID(nrl.CPUID)
-
-			// if dev.ID > 0 {
-
-			// 	updateDeviceCallsignSSIDByCPuid(nrl.CallSign, nrl.CPUID, nrl.SSID)
-
-			// 	fmt.Println("dev updated:", dev, nrl)
-
-			// } else {
-
 			//设备不存在，加入设备,并加入加入缺省0公共群组,需要保存呼号callsign
 
 			err = addDevice(&deviceInfo{
 				CallSignSSID: callsignSSID,
 				CallSign:     nrl.CallSign,
 				SSID:         nrl.SSID,
-				CPUID:        nrl.CPUID,
-				DevModel:     nrl.DevMode,
-				Priority:     100,
+				//DMRID:        nrl.DMRID, // 过渡期，暂时不从nrl报文中获取DMRID，盒子不支持，当前从服务器配置中获取
+				DevModel: nrl.DevMode,
+				Priority: 100,
 				//udpAddr:      nrl.UDPAddr,
 				ChanName:  make([]string, 8),
 				pcmBuffer: make([]int, 500),
@@ -182,17 +173,19 @@ func udpProcess(conn *net.UDPConn) {
 
 			devCallsignSSIDMap[callsignSSID] = d
 
+			packet := NRL21SetDevDMRID(dev.DMRID, data[:n])
+
 			if p, ok := publicGroupMap[d.GroupID]; ok {
 
 				p.DevMap[d.ID] = d
 
-				NRL21parser(nrl, data[:n], d, conn, p)
+				NRL21parser(nrl, packet, d, conn, p)
 
 			} else {
 
 				publicGroupMap[0].DevMap[d.ID] = d
 
-				NRL21parser(nrl, data[:n], d, conn, publicGroupMap[0])
+				NRL21parser(nrl, packet, d, conn, publicGroupMap[0])
 
 			}
 
@@ -213,7 +206,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 	case 1, 8:
 		//1 语音消息，需要转发给群组内其它设备,
 		//fmt.Println("recived G.711 voice ")
-		// fmt.Println(connpool.allowDEV, n.CPUID, n.CallSign)
 
 		//设备状态为禁发
 
@@ -288,7 +280,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		if dev.udpSocket == nil {
 
 			if dev.DeviceParm == nil && dev.DevModel < 100 {
-				conn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
+				//发送查询设备参数
+				conn.WriteToUDP(encodeNRL21(dev.CallSign, dev.SSID, 3, 0, "", []byte{0x01}), dev.udpAddr)
 
 			} else {
 				conn.WriteToUDP(packet, nrl.UDPAddr)
@@ -302,38 +295,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			if nrl.DevMode != 0 {
 				dev.DevModel = nrl.DevMode
 			}
-
-			//收到200设备第一次上线，并且是透明模式，将所有设备信息的IP信息通过心跳发给对方服务器
-			// if dev.SSID == 200 && (dev.Status&4 == 4) {
-			// 	for _, vv := range devCallsignSSIDMap {
-			// 		if vv.ISOnline {
-
-			// 			bytes, err := hex.DecodeString(vv.CPUID)
-			// 			if err != nil {
-			// 				bytes = []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-			// 			}
-
-			// 			pack := encodeNRL21(vv.CallSign, vv.SSID, 2, vv.DevModel, bytes, vv.udpAddr.IP.To4())
-			// 			conn.WriteToUDP(pack, dev.udpAddr)
-			// 			//fmt.Println(pack)
-			// 		}
-
-			// 	}
-			// } else {
-
-			// 	//200设备手工上线
-
-			// 	//将普通新上线的设备心跳附加IPv4地址转发给所有200的服务器
-			// 	for _, vv := range ServerMap {
-			// 		if vv.udpAddr != nil && vv.ISOnline && (vv.Status&4 == 4) {
-			// 			p := append(packet, nrl.UDPAddr.IP.To4()...)
-			// 			conn.WriteToUDP(p, vv.udpAddr)
-			// 			log.Printf("forward hb packet: %v %v %v \n", len(p), vv.udpAddr.String(), nrl.UDPAddr.IP.To4())
-			// 		}
-
-			// 	}
-
-			// }
 
 			//查询设备qth信息
 
@@ -385,10 +346,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		dev.CtlTime = dev.CtlTime + 63
 		//totalstats.CtlTime = totalstats.CtlTime + 63
-
-		// if gp.connPool.allowCALLSSID != "" && nrl.CPUID != gp.connPool.allowCALLSSID {
-		// 	return
-		// }
 
 		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 			dev.udpAddr = nrl.UDPAddr
@@ -530,7 +487,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 			if vv.udpAddr != nil && nrl.UDPAddrStr != vv.udpAddr.String() && ((vv.Status & 2) != 2) {
 
 				if vv.DevModel == 200 && ((vv.Status & 4) != 4) {
-					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), calculateCpuId(vv.CallSign+"-200"), packet)
+					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
 					conn.WriteToUDP(newpacket, vv.udpAddr)
 
 				} else {
@@ -544,10 +501,6 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 		}
 
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
-
-		if dev.CallSign == "BH4RPN" {
-			fmt.Println("case 3:", dev.CallSignSSID, "numbs", numbs, "type", gp.Type, "gp.ID", gp.ID, "gp.Name", gp.Name)
-		}
 
 		//语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音，
 		if nrl.Status&0x01 == 0 {
@@ -604,7 +557,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UD
 
 				if vv.DevModel == 200 {
 					//普通设备发给200设备，需要将原始呼号和SSID放到协议头
-					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), calculateCpuId(vv.CallSign+"-200"), packet)
+					newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
 					conn.WriteToUDP(newpacket, vv.udpAddr)
 
 				} else {
@@ -647,12 +600,12 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 
 			//转发给其他服务器-200设备，需要使用携带原始信息
 			if vv.DevModel == 200 {
-				newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, []byte(nrl.CPUID), packet)
+				newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 9, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, nrl.DMRID, packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
 			} else {
 				//转发给普通设备，需要将原始信息替换协议头信息
-				newpacket := NRL21replace200dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, []byte(nrl.CPUID), packet)
+				newpacket := NRL21replace200dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 			}
 
@@ -688,7 +641,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 
 		if clientAddrStr != kk {
 			if vv.DevModel == 200 {
-				newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 5, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), calculateCpuId(vv.CallSign+"-200"), packet)
+				newpacket := NRL21replace200dev(vv.CallSign, vv.SSID, 5, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), vv.DMRID, packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
 			} else {

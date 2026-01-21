@@ -97,7 +97,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 		dev := *vv
 
 		if !isadmin && dev.CallSign != u.CallSign {
-			dev.CPUID = ""
+
 			dev.DeviceParm = nil
 		}
 
@@ -640,7 +640,6 @@ func (j *jsonapi) httpChangeDeviceParm(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	//cpuid := req.Form["CPUID"][0]
 	callsign := req.Form["callsign"][0]
 	ssid := req.Form["ssid"][0]
 	callsignssid := callsign + "-" + ssid
@@ -664,7 +663,7 @@ outerLoop:
 		//fmt.Println(k, v)
 
 		switch k {
-		case "CPUID", "ssid", "callsign":
+		case "DMRID", "ssid", "callsign":
 			continue
 
 		case "dcd_select":

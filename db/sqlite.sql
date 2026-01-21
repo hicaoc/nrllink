@@ -1,7 +1,7 @@
 CREATE TABLE "devices" (
 	"id"	INTEGER UNIQUE COLLATE BINARY,
 	"name"	TEXT,
-	"cpuid"	TEXT,
+	"dmrid"	TEXT,
 	"callsign" TEXT,
 	"ssid" INTEGER,
 	"password"	TEXT,
@@ -50,7 +50,7 @@ CREATE TABLE "public_groups" (
 	"type"	INTEGER,
 	"callsign"	TEXT,
 	"password"	TEXT,
-	"allow_cpuid"	TEXT,
+	"allow_dmrid"	TEXT,
 	"allow_callsign_ssid" TEXT,
 	"ower_id"	INTEGER,
 	"devlist"	TEXT,

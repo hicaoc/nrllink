@@ -68,9 +68,9 @@ func (p *group) mixPCM() {
 	newG711 := make([]byte, 500)
 	data := make([]byte, 500)
 
-	globalPacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), data)
-	speakerPacket := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), data)
-	speakerB_Packet := encodeNRL21("MEETLY", 201, 1, 201, calculateCpuId("MEETLY-201"), data)
+	globalPacket := encodeNRL21("MEETLY", 201, 1, 201, "", data)
+	speakerPacket := encodeNRL21("MEETLY", 201, 1, 201, "", data)
+	speakerB_Packet := encodeNRL21("MEETLY", 201, 1, 201, "", data)
 
 	log.Println("mixPCM:", "p:", p)
 

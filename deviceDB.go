@@ -18,7 +18,7 @@ import (
 type deviceInfo struct {
 	ID              int    `json:"id" db:"id"` //设备唯一编号
 	Name            string `json:"name" db:"name"`
-	CPUID           string `json:"cpuid" db:"cpuid"`         //设备CPUID
+	DMRID           string `json:"dmrid" db:"dmrid"`         //设备DMRID
 	Password        string `json:"password" db:"password"`   //设备接入密码
 	Gird            string `json:"gird" db:"gird"`           //设备位置
 	DevType         byte   `json:"dev_type" db:"dev_type"`   //设备型号
@@ -69,9 +69,7 @@ type deviceInfo struct {
 
 func (d *deviceInfo) sendHeartbear() {
 
-	cpuid := calculateCpuId(d.CallSign + "-200")
-
-	packet := encodeNRL21(d.CallSign, 200, 2, 200, cpuid, []byte{})
+	packet := encodeNRL21(d.CallSign, 200, 2, 200, "", []byte{})
 
 	for {
 
@@ -198,7 +196,7 @@ func initAllDevList() {
 	callsign,
 	CAST(ssid AS INTEGER) AS ssid,
 	priority,	
-	cpuid,
+	dmrid,
 	password,
 	gird,
 	dev_type,
@@ -221,7 +219,7 @@ func initAllDevList() {
 	for rows.Next() {
 
 		dev := &deviceInfo{}
-		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 			&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 			&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 		if err != nil {
@@ -294,7 +292,7 @@ func getDevicelist(w string, p string, sort string) ([]deviceInfo, int) {
 	callsign,
 	CAST(ssid AS INTEGER) AS ssid,
 	priority,
-	cpuid,
+	dmrid,
 	password,
 	gird,
 	dev_type,
@@ -324,7 +322,7 @@ func getDevicelist(w string, p string, sort string) ([]deviceInfo, int) {
 
 		dev := &deviceInfo{}
 
-		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		err := rows.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 			&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 			&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 		if err != nil {
@@ -415,13 +413,12 @@ func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 
 	row := db.QueryRow(`select id,name,callsign,
 	CAST(ssid AS INTEGER) AS ssid,		priority,
-
-	cpuid,password,gird,dev_type,dev_model,
+	dmrid,password,gird,dev_type,dev_model,
 	group_id,status,is_certed,chan_name,
 	create_time,update_time,online_time,note,rf_type  
  from  devices   where callsign=? and ssid=?`, callsign, ssid)
 
-	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 
@@ -436,40 +433,40 @@ func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 
 }
 
-// func getDeviceByCpuID(cpuid string) (dev *deviceInfo) {
-// 	dev = &deviceInfo{}
+func getDeviceByDMRID(dmrid string) (dev *deviceInfo) {
+	dev = &deviceInfo{}
 
-// 	row := db.QueryRow(`select
-// 	id,
-// 	name,
-// 	callsign,
-// 	CAST(ssid AS INTEGER) AS ssid,
-// 	cpuid,
-// 	password,gird,dev_type,dev_model,
-// 	group_id,status,is_certed,chan_name,
-// 	create_time,update_time,online_time,note,rf_type
-//  from  devices   where cpuid=? `, cpuid)
+	row := db.QueryRow(`select
+	id,
+	name,
+	callsign,
+	CAST(ssid AS INTEGER) AS ssid,
+	dmrid,
+	password,gird,dev_type,dev_model,
+	group_id,status,is_certed,chan_name,
+	create_time,update_time,online_time,note,rf_type
+ from  devices   where dmrid=? `, dmrid)
 
-// 	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.CPUID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
-// 		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
-// 		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
+	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 
-// 	if err != nil {
-// 		log.Println("query one device rows err:", err)
-// 	}
+	if err != nil {
+		log.Println("query one device rows err:", err)
+	}
 
-// 	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
-// 	dev.CallSignSSID = callsignSSID
+	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
+	dev.CallSignSSID = callsignSSID
 
-// 	return dev
+	return dev
 
-// }
+}
 
 func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
 
 	if dev, ok := devCallsignSSIDMap[callsignwithssid]; ok {
 
-		globelconn.WriteToUDP(encodeDeviceParm(dev, 0x01), dev.udpAddr)
+		globelconn.WriteToUDP(encodeNRL21(dev.CallSign, dev.SSID, 3, 0, "", []byte{0x01}), dev.udpAddr)
 
 		time.Sleep(300 * time.Millisecond)
 
@@ -488,7 +485,8 @@ func changeDeviceByteParm(callsignssid string, offset int, str string) (res []by
 	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
 		d.DeviceParm.data[offset] = byte(val)
-		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -522,7 +520,8 @@ func changeDeviceCallsignSSIDParm(callsignssid string, newcallsignssid string) (
 		if len(callsign) == 4 {
 			d.DeviceParm.data[69] = 0
 		}
-		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -614,7 +613,8 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 		}
 		d.DeviceParm.data[ip.destIPOffset] = 0
 
-		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -633,7 +633,7 @@ func DeviceAT(at *ATcommand) (dev *deviceInfo, err error) {
 
 		atcommand := append([]byte{0x01}, []byte(at.String())...)
 
-		packet := encodeNRL21(at.CallSign, at.SSID, 11, 11, []byte{}, []byte(atcommand))
+		packet := encodeNRL21(at.CallSign, at.SSID, 11, 11, d.DMRID, []byte(atcommand))
 
 		globelconn.WriteToUDP(packet, d.udpAddr)
 
@@ -654,7 +654,8 @@ func changeDeviceUint16Parm(callsignssid string, offset int, str string) (res []
 		d.DeviceParm.data[offset+1] = byte(val & 0xFF)
 		d.DeviceParm.data[offset] = byte(val >> 8)
 
-		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -692,7 +693,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 		d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
 		d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
 
-		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		newpacket := append(encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03}), d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -732,7 +733,8 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 		d.DeviceParm.data[242] = []byte(strconv.Itoa(ctr.TwoMICLevel))[0]
 		d.DeviceParm.data[244] = []byte(strconv.Itoa(ctr.TwoTOTLevel))[0]
 
-		newpacket := append(encodeDeviceParm(d, 0x03), d.DeviceParm.data...)
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -767,10 +769,10 @@ func IsCallSign(s string) bool {
 func addDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
-	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,callsign,ssid,cpuid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
+	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,callsign,ssid,dmrid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
 		 VALUES ('','',0,0,0,0,?,?,?,?,'','',0,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
-	_, err := db.Exec(query, dev.CallSign, strconv.Itoa(int(dev.SSID)), dev.CPUID, dev.ChanName)
+	_, err := db.Exec(query, dev.CallSign, strconv.Itoa(int(dev.SSID)), dev.DMRID, dev.ChanName)
 
 	if err != nil {
 		log.Println("add dev failed, ", err, '\n', query)
@@ -820,9 +822,9 @@ func delDevice(dev *deviceInfo) error {
 
 func updateDevice(e *deviceInfo) error {
 
-	_, err := db.Exec(`update devices set name=?, gird=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
+	_, err := db.Exec(`update devices set name=?, gird=?, dmrid=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
 	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
-		e.Name, e.Gird, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
+		e.Name, e.Gird, e.DMRID, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
 	if err != nil {
 		log.Println("update device failed, ", err)
 		return err
@@ -831,6 +833,7 @@ func updateDevice(e *deviceInfo) error {
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]; ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
+		d.DMRID = e.DMRID
 		d.DevType = e.DevType
 		d.DevModel = e.DevModel
 		d.Status = e.Status

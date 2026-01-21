@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"strconv"
@@ -28,20 +27,21 @@ type control struct {
 	RealyStatus       byte   `json:"realy_status"`        //0x0A  Relay继电器掉电状态 0=断开  1=吸合
 	AllowRealyControl byte   `json:"allow_relay_control"` //0x0B  是否允许继电器控制
 	VoiceBitrate      byte   `json:"voice_bitrate"`       //0x0C  H=原码率  M=码率/2
-	LocalCPUID        string `json:"local_cpuid"`         //0x10-0x16  本机设备序列号，不可修改
-	LocalPassword     string `json:"local_password"`
-	PeerCPUID         string `json:"peer_cpuid"`      //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
-	PeerPassword      string `json:"peer_password"`   //远程目标接入密码，0-9 A-F 可修改
-	InitSign          byte   `json:"init_sign"`       //0x1F  //初始化标记
-	LocalIPaddr       string `json:"local_ipaddr"`    //0x20-0x23  192.168.1.190
-	Gateway           string `json:"gateway"`         //0x24-0x27  192.168.1.1
-	NetMask           string `json:"netmask"`         //0x28-0x31  255.255.255.0
-	DNSIP             string `json:"dns_ipaddr"`      //0x2C-0x2F  114.114.114.114
-	DestPort          uint16 `json:"dest_port"`       //0x30-0x31  UDP AUDIO OUT目标端口号
-	LoaclPort         uint16 `json:"local_port"`      //0x32-0x33  UDP AUDIO IN本机端口号
-	SSID              byte   `json:"ssid"`            //0x40
-	CallSign          string `json:"callsign"`        //0x41-0x47  呼号 最长6位 0X00结束符号
-	DestDomainName    string `json:"dest_domainname"` //0x50-0x7F  目标IP或域名，IP=XXX.XXX.XXX.XXX    域名=XXX.XXX.XXX   50-7F 最长48字节 0X00结束符号
+	DMRID             string `json:"dmrid"`               //0x10-0x19  本机设备序列号，不可修改
+	Password          string `json:"password"`            //0x1A-0x1E  本机设备密码，不可修改
+	// LocalPassword     string `json:"local_password"`
+	// PeerCPUID         string `json:"peer_cpuid"`      //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
+	// PeerPassword      string `json:"peer_password"`   //远程目标接入密码，0-9 A-F 可修改
+	InitSign       byte   `json:"init_sign"`       //0x1F  //初始化标记
+	LocalIPaddr    string `json:"local_ipaddr"`    //0x20-0x23  192.168.1.190
+	Gateway        string `json:"gateway"`         //0x24-0x27  192.168.1.1
+	NetMask        string `json:"netmask"`         //0x28-0x31  255.255.255.0
+	DNSIP          string `json:"dns_ipaddr"`      //0x2C-0x2F  114.114.114.114
+	DestPort       uint16 `json:"dest_port"`       //0x30-0x31  UDP AUDIO OUT目标端口号
+	LoaclPort      uint16 `json:"local_port"`      //0x32-0x33  UDP AUDIO IN本机端口号
+	SSID           byte   `json:"ssid"`            //0x40
+	CallSign       string `json:"callsign"`        //0x41-0x47  呼号 最长6位 0X00结束符号
+	DestDomainName string `json:"dest_domainname"` //0x50-0x7F  目标IP或域名，IP=XXX.XXX.XXX.XXX    域名=XXX.XXX.XXX   50-7F 最长48字节 0X00结束符号
 
 	//1w parm
 	///OneWParm       string `json:"onew_parm"`       //0x80-0x9F 对讲机模块频率    按格式填写  27/29字节   0X00结束符号
@@ -152,16 +152,16 @@ func decodeControlPacket(data []byte) *control {
 		c.RemoveTailVoice = uint16(c.data[5])<<8 | uint16(c.data[6]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
 		//c.AddTailVoice = uint16(c.data[3])<<8 | uint16(c.data[4])
 		//c.RemoveTailVoice = uint16(c.data[5])<<8 | uint16(c.data[6]) //0x05-0x06  默认消尾音,步进5MS  50*5=250ms
-		c.PTTresistive = c.data[7]                        //0x07  PTT 电阻  0=0FF 1=EN
-		c.Monitor = c.data[8]                             //0x08  MONITOR 监听输出  0=0FF 1=EN
-		c.KeyFunc = c.data[9]                             //0x09  自定义KEY  0=Relay 1=MANUAL PTT
-		c.RealyStatus = c.data[10]                        //0x0A  Relay继电器掉电状态 0=断开  1=吸合
-		c.AllowRealyControl = c.data[11]                  //0x0B  是否允许继电器控制
-		c.VoiceBitrate = c.data[12]                       //0x0C  H=原码率  M=码率/2
-		c.LocalCPUID = fmt.Sprintf("%02X", c.data[16:20]) //0x10-0x16  本机设备序列号，不可修改
-		c.LocalPassword = fmt.Sprintf("%02X", c.data[20:23])
-		c.PeerCPUID = fmt.Sprintf("%02X", c.data[23:27])                                           //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
-		c.PeerPassword = fmt.Sprintf("%02X", c.data[27:30])                                        //远程目标接入密码，0-9 A-F 可修改
+		c.PTTresistive = c.data[7]       //0x07  PTT 电阻  0=0FF 1=EN
+		c.Monitor = c.data[8]            //0x08  MONITOR 监听输出  0=0FF 1=EN
+		c.KeyFunc = c.data[9]            //0x09  自定义KEY  0=Relay 1=MANUAL PTT
+		c.RealyStatus = c.data[10]       //0x0A  Relay继电器掉电状态 0=断开  1=吸合
+		c.AllowRealyControl = c.data[11] //0x0B  是否允许继电器控制
+		c.VoiceBitrate = c.data[12]      //0x0C  H=原码率  M=码率/2
+		c.DMRID = string(c.data[16:26])  //0x10-0x19  本机设备DMRID，不可修改
+		c.Password = string(c.data[26:31])
+		// c.PeerCPUID = fmt.Sprintf("%02X", c.data[23:27])                                           //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
+		// c.PeerPassword = fmt.Sprintf("%02X", c.data[27:30])                                        //远程目标接入密码，0-9 A-F 可修改
 		c.InitSign = c.data[31]                                                                    //0x1F  //初始化标记
 		c.LocalIPaddr = fmt.Sprintf("%v.%v.%v.%v", c.data[32], c.data[33], c.data[34], c.data[35]) //0x20-0x23  192.168.1.190
 		c.Gateway = fmt.Sprintf("%v.%v.%v.%v", c.data[36], c.data[37], c.data[38], c.data[39])     //0x24-0x27  192.168.1.1
@@ -239,46 +239,10 @@ func decodeControlPacket(data []byte) *control {
 
 }
 
-func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
+// func encodeDeviceParm(dev *deviceInfo, subtype byte) (packet []byte) {
 
-	packet = append(packet, []byte{'N', 'R', 'L', '2'}...) //0-3
-	packet = append(packet, []byte{0, 49}...)              //长度   4-5
+// 	packet = encodeNRL21(dev.CallSign, dev.SSID, 3, 0, "", []byte{subtype})
 
-	id, _ := hex.DecodeString(dev.CPUID)
-
-	packet = append(packet, id...) //本机CPUID  6-10
-
-	pass_hex_data, _ := hex.DecodeString(dev.Password)
-	if len(pass_hex_data) < 3 {
-		pass_hex_data = []byte("000")
-	}
-	packet = append(packet, []byte(pass_hex_data)[:3]...) //本机设备密码  10-12
-	packet = append(packet, id...)                        //目标CPUID  13-19
-	packet = append(packet, []byte(pass_hex_data)[:3]...) //目标设备密码  10-12
-	packet = append(packet, 3)                            //类型3  20
-	packet = append(packet, 0)                            //busy 21
-	packet = append(packet, []byte{0x00, 0x00}...)        //计数器  22-23
-
-	packet = append(packet,
-		append([]byte(dev.CallSign),
-			make([]byte, 6-len(dev.CallSign))...)...) //callsign     24-29  //可能存在5位呼号的问题
-
-	packet = append(packet, dev.SSID)                    // 30
-	packet = append(packet, []byte{0x21, 0x03, 0x14}...) //version  31-33
-	packet = append(packet, make([]byte, 12)...)         //Reserved  34-45
-	packet = append(packet, []byte{0x00, 0x00}...)       //crc   46-47
-	packet = append(packet, subtype)                     // 查询
-
-	//log.Println(len(packet), fmt.Sprintf("CPUID:%v Callsign:%v-%v %02X", dev.CPUID, dev.CallSign, dev.SSID, packet))
-
-	//fmt.Println(string(packet))
-
-	return packet
-
-}
-
-// func sendParmQuery(CPUID string) {
+// 	return packet
 
 // }
-
-// func sendParmChange(CPUID string) {}
