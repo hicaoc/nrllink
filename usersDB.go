@@ -17,6 +17,8 @@ type userinfo struct {
 	ID       int    `db:"id" json:"id"`
 	Name     string `db:"name" json:"name"`
 	CallSign string `db:"callsign" json:"callsign"`
+	MDCID    string `db:"mdcid" json:"mdcid"`
+	DMRID    string `db:"dmrid" json:"dmrid"`
 	Gird     string `db:"gird" json:"gird"`
 	Phone    string `db:"phone" json:"phone"`
 	Password string `db:"password" json:"password"`
@@ -168,7 +170,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 	emp := []userinfo{}
 
 	query := fmt.Sprintf(`SELECT id,pid,name,phone,
-	 callsign,gird,birthday,
+	 callsign,gird,birthday,mdcid,dmrid,
 	 sex,nickname,openid,avatar,address, status,
 	 last_login_time, login_err_times, last_login_ip,
 	 alarm_msg,roles,create_time,update_time FROM users  %v  %v  %v  `, w, sort, p)
@@ -182,7 +184,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 		r := userinfo{}
 		var roles string
 		err := rows.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
-			&r.CallSign, &r.Gird, &r.Birthday,
+			&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
 			&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
 			&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
 			&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime,
@@ -223,14 +225,14 @@ func getuser(username string) (*userinfo, error) {
 	var roles string
 
 	query := `SELECT id,pid,name,phone,
-	callsign,gird,birthday,
+	callsign,gird,birthday,mdcid,dmrid,
 	sex,nickname,openid,avatar,address, status,
 	last_login_time, login_err_times, last_login_ip,
 	alarm_msg,roles,create_time,update_time FROM users where phone=?  `
 
 	row := db.QueryRow(query, username)
 	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
-		&r.CallSign, &r.Gird, &r.Birthday,
+		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
 		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
 		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
 		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime)
@@ -266,7 +268,8 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 
 		r := userinfo{}
 		var roles string
-		err := rows.Scan(&r.ID, &r.Name, &r.CallSign, &r.Gird, &r.Phone, &r.Password, &r.Birthday, &r.Sex, &r.Avatar, &r.Address,
+		err := rows.Scan(&r.ID, &r.Name, &r.CallSign, &r.Gird, &r.Phone, &r.Password, &r.Birthday, &r.MDCID, &r.DMRID,
+			&r.Sex, &r.Avatar, &r.Address,
 			&roles, &r.Introduction, &r.AlarmMsg, &r.Status, &r.UpdateTime, &r.LastLoginTime, &r.LoginErrTimes,
 			&r.CreateTime, &r.OpenID, &r.NickName, &r.PID, &r.LastLoginIP)
 		if err != nil {
@@ -398,10 +401,10 @@ func addUser(e *userinfo) error {
 	//	fmt.Println("user:", e)
 
 	roles := strings.Join(e.Roles, ",")
-	query := `INSERT INTO users (pid,name,phone,sex,callsign,gird,address,birthday,introduction,nickname,openid,last_login_ip,last_login_time,
+	query := `INSERT INTO users (pid,name,phone,sex,callsign,mdcid,dmrid,gird,address,birthday,introduction,nickname,openid,last_login_ip,last_login_time,
 		avatar,status,password,roles, alarm_msg,		
 		create_time,login_err_times,update_time) 
-	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
 		CURRENT_TIMESTAMP,0,CURRENT_TIMESTAMP)`
 
 	stmt, err := db.Prepare(query)
@@ -414,7 +417,7 @@ func addUser(e *userinfo) error {
 	//	e.Avatar = "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif"
 	e.Avatar = conf.WeiXin.AvatarURL
 
-	res, err := stmt.Exec(e.PID, e.Name, e.Phone, e.Sex, e.CallSign, e.Gird, e.Address, e.Birthday, e.Introduction, e.NickName, e.OpenID, e.LastLoginIP, e.LastLoginTime,
+	res, err := stmt.Exec(e.PID, e.Name, e.Phone, e.Sex, e.CallSign, e.MDCID, e.DMRID, e.Gird, e.Address, e.Birthday, e.Introduction, e.NickName, e.OpenID, e.LastLoginIP, e.LastLoginTime,
 		e.Avatar, e.Status, password, roles, e.AlarmMsg)
 	// Named queries can use structs, so if you have an existing struct (i.e. person := &Person{}) that you have populated, you can pass it in as &person
 	//	tx.NamedExec("INSERT INTO person (first_name, last_name, email) VALUES (:first_name, :last_name, :email)", &Person{"Jane", "Citizen", "jane.citzen@example.com"})
@@ -455,9 +458,9 @@ func updateUser(e *userinfo) error {
 
 	roles := strings.Join(e.Roles, ",")
 
-	_, err := db.Exec(`update users set name=?,phone=?,sex=?,callsign=?,gird=?,address=?,birthday=?,introduction=?,
+	_, err := db.Exec(`update users set name=?,phone=?,sex=?,callsign=?,	mdcid=?,dmrid=?,gird=?,address=?,birthday=?,introduction=?,
 	avatar=?,status=?,alarm_msg=?,   update_time=CURRENT_TIMESTAMP,roles=?,pid=?  where id=?`,
-		e.Name, e.Phone, e.Sex, e.CallSign, e.Gird, e.Address, e.Birthday, e.Introduction, e.Avatar, e.Status, e.AlarmMsg, roles, e.PID, e.ID)
+		e.Name, e.Phone, e.Sex, e.CallSign, e.MDCID, e.DMRID, e.Gird, e.Address, e.Birthday, e.Introduction, e.Avatar, e.Status, e.AlarmMsg, roles, e.PID, e.ID)
 	if err != nil {
 		log.Println("update user failed, ", err)
 		return err

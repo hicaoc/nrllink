@@ -7,7 +7,31 @@ import (
 
 func initAllUserList() {
 
-	rows, err := db.Query("SELECT * from  users where status=1")
+	rows, err := db.Query(`
+	SELECT 
+	id,name,callsign,
+	mdcid,
+	dmrid,
+	gird,
+	phone,
+	password,
+	birthday,
+	sex,
+	avatar,
+	address,
+	roles,
+	introduction,
+	alarm_msg,
+	status,
+	update_time,
+	last_login_time,
+	login_err_times,
+	create_time, 
+	openid,
+    nickname,
+    pid,
+	last_login_ip
+	FROM users where status=1`)
 
 	if err != nil {
 		log.Println("query all user list  err:", err)
@@ -18,9 +42,13 @@ func initAllUserList() {
 
 		var roles string
 
-		err := rows.Scan(&user.ID, &user.Name, &user.CallSign, &user.Gird, &user.Phone, &user.Password,
-			&user.Birthday, &user.Sex, &user.Avatar, &user.Address, &roles, &user.Introduction, &user.AlarmMsg,
-			&user.Status, &user.UpdateTime, &user.LastLoginTime, &user.LoginErrTimes, &user.CreateTime, &user.OpenID, &user.NickName, &user.PID, &user.LastLoginIP)
+		err := rows.Scan(&user.ID, &user.Name, &user.CallSign,
+			&user.MDCID, &user.DMRID, &user.Gird,
+			&user.Phone, &user.Password,
+			&user.Birthday, &user.Sex, &user.Avatar, &user.Address,
+			&roles, &user.Introduction, &user.AlarmMsg,
+			&user.Status, &user.UpdateTime, &user.LastLoginTime, &user.LoginErrTimes,
+			&user.CreateTime, &user.OpenID, &user.NickName, &user.PID, &user.LastLoginIP)
 		if err != nil {
 			log.Println("query  all user rows err:", err)
 			continue
@@ -42,7 +70,7 @@ func (u *userinfo) userinit() {
 
 	u.Groups[1] = &group{
 		ID:           1,
-		Name:         "私有房间1",
+		Name:         "个人房间1",
 		Type:         8,
 		DevMap:       make(map[int]*deviceInfo),
 		DevList:      []int{},
@@ -53,7 +81,7 @@ func (u *userinfo) userinit() {
 
 	u.Groups[2] = &group{
 		ID:           2,
-		Name:         "私有房间2",
+		Name:         "个人房间2",
 		Type:         8,
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
@@ -64,7 +92,7 @@ func (u *userinfo) userinit() {
 
 	u.Groups[3] = &group{
 		ID:           3,
-		Name:         "私有房间3",
+		Name:         "个人房间3",
 		Type:         8,
 		OwerID:       u.ID,
 		OwerCallsign: u.CallSign,
