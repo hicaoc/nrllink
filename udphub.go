@@ -173,19 +173,17 @@ func udpProcess(conn *net.UDPConn) {
 
 			devCallsignSSIDMap[callsignSSID] = d
 
-			packet := NRL21SetDevDMRID(dev.DMRID, data[:n])
-
 			if p, ok := publicGroupMap[d.GroupID]; ok {
 
 				p.DevMap[d.ID] = d
 
-				NRL21parser(nrl, packet, d, conn, p)
+				NRL21parser(nrl, data[:n], d, conn, p)
 
 			} else {
 
 				publicGroupMap[0].DevMap[d.ID] = d
 
-				NRL21parser(nrl, packet, d, conn, publicGroupMap[0])
+				NRL21parser(nrl, data[:n], d, conn, publicGroupMap[0])
 
 			}
 

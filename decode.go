@@ -156,7 +156,12 @@ func NRL21SetCallsignSSID(callsign string, ssid byte, packet []byte) []byte {
 }
 
 func NRL21SetDevDMRID(dmrid string, packet []byte) []byte {
-	copy(packet[6:15], dmrid)
+	if len(dmrid) == 0 {
+		copy(packet[6:15], []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0})
+	} else {
+		copy(packet[6:15], dmrid)
+	}
+
 	return packet
 }
 
