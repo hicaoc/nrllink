@@ -93,6 +93,16 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 
 */
 
+//type 8 语音编码格式 opus
+/*
+Sample rate: 16kHz
+Channels: 1
+Frame size: 20ms (320 samples @16k)
+Bitrate: 32–40 kbps (Default VBR)
+Application: OPUS_APPLICATION_VOIP
+Complexity: 10
+*/
+
 func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 
 	if len(d) < 48 {
