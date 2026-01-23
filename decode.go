@@ -130,7 +130,7 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.SSID = d[30]
 	n.DevMode = d[31]
 
-	if n.Type == 9 {
+	if n.Type == 9 || n.DevMode == 200 {
 		n.OriginalCallsign = string(bytes.TrimRight(d[32:38], string([]byte{13, 0})))
 		n.OriginalSSID = d[38]
 		n.OriginalIP = d[39:43]
@@ -166,27 +166,24 @@ type G711Voice struct {
 // 	// 将哈希值转换为 7 字节的十六进制字符串
 
 // }
+var zero6 = make([]byte, 9)
 
 func NRL21SetCallsignSSID(callsign string, ssid byte, packet []byte) []byte {
+	copy(packet[24:30], zero6)
 	copy(packet[24:30], callsign)
 
-	if len(callsign) == 5 {
-		packet[29] = 0
-	}
-
-	// 写入 SSID
 	packet[30] = ssid
 
 	return packet
 
 }
 
+var zero9 = make([]byte, 9)
+
 func NRL21SetDevDMRID(dmrid string, packet []byte) []byte {
-	if len(dmrid) == 0 {
-		copy(packet[6:15], []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0})
-	} else {
-		copy(packet[6:15], dmrid)
-	}
+
+	copy(packet[6:15], zero9)
+	copy(packet[6:15], dmrid)
 
 	return packet
 }
@@ -248,9 +245,9 @@ func encodeNRL21(callsign string, ssid, packetType, DevMode uint8, dmrid string,
 	// 写入长度
 	binary.BigEndian.PutUint16(packet[4:6], uint16(totalSize))
 
-	// 写入 CPUID
+	// 写入 DMRID
 
-	copy(packet[6:16], dmrid)
+	copy(packet[6:15], dmrid)
 
 	// 写入 Type  2
 	packet[20] = packetType
@@ -263,9 +260,9 @@ func encodeNRL21(callsign string, ssid, packetType, DevMode uint8, dmrid string,
 
 	// 写入 CallSign
 	copy(packet[24:30], callsign)
-	if len(callsign) == 5 {
-		packet[29] = 0
-	}
+	// if len(callsign) == 5 {
+	// 	packet[29] = 0
+	// }
 
 	// 写入 SSID
 	packet[30] = ssid
