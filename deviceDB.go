@@ -64,6 +64,7 @@ type deviceInfo struct {
 	pcmG711Chan   chan [][]byte //g711数据缓存通道
 	pcmBuffer     []int
 	speaking      bool
+	Ducked        bool `json:"ducted"`
 	//ticker        *time.Ticker
 }
 

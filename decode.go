@@ -77,6 +77,22 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 
 */
 
+//type 5 文本消息子类型规范，使用[]头表达内容的媒体类型,不带方括号的默认为纯文本类型，
+/*
+[text]text/plain  纯文本消息
+[loc]application/location  位置消息，经纬度
+[json]application/json  json消息
+[xml]application/xml  xml消息
+[html]text/html  html消息
+
+//下面几种体积大的类型，须通过oss上传，NRL报文只传输媒体在oss上的链接
+[bin]application/octet-stream url
+[img]image/jpeg url
+[video]video/mp4 url
+[audio]audio/mp3 url
+
+*/
+
 func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 
 	if len(d) < 48 {
