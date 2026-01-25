@@ -83,15 +83,17 @@ func (p *Server) Start() error {
 		fmt.Println("start device", p.OwerCallsign, 200)
 
 		dev = &deviceInfo{
-			Name:      p.IPAddr + ":" + p.UDPPort,
-			CallSign:  p.OwerCallsign,
-			udpSocket: globelconn,
-			udpAddr:   addr,
-			SSID:      200,
-			Priority:  100,
-			DevModel:  200,
-			DMRID:     "",
-			Note:      "server"}
+			Name:        p.IPAddr + ":" + p.UDPPort,
+			CallSign:    p.OwerCallsign,
+			udpSocket:   globelconn,
+			udpAddr:     addr,
+			SSID:        200,
+			Priority:    100,
+			DevModel:    200,
+			pcmG711Chan: make(chan [][]byte, 3),
+			pcmBuffer:   make([]int, 500),
+			DMRID:       "",
+			Note:        "server"}
 
 		err = addDevice(dev)
 		if err != nil {
@@ -347,6 +349,14 @@ func addServers(s *Server) error {
 		return err
 	} else {
 		fmt.Println("resault:", resault)
+	}
+
+	switch s.Status {
+	case 1:
+		s.Start()
+
+	case 2:
+		go s.Stop()
 	}
 
 	return nil

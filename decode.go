@@ -24,13 +24,28 @@ type NRL21packet struct {
 	Count      uint16       //报文计数器2节
 	CallSign   string       //所有者呼号 6字节
 	SSID       byte         //所有者呼号 1字节
-	DevMode    byte         //设备型号
+	DevModel   byte         //设备型号
 
 	OriginalCallsign string //原始呼号
 	OriginalSSID     uint8  //原始SSID
 	OriginalIP       net.IP //原始IP
 
 	DATA []byte //上层数据内容
+}
+
+func newNRL21packet(remoteaddr *net.UDPAddr, d []byte) (packet *NRL21packet, err error) {
+	packet = &NRL21packet{}
+
+	err = packet.decodeNRL21(d)
+
+	if err != nil {
+		return nil, err
+	}
+
+	packet.UDPAddr = remoteaddr
+	packet.UDPAddrStr = remoteaddr.String()
+	packet.timeStamp = time.Now()
+	return
 }
 
 /*
@@ -128,9 +143,9 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	}
 
 	n.SSID = d[30]
-	n.DevMode = d[31]
+	n.DevModel = d[31]
 
-	if n.Type == 9 || n.DevMode == 200 {
+	if n.Type == 9 || n.DevModel == 200 {
 		n.OriginalCallsign = string(bytes.TrimRight(d[32:38], string([]byte{13, 0})))
 		n.OriginalSSID = d[38]
 		n.OriginalIP = d[39:43]
@@ -180,15 +195,14 @@ func NRL21SetCallsignSSID(callsign string, ssid byte, packet []byte) []byte {
 
 var zero9 = make([]byte, 9)
 
-func NRL21SetDevDMRID(dmrid string, packet []byte) []byte {
+func NRL21SetDevDMRID(dmrid string, packet []byte) {
 
 	copy(packet[6:15], zero9)
 	copy(packet[6:15], dmrid)
 
-	return packet
 }
 
-func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, dmrid string, data []byte) (packet []byte) {
+func NRL21replace200dev(callsign string, ssid, packetType, DevModel uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, dmrid string, data []byte) (packet []byte) {
 
 	packet = make([]byte, len(data))
 
@@ -212,7 +226,7 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, origin
 	packet[30] = ssid
 
 	// 写入 DevMode
-	packet[31] = DevMode
+	packet[31] = DevModel
 
 	// 协议原始呼号
 	copy(packet[32:38], originalCallsign)
@@ -227,7 +241,7 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevMode uint8, origin
 
 }
 
-func encodeNRL21(callsign string, ssid, packetType, DevMode uint8, dmrid string, data []byte) (packet []byte) {
+func encodeNRL21(callsign string, ssid, packetType, DevModel uint8, dmrid string, data []byte) (packet []byte) {
 
 	//编码报名
 
@@ -268,7 +282,7 @@ func encodeNRL21(callsign string, ssid, packetType, DevMode uint8, dmrid string,
 	packet[30] = ssid
 
 	// 写入 DevMode
-	packet[31] = DevMode
+	packet[31] = DevModel
 
 	// 写入 DATA
 	if len(data) > 0 {

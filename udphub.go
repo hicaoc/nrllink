@@ -92,22 +92,13 @@ func udpProcess(conn *net.UDPConn) {
 			break
 		}
 
-		nrl := &NRL21packet{}
-		nrl.UDPAddr = remoteaddr
-		nrl.UDPAddrStr = remoteaddr.String()
-		nrl.timeStamp = time.Now()
-
-		err = nrl.decodeNRL21(data[:n])
-		totalstats.PacketNumber++
-
+		nrl, err := newNRL21packet(remoteaddr, data[:n])
 		if err != nil {
-
 			log.Printf("from %v, decode err %v  % X:", remoteaddr, err, data[:n])
 			continue
-			//break
-			// <-limitChan
-			// return
 		}
+
+		totalstats.PacketNumber++
 
 		callsignSSID := getCallsignSSID(nrl.CallSign, nrl.SSID)
 
@@ -118,14 +109,16 @@ func udpProcess(conn *net.UDPConn) {
 			dev.Traffic = dev.Traffic + 42 + 48 + len(nrl.DATA)
 			totalstats.Traffic = totalstats.Traffic + 42 + 48 + len(nrl.DATA)
 
-			packet := NRL21SetDevDMRID(dev.DMRID, data[:n])
+			if nrl.DevModel != 200 {
+				NRL21SetDevDMRID(dev.DMRID, data[:n])
+			}
 
 			//  没有加入公共组的设备，使用用户内置连接池
 			if dev.GroupID > 0 && dev.GroupID <= 3 {
 
 				if u, okok := userlist.Load(dev.CallSign); okok {
 
-					NRL21parser(nrl, packet, dev, conn, u.(*userinfo).Groups[dev.GroupID])
+					NRL21parser(nrl, data[:n], dev, conn, u.(*userinfo).Groups[dev.GroupID])
 				} else {
 
 					fmt.Println("dev:", dev, nrl)
@@ -153,7 +146,7 @@ func udpProcess(conn *net.UDPConn) {
 				CallSign:     nrl.CallSign,
 				SSID:         nrl.SSID,
 				//DMRID:        nrl.DMRID, // 过渡期，暂时不从nrl报文中获取DMRID，盒子不支持，当前从服务器配置中获取
-				DevModel: nrl.DevMode,
+				DevModel: nrl.DevModel,
 				Priority: 100,
 				//udpAddr:      nrl.UDPAddr,
 				ChanName:  make([]string, 8),
@@ -290,8 +283,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		if !dev.ISOnline {
 
 			//如果设备没有携带型号，则使用用户指定的型号，不更新
-			if nrl.DevMode != 0 {
-				dev.DevModel = nrl.DevMode
+			if nrl.DevModel != 0 {
+				dev.DevModel = nrl.DevModel
 			}
 
 			//查询设备qth信息
@@ -622,7 +615,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 	clientAddrStr := nrl.UDPAddr.String()
 
 	//200设备转发给其他设备
-	if nrl.DevMode == 200 {
+	if nrl.DevModel == 200 {
 
 		for kk, vv := range connpool.devConnMap {
 
