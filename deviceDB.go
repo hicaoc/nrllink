@@ -18,7 +18,7 @@ import (
 type deviceInfo struct {
 	ID              int    `json:"id" db:"id"` //设备唯一编号
 	Name            string `json:"name" db:"name"`
-	DMRID           string `json:"dmrid" db:"dmrid"`         //设备DMRID
+	DMRID           uint32 `json:"dmrid" db:"dmrid"`         //设备DMRID
 	Password        string `json:"password" db:"password"`   //设备接入密码
 	Gird            string `json:"gird" db:"gird"`           //设备位置
 	DevType         byte   `json:"dev_type" db:"dev_type"`   //设备型号
@@ -70,7 +70,7 @@ type deviceInfo struct {
 
 func (d *deviceInfo) sendHeartbear() {
 
-	packet := encodeNRL21(d.CallSign, 200, 2, 200, "", []byte{})
+	packet := encodeNRL21(d.CallSign, 200, 2, 200, 0, []byte{})
 
 	for {
 
@@ -467,7 +467,7 @@ func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
 
 	if dev, ok := devCallsignSSIDMap[callsignwithssid]; ok {
 
-		globelconn.WriteToUDP(encodeNRL21(dev.CallSign, dev.SSID, 3, 0, "", []byte{0x01}), dev.udpAddr)
+		globelconn.WriteToUDP(encodeNRL21(dev.CallSign, dev.SSID, 3, 0, 0, []byte{0x01}), dev.udpAddr)
 
 		time.Sleep(300 * time.Millisecond)
 
@@ -486,7 +486,7 @@ func changeDeviceByteParm(callsignssid string, offset int, str string) (res []by
 	if d, ok := devCallsignSSIDMap[callsignssid]; ok {
 
 		d.DeviceParm.data[offset] = byte(val)
-		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, 0, []byte{0x03})
 		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
@@ -521,7 +521,7 @@ func changeDeviceCallsignSSIDParm(callsignssid string, newcallsignssid string) (
 		if len(callsign) == 4 {
 			d.DeviceParm.data[69] = 0
 		}
-		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, 0, []byte{0x03})
 		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
@@ -614,7 +614,7 @@ func changeDeviceIPParm(callsignssid string, ip ipparm) (res []byte, err error) 
 		}
 		d.DeviceParm.data[ip.destIPOffset] = 0
 
-		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, 0, []byte{0x03})
 		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
@@ -655,7 +655,7 @@ func changeDeviceUint16Parm(callsignssid string, offset int, str string) (res []
 		d.DeviceParm.data[offset+1] = byte(val & 0xFF)
 		d.DeviceParm.data[offset] = byte(val >> 8)
 
-		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, 0, []byte{0x03})
 		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
@@ -694,7 +694,7 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 		d.DeviceParm.data[160] = []byte(strconv.Itoa(ctr.OneVolume))[0]
 		d.DeviceParm.data[161] = []byte(strconv.Itoa(ctr.OneMICSensitivity))[0]
 
-		newpacket := append(encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03}), d.DeviceParm.data...)
+		newpacket := append(encodeNRL21(d.CallSign, d.SSID, 3, 0, 0, []byte{0x03}), d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)
 
@@ -734,7 +734,7 @@ func changeDevice2W(ctr *control) (res []byte, err error) {
 		d.DeviceParm.data[242] = []byte(strconv.Itoa(ctr.TwoMICLevel))[0]
 		d.DeviceParm.data[244] = []byte(strconv.Itoa(ctr.TwoTOTLevel))[0]
 
-		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, "", []byte{0x03})
+		newpacket := encodeNRL21(d.CallSign, d.SSID, 3, 0, 0, []byte{0x03})
 		newpacket = append(newpacket, d.DeviceParm.data...)
 		globelconn.WriteToUDP(newpacket, d.udpAddr)
 		time.Sleep(200 * time.Millisecond)

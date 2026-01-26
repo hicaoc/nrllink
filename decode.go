@@ -17,8 +17,8 @@ type NRL21packet struct {
 	UDPAddr    *net.UDPAddr //报文来源UDP地址和端口
 	Version    string       //协议标识 “NRL2” 每个报文都以 NRL2 4个字节开头
 	Length     uint16       //上层数据长度
-	DMRID      string       //设备唯一标识 长度9字节
-	Password   string       //密码5个字节
+	DMRID      uint32       //设备唯一标识 长度3字节
+	Password   string       //密码11个字节
 	Type       byte         //上层数据类型 一个字节 0:保留， 1：G.711语音，2：心跳  3：设备配置 4：保留，5. 文本消息，6，设备控制设备， 7，设备要求加入组等指令 9:服务器互联语音,11 AT透传
 	Status     byte         //设备状态位
 	Count      uint16       //报文计数器2节
@@ -58,8 +58,8 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 --------------|---------------|---------------------|---------------------------------------------------
 0-3           | 4             | Version             | 协议标识，固定为 ASCII "NRL2"
 4-5           | 2             | Length              | 报文总长度 (头部+数据)，uint16
-6-14          | 9             | DMRID               | 设备DMR标识。decode 取 7+2 字节 [6:15]
-15-19         | 5             | Password            | 设备访问密码
+6-8           | 3             | DMRID               | 设备DMR标识。decode 取 3 字节 [6:9]
+9-19          | 11            | Password            | 设备访问密码
 20            | 1             | Type                | 数据类型：
               |               |                     | 0: 保留
               |               |                     | 1: G.711 语音 (PCM A-law/u-law)
@@ -131,8 +131,8 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 
 	n.Length = binary.BigEndian.Uint16(d[4:6])
 
-	n.DMRID = string(d[6:15])
-	n.Password = string(d[15:20])
+	n.DMRID = bytesToUint24(d[6:9])
+	n.Password = string(d[9:20])
 	n.Type = d[20]
 	n.Status = d[21]
 	n.Count = binary.BigEndian.Uint16(d[22:24])
@@ -193,16 +193,22 @@ func NRL21SetCallsignSSID(callsign string, ssid byte, packet []byte) []byte {
 
 }
 
-var zero9 = make([]byte, 9)
+func bytesToUint24(b []byte) uint32 {
+	if len(b) < 3 {
+		return 0
+	}
+	return uint32(b[0])<<16 | uint32(b[1])<<8 | uint32(b[2])
+}
 
-func NRL21SetDevDMRID(dmrid string, packet []byte) {
+func NRL21SetDevDMRID(dmrid uint32, packet []byte) {
 
-	copy(packet[6:15], zero9)
-	copy(packet[6:15], dmrid)
+	packet[6] = byte(dmrid >> 16)
+	packet[7] = byte(dmrid >> 8)
+	packet[8] = byte(dmrid)
 
 }
 
-func NRL21replace200dev(callsign string, ssid, packetType, DevModel uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, dmrid string, data []byte) (packet []byte) {
+func NRL21replace200dev(callsign string, ssid, packetType, DevModel uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, dmrid uint32, data []byte) (packet []byte) {
 
 	packet = make([]byte, len(data))
 
@@ -210,7 +216,7 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevModel uint8, origi
 
 	// 写入 DMRID
 
-	copy(packet[6:15], dmrid)
+	NRL21SetDevDMRID(dmrid, packet)
 
 	// 写入 Type  2
 	packet[20] = packetType
@@ -241,7 +247,7 @@ func NRL21replace200dev(callsign string, ssid, packetType, DevModel uint8, origi
 
 }
 
-func encodeNRL21(callsign string, ssid, packetType, DevModel uint8, dmrid string, data []byte) (packet []byte) {
+func encodeNRL21(callsign string, ssid, packetType, DevModel uint8, dmrid uint32, data []byte) (packet []byte) {
 
 	//编码报名
 
@@ -261,7 +267,7 @@ func encodeNRL21(callsign string, ssid, packetType, DevModel uint8, dmrid string
 
 	// 写入 DMRID
 
-	copy(packet[6:15], dmrid)
+	NRL21SetDevDMRID(dmrid, packet)
 
 	// 写入 Type  2
 	packet[20] = packetType

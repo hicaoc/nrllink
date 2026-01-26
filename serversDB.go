@@ -92,7 +92,7 @@ func (p *Server) Start() error {
 			DevModel:    200,
 			pcmG711Chan: make(chan [][]byte, 3),
 			pcmBuffer:   make([]int, 500),
-			DMRID:       "",
+			DMRID:       0,
 			Note:        "server"}
 
 		err = addDevice(dev)

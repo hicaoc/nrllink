@@ -127,7 +127,7 @@ func decodeATPacket(callsign string, ssid byte, data []byte) *ATcommand {
 		}
 
 	} else {
-		log.Println("AT command type error:", callsign, ssid, data)
+		log.Printf("AT command type error: %s %d %d %s %v", callsign, ssid, c.Type, string(data[1:]), data)
 	}
 
 	return c

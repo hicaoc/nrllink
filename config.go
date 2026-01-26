@@ -189,8 +189,14 @@ func updatedb() {
 		//"ALTER TABLE devices ADD COLUMN callsign TEXT DEFAULT '';",
 		"ALTER TABLE devices ADD COLUMN priority INTEGER DEFAULT 100;",
 		"ALTER TABLE devices RENAME COLUMN cpuid TO dmrid;",
-		"ALTER TABLE users ADD COLUMN mdcid TEXT DEFAULT '';",
-		"ALTER TABLE users ADD COLUMN dmrid TEXT DEFAULT '';",
+
+		"ALTER TABLE users drop COLUMN mdcid;",
+		"ALTER TABLE users drop COLUMN dmrid;",
+		"ALTER TABLE devices drop COLUMN dmrid;",
+
+		"ALTER TABLE devices ADD COLUMN dmrid INTEGER DEFAULT 0;",
+		"ALTER TABLE users ADD COLUMN mdcid INTEGER DEFAULT 0;",
+		"ALTER TABLE users ADD COLUMN dmrid INTEGER DEFAULT 0;",
 		//"update devices set dmrid='';",
 		//"ALTER TABLE public_groups ADD COLUMN allow_callsign_ssid TEXT DEFAULT '';",
 		//"CREATE UNIQUE INDEX idx_ssid_callsign ON devices (ssid, callsign);",
