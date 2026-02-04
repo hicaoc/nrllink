@@ -91,7 +91,7 @@ func (p *Server) Start() error {
 			Priority:    100,
 			DevModel:    200,
 			pcmG711Chan: make(chan [][]byte, 3),
-			pcmBuffer:   make([]int, 500),
+			pcmBuffer:   make([]int, 160),
 			DMRID:       0,
 			Note:        "server"}
 

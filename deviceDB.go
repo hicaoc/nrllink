@@ -231,7 +231,7 @@ func initAllDevList() {
 		dev.CallSignSSID = callsignSSID
 
 		dev.pcmG711Chan = make(chan [][]byte, 3)
-		dev.pcmBuffer = make([]int, 500)
+		dev.pcmBuffer = make([]int, 160)
 
 		devCallsignSSIDMap[callsignSSID] = dev
 

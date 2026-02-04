@@ -63,10 +63,10 @@ func (p *group) String() string {
 }
 
 func (p *group) mixPCM() {
-	pcm := make([]int, 500)
-	globalG711 := make([]byte, 500)
-	newG711 := make([]byte, 500)
-	data := make([]byte, 500)
+	pcm := make([]int, 160)
+	globalG711 := make([]byte, 160)
+	newG711 := make([]byte, 160)
+	data := make([]byte, 160)
 
 	globalPacket := encodeNRL21("MEETLY", 201, 1, 201, 0, data)
 	speakerPacket := encodeNRL21("MEETLY", 201, 1, 201, 0, data)
@@ -95,7 +95,7 @@ func (p *group) mixPCM() {
 			vv.speaking = false
 			select {
 			case g711 := <-vv.pcmG711Chan:
-				raw := g711[0][:500]
+				raw := g711[0][:160]
 				vv.speaking = true
 				speakers = append(speakers, activeSpeaker{vv, raw})
 			default:
