@@ -284,7 +284,7 @@ func initPublicGroup() {
 
 		if pg.Type == 7 {
 			if pg.ticker == nil {
-				pg.ticker = time.NewTicker(62500 * time.Microsecond)
+				pg.ticker = time.NewTicker(20000 * time.Microsecond)
 				go pg.mixPCM()
 			}
 
@@ -463,7 +463,7 @@ func addPublicGroup(pg *group) error {
 		newpg.DevMap = make(map[int]*deviceInfo, 10)
 		if newpg.Type == 7 {
 			if newpg.ticker == nil {
-				newpg.ticker = time.NewTicker(62500 * time.Microsecond)
+				newpg.ticker = time.NewTicker(20000 * time.Microsecond)
 				go newpg.mixPCM()
 			}
 
@@ -497,7 +497,7 @@ func updatePublicGroup(pg *group) error {
 		//类型从其他改成7，需要启动mixPCM
 		if pg.Type == 7 && p.Type != 7 {
 			if p.ticker == nil {
-				p.ticker = time.NewTicker(62500 * time.Microsecond)
+				p.ticker = time.NewTicker(20000 * time.Microsecond)
 				go p.mixPCM()
 			}
 
