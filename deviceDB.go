@@ -111,6 +111,10 @@ func checkdeviceOnline() {
 			vv.OnlineDevNumber = 0
 
 			for kkk, vvv := range vv.connPool.devConnMap {
+				//255设备不参与在线统计，永远在线
+				if vvv.DevModel == 255 || vvv.SSID == 255 {
+					continue
+				}
 
 				switch {
 				case t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline || kkk != vvv.udpAddr.String():
@@ -125,9 +129,7 @@ func checkdeviceOnline() {
 
 				default:
 					vv.OnlineDevNumber = vv.OnlineDevNumber + 1
-
 					onlineMap[vvv.ID] = vvv
-
 				}
 
 				//fmt.Println("dev conn pool:", vv.ID, vv.Name, len(vv.connPool.devConnMap), kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
@@ -233,6 +235,10 @@ func initAllDevList() {
 		dev.pcmG711Chan = make(chan [][]byte, 3)
 		dev.pcmBuffer = make([]int, 160)
 
+		if dev.SSID == 255 || dev.DevModel == 255 {
+			dev.GroupID = 999
+		}
+
 		devCallsignSSIDMap[callsignSSID] = dev
 
 		if kk, ok := publicGroupMap[dev.GroupID]; ok {
@@ -242,7 +248,7 @@ func initAllDevList() {
 
 		} else {
 
-			if dev.GroupID > 1000 {
+			if dev.GroupID > 999 {
 
 				dev.GroupID = 0
 
@@ -846,31 +852,15 @@ func updateDevice(e *deviceInfo) error {
 
 		if d.GroupID != e.GroupID {
 
-			if g, okok := publicGroupMap[e.GroupID]; okok {
-
-				if e.GroupID == 0 || g.Password == "" || e.Password == g.Password {
-
-					_, err := changeDevGroup(d, e.GroupID)
-					if err != nil {
-						return err
-					}
-
-				} else {
-					fmt.Println("group password:", e.Password, []byte(g.Password), len(e.Password), len(g.Password), g)
-					return fmt.Errorf("group pasword err")
-				}
-
-			} else if e.GroupID < 1000 && e.GroupID != 0 {
-				_, err := changeDevGroup(d, e.GroupID)
-				if err != nil {
-					return err
-				}
-
-			} else {
-				return fmt.Errorf("group not found")
-
+			if d.DevModel == 255 || d.SSID == 255 {
+				d.GroupID = 999
+				return nil
 			}
 
+			_, err := changeDevGroup(d, e.GroupID)
+			if err != nil {
+				return err
+			}
 		}
 
 	}
@@ -884,34 +874,9 @@ func changeDeviceGroup(e *deviceInfo) error {
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]; ok {
 
 		if d.GroupID != e.GroupID {
-
-			if g, okok := publicGroupMap[e.GroupID]; okok {
-
-				if e.GroupID == 0 || g.Password == "" || e.Password == g.Password {
-
-					_, err := changeDevGroup(d, e.GroupID)
-					if err != nil {
-						return err
-					}
-					_, err = db.Exec(`update devices set group_id=? where id=? `, e.GroupID, d.ID)
-					if err != nil {
-						log.Println("update device failed, ", err)
-						return err
-					}
-
-				} else {
-					return fmt.Errorf("group pasword err")
-				}
-
-			} else if e.GroupID < 1000 && e.GroupID != 0 {
-				_, err := changeDevGroup(d, e.GroupID)
-				if err != nil {
-					return err
-				}
-
-			} else {
-				return fmt.Errorf("group not found")
-
+			_, err := changeDevGroup(d, e.GroupID)
+			if err != nil {
+				return err
 			}
 
 		}

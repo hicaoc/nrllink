@@ -375,7 +375,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 	//从之前的组删除
 
-	if dev.GroupID >= 1000 || dev.GroupID == 0 {
+	if dev.GroupID >= 999 || dev.GroupID == 0 {
 
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
 			delete(g.connPool.devConnMap, dev.udpAddr.String())
@@ -415,7 +415,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 	//加入新的组
 
-	if groupid >= 1000 || groupid == 0 {
+	if groupid >= 999 || groupid == 0 {
 
 		if g, ok := publicGroupMap[groupid]; ok {
 			dev.GroupID = groupid

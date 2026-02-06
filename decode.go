@@ -145,7 +145,7 @@ func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 	n.SSID = d[30]
 	n.DevModel = d[31]
 
-	if n.Type == 9 || n.DevModel == 200 {
+	if n.Type == 9 || n.DevModel == 200 || n.DevModel == 255 {
 		n.OriginalCallsign = string(bytes.TrimRight(d[32:38], string([]byte{13, 0})))
 		n.OriginalSSID = d[38]
 		n.OriginalIP = d[39:43]
@@ -208,7 +208,7 @@ func NRL21SetDevDMRID(dmrid uint32, packet []byte) {
 
 }
 
-func NRL21replace200dev(callsign string, ssid, packetType, DevModel uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, dmrid uint32, data []byte) (packet []byte) {
+func NRL21replace200and255dev(callsign string, ssid, packetType, DevModel uint8, originalCallsign string, originaSSID uint8, originalIP net.IP, dmrid uint32, data []byte) (packet []byte) {
 
 	packet = make([]byte, len(data))
 
