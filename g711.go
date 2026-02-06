@@ -33,61 +33,54 @@ func Linear2Alaw(sample int16) byte {
 	return linear2alawTable[uint16(sample)]
 }
 
-// Internal version of alaw2linear for table generation
 func rawAlaw2linear(code byte) int16 {
 	code ^= 0x55
 
-	sign := int16(code & 0x80)
-	seg := (code & 0x70) >> 4
-	quant := code & 0x0F
+	iexp := int16((code & 0x70) >> 4)
+	mant := int16(code & 0x0F)
 
-	var sample int16
-	if seg == 0 {
-		sample = int16(quant<<1) | 0x01
-	} else {
-		sample = (int16(quant<<1) | 0x21) << (seg - 1)
+	if iexp > 0 {
+		mant += 16
 	}
 
-	if sign != 0 {
-		return sample << 3
+	mant = (mant << 4) + 0x08
+
+	if iexp > 1 {
+		mant <<= (iexp - 1)
 	}
-	return -(sample << 3)
+
+	if (code & 0x80) != 0 {
+		return mant
+	}
+	return -mant
 }
 
-// Internal version of Linear2Alaw for table generation
 func rawLinear2Alaw(sample int16) byte {
 	var sign byte
+	var ix int16
+
 	if sample < 0 {
-		if sample == -32768 {
-			sample = -32767
-		}
-		sample = -sample
-		sign = 0x00
-	} else {
 		sign = 0x80
-	}
-
-	// 13-bit absolute value for A-law
-	pcm := sample >> 3
-
-	seg := byte(0)
-	if pcm >= 32 {
-		seg = 1
-		t := int16(64)
-		for seg < 7 && pcm >= t {
-			t <<= 1
-			seg++
-		}
-	}
-
-	var mant byte
-	if seg == 0 {
-		mant = byte(pcm>>1) & 0x0F
+		ix = (^sample) >> 4 // ✅ 按位取反
 	} else {
-		mant = byte(pcm>>seg) & 0x0F
+		ix = sample >> 4
 	}
 
-	return (sign | (seg << 4) | mant) ^ 0x55
+	if ix > 15 {
+		iexp := byte(1)
+		for ix > 31 {
+			ix >>= 1
+			iexp++
+		}
+		ix -= 16
+		ix += int16(iexp << 4)
+	}
+
+	if sign == 0 {
+		ix |= 0x80
+	}
+
+	return byte(ix) ^ 0x55
 }
 
 // G711Encode converts a slice of 16-bit linear PCM samples to a slice of 8-bit A-law samples.
