@@ -78,7 +78,7 @@ func (d *deviceInfo) sendHeartbear() {
 			//发送心跳包
 			_, err := d.udpSocket.WriteToUDP(packet, d.udpAddr)
 			if err != nil {
-				log.Println("send hb err:", err)
+				log.Println("send hb err:", err, d.udpAddr)
 				d.udpSocket = globelconn
 			}
 			time.Sleep(time.Second * 2)

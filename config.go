@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 
@@ -15,11 +16,12 @@ import (
 var PlatformList []Platformitem
 
 type Platformitem struct {
-	Name   string `yaml:"Name" json:"name"` // 对应 YAML 和 JSON 的 name 字段
-	Host   string `yaml:"Host" json:"host"` // 对应 YAML 和 JSON 的 host 字段
-	Port   string `yaml:"Port" json:"port"` // 对应 YAML 和 JSON 的 port 字段
-	Online int    `yaml:"Online" json:"online"`
-	Total  int    `yaml:"Total" json:"total"`
+	Name    string `yaml:"Name" json:"name"` // 对应 YAML 和 JSON 的 name 字段
+	Host    string `yaml:"Host" json:"host"` // 对应 YAML 和 JSON 的 host 字段
+	Port    string `yaml:"Port" json:"port"` // 对应 YAML 和 JSON 的 port 字段
+	Online  int    `yaml:"Online" json:"online"`
+	Total   int    `yaml:"Total" json:"total"`
+	udpAddr *net.UDPAddr
 }
 
 type config struct {

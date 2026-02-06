@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -161,12 +163,23 @@ func (a *APRSTV) GetNRL() {
 			continue
 		}
 
+		targetAddr, err := net.ResolveUDPAddr("udp", host+":"+port)
+		if err != nil {
+			log.Println("APRS: host or port err：", err)
+		}
+
+		if host == conf.APRS.APRSServerHost {
+			targetAddr = nil
+			log.Println("APRS: host is me ,skip ", err)
+		}
+
 		p := Platformitem{
-			Host:   host,
-			Port:   port,
-			Name:   name,
-			Online: online,
-			Total:  total,
+			Host:    host,
+			Port:    port,
+			Name:    name,
+			Online:  online,
+			Total:   total,
+			udpAddr: targetAddr,
 		}
 
 		totalstats.PlatformDevOnline = totalstats.PlatformDevOnline + online
@@ -240,6 +253,7 @@ func (a *APRSTV) GetNRLStat() {
 func findNRL() {
 
 	aprstv := NewAPRSTV()
+
 	// 启动定时发送（每分钟一次）
 	Timer := time.NewTicker(60 * time.Second)
 

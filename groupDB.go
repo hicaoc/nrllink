@@ -224,6 +224,18 @@ func initPublicGroup() {
 
 	publicGroupMap[0] = pg0
 
+	pg999 := &group{
+		ID:           999,
+		Name:         "全网互联",
+		OwerCallsign: "default",
+		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
+		DevMap:       make(map[int]*deviceInfo, 10),
+		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
+		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	publicGroupMap[999] = pg999
+
 	rows, err := db.Query(
 		`SELECT 
 			id,
