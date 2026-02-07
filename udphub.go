@@ -697,7 +697,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 
 	//200设备转发给其他设备
 	if nrl.DevModel == 200 {
-		newpacket := NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 5, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
+		newpacket := NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 
 		for kk, vv := range connpool.devConnMap {
 
@@ -705,7 +705,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 				//200设备转发给其他200设备，需要替换包头的呼号为新200设备的呼号
 				if vv.DevModel == 200 {
 
-					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, 5, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, nrl.DMRID, packet)
+					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, nrl.DMRID, packet)
 
 					conn.WriteToUDP(newpacket, vv.udpAddr)
 				} else {
@@ -720,7 +720,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 	}
 
 	if nrl.DevModel == 255 || nrl.SSID == 255 {
-		newpacket := NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 5, 255, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
+		newpacket := NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 255, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 
 		for kk, vv := range connpool.devConnMap {
 
@@ -747,7 +747,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 
 			//普通设备转发给200设备
 			if vv.DevModel == 200 {
-				newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, 5, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), vv.DMRID, packet)
+				newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), vv.DMRID, packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
 				//普通设备不转发给255设备
