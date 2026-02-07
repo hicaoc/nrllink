@@ -491,7 +491,7 @@ func update200QTH(Originalcallsignssid string, nrl *NRL21packet, dev *deviceInfo
 
 }
 
-func FullNetVoiceOutput(nrl *NRL21packet, dev *deviceInfo, packet []byte) {
+func FullNetOutput(nrl *NRL21packet, dev *deviceInfo, packet []byte) {
 
 	if conf.APRS.CallSign == "" {
 		return
@@ -542,7 +542,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 				//普通设备转发给其他200和255设备
 
 				if vv.DevModel == 200 && ((vv.Status & 4) != 4) {
-					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
+					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
 					globelconn.WriteToUDP(newpacket, vv.udpAddr)
 
 				} else {
@@ -612,7 +612,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 
 				if vv.DevModel == 200 {
 					//普通设备发给200设备，需要将原始呼号和SSID放到协议头
-					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
+					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
 					globelconn.WriteToUDP(newpacket, vv.udpAddr)
 					//这里不处理255设备
 				} else if vv.DevModel == 255 || vv.SSID == 255 {
@@ -633,7 +633,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 		}
 
 		if gp.ID == 999 {
-			FullNetVoiceOutput(nrl, dev, packet)
+			FullNetOutput(nrl, dev, packet)
 
 		}
 
@@ -660,9 +660,9 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 	var newpacket []byte
 
 	if nrl.DevModel == 200 {
-		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
+		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	} else if nrl.DevModel == 255 && nrl.SSID == 255 {
-		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
+		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	}
 
 	for _, vv := range gp.connPool.devConnList {
@@ -671,7 +671,7 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 
 			//转发给200设备
 			if vv.DevModel == 200 {
-				new200packet := NRL21replace200and255dev(vv.CallSign, vv.SSID, 9, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, nrl.DMRID, packet)
+				new200packet := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, nrl.DMRID, packet)
 				conn.WriteToUDP(new200packet, vv.udpAddr)
 
 			} else if nrl.DevModel == 255 && nrl.SSID == 255 && vv.DevModel != 255 && vv.SSID != 255 {
@@ -719,14 +719,14 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 		return
 	}
 
-	if nrl.DevModel == 255 {
+	if nrl.DevModel == 255 || nrl.SSID == 255 {
 		newpacket := NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 5, 255, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 
 		for kk, vv := range connpool.devConnMap {
 
 			if clientAddrStr != kk {
 				//200设备转发给其他200设备，需要替换包头的呼号为新200设备的呼号
-				if vv.DevModel == 255 {
+				if vv.DevModel == 255 || vv.SSID == 255 {
 					continue
 					//200设备转发给普通设备
 				} else {
@@ -750,12 +750,21 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 				newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, 5, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), vv.DMRID, packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
+				//普通设备不转发给255设备
+			} else if vv.DevModel == 255 || vv.SSID == 255 {
+				continue
+
 				//普通设备转发给普通设备
 			} else {
 				conn.WriteToUDP(packet, vv.udpAddr)
 			}
 
 		}
+	}
+
+	//普通设备转发给全网通设备，输出到各个平台
+	if dev.GroupID == 999 {
+		FullNetOutput(nrl, dev, packet)
 	}
 
 }
