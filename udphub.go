@@ -255,8 +255,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.LastVoiceEndTime = nrl.timeStamp
 		dev.LastCtlEndTime = nrl.timeStamp
 
-		fmt.Println("dev.DevModel", dev.DevModel, "dev.SSID", dev.SSID, "nrl.DevModel", nrl.DevModel, "nrl.SSID", nrl.SSID)
-
 		//来自其他服务器255的包
 		if nrl.DevModel == 255 && nrl.SSID == 255 {
 			dev.ISOnline = true
@@ -503,7 +501,7 @@ func FullNetVoiceOutput(nrl *NRL21packet, dev *deviceInfo, packet []byte) {
 
 	for _, v := range conf.PlatformList {
 
-		if v.udpAddr != nil || v.Host != conf.APRS.APRSServerHost {
+		if v.udpAddr != nil && v.Host != conf.APRS.SelfAddress {
 			globelconn.WriteToUDP(newpacket, v.udpAddr)
 		}
 
@@ -617,7 +615,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, 9, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), dev.DMRID, packet)
 					globelconn.WriteToUDP(newpacket, vv.udpAddr)
 					//这里不处理255设备
-				} else if vv.DevModel == 255 && vv.SSID == 255 {
+				} else if vv.DevModel == 255 || vv.SSID == 255 {
 					continue
 
 				} else {
@@ -644,7 +642,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 }
 func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Microsecond) || nrl.Status&0x01 == 0 {
+	if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
 
 		if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 			k.LastVoiceEndTime = nrl.timeStamp
@@ -661,12 +659,10 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 
 	var newpacket []byte
 
-	fmt.Println("forwardServerVoice", nrl.DevModel, nrl.SSID, nrl.OriginalCallsign, nrl.OriginalSSID)
-
 	if nrl.DevModel == 200 {
 		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	} else if nrl.DevModel == 255 && nrl.SSID == 255 {
-		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 255, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
+		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, 1, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	}
 
 	for _, vv := range gp.connPool.devConnList {
@@ -679,10 +675,8 @@ func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *
 				conn.WriteToUDP(new200packet, vv.udpAddr)
 
 			} else if nrl.DevModel == 255 && nrl.SSID == 255 && vv.DevModel != 255 && vv.SSID != 255 {
-				fmt.Println("forwardServerVoice222222222222", nrl.DevModel, nrl.SSID)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 			} else {
-				fmt.Println("forwardServerVoice33333333333", nrl.DevModel, nrl.SSID)
 				//转发给普通设备，需要将原始信息替换协议头信息
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 			}

@@ -236,6 +236,9 @@ func NRL21replace200and255dev(callsign string, ssid, packetType, DevModel uint8,
 
 	// 协议原始呼号
 	copy(packet[32:38], originalCallsign)
+	if len(originalCallsign) == 5 {
+		packet[37] = 0
+	}
 
 	// 写入原始SSID
 	packet[38] = originaSSID
