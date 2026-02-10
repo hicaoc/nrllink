@@ -53,5 +53,5 @@ echo "deploying to $i"
 
 done
 
-#scp udphub root@192.168.35.40:nrllink/nrllink/
+scp udphub root@192.168.35.40:nrllink/nrllink/
 

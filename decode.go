@@ -51,7 +51,6 @@ func newNRL21packet(remoteaddr *net.UDPAddr, d []byte) (packet *NRL21packet, err
 /*
 NRL2 协议规范 (NRL2 Protocol Specification)
 
-
 报文头部固定长度为 48 字节，大端序 (BigEndian)。
 
 偏移 (Offset) | 长度 (Length) | 字段名 (Field)      | 说明 (Description)
@@ -62,35 +61,30 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 9-19          | 11            | Password            | 设备访问密码
 20            | 1             | Type                | 数据类型：
               |               |                     | 0: 保留
-              |               |                     | 1: G.711 语音 (PCM A-law/u-law)
+              |               |                     | 1: G.711 语音 (PCM A-law)
               |               |                     | 2: 心跳 (Heartbeat)
               |               |                     | 3: 设备配置 (Config)
               |               |                     | 5: 文本消息 (Text Message)
               |               |                     | 6: 设备控制 (Control)
               |               |                     | 7: 组加入指令 (Join Group)
 			  |			      |                     | 8: Opus 16K
-              |               |                     | 9: 服务器互联语音 (Server Interconnect Voice)
+              |               |                     | 9: 服务器互联语音 (Server Interconnect Voice) //后续版本废弃
               |               |                     | 11: AT 透传 (AT Passthrough)
 21            | 1             | Status              | 设备状态位
 22-23         | 2             | Count               | 报文计数器
 24-29         | 6             | CallSign            | 所有者呼号，不足 6 位补 0
 30            | 1             | SSID                | 所有者 SSID
-31            | 1             | DevMode             | 设备型号
+31            | 1             | DevModel            | 设备型号
 32-45         | 16            | Reserved/Extended   | 保留项或扩展内容
 46-47         | 2             | CRC                 | 校验码
 48-           | -             | DATA                | 上层协议数据负载
 
-// Type 9 的扩展内容
+
+//扩展内容 设备型号是200或者255，或者 Type 是 9 的报文，扩展内容定义如下：（9之后版本废弃）
 32-37         | 6             | OrigCallsign        | 原始呼号 (仅 Type 9 使用；其余类型作为扩展内容)
 38            | 1             | OrigSSID            | 原始 SSID (仅 Type 9 使用；其余类型作为扩展内容)
 39-42         | 4             | OrigIP              | 原始 IP 地址 (仅 Type 9 使用；其余类型作为扩展内容)
 
-
-
-// 32-48 位的默认扩展内容为暂时保留给会议模式的呼叫者列表
-32-47         | 16
-
-*/
 
 //type 5 文本消息子类型规范，使用[]头表达内容的媒体类型,不带方括号的默认为纯文本类型，
 /*
@@ -106,6 +100,13 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 [video]video/mp4 url
 [audio]audio/mp3 url
 
+*/
+//type 1 G.711 语音编码格式 PCM A-law
+/*
+Sample rate: 8kHz
+Channels: 1
+Frame size: 20ms (160 samples @8k) 之前500字节的下个版本废弃
+Bitrate: 64 kbps
 */
 
 //type 8 语音编码格式 opus
