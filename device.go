@@ -565,7 +565,13 @@ func (j *jsonapi) httpDeviceAT(w http.ResponseWriter, req *http.Request) {
 
 	rescode, _ := jsonextra.Marshal(dev)
 
-	respone := fmt.Sprintf(`{"code":20000,"data":{"message":"AT指令已经发送给设备","items":%s}}`, rescode)
+	if dev.LastATcommand == nil {
+		respone := fmt.Sprintf(`{"code":20001,"data":{"message":"设备固件版本不支持，请先升级固件","items":%s}}`, rescode)
+		w.Write([]byte(respone))
+		return
+	}
+
+	respone := fmt.Sprintf(`{"code":20000,"data":{"message":"AT命令执行成功","items":%s}}`, rescode)
 
 	w.Write([]byte(respone))
 
