@@ -62,7 +62,7 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 20            | 1             | Type                | 数据类型：
               |               |                     | 0: 保留
               |               |                     | 1: G.711 语音 (PCM A-law)
-              |               |                     | 2: 心跳 (Heartbeat)
+              |               |                     | 2: 心跳 (Heartbeat) 2秒一次
               |               |                     | 3: 设备配置 (Config)
               |               |                     | 5: 文本消息 (Text Message)
               |               |                     | 6: 设备控制 (Control)
@@ -73,17 +73,17 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 21            | 1             | Status              | 设备状态位 //下个版本去掉，变成保留字段
 22-23         | 2             | Count               | 报文计数器
 24-29         | 6             | CallSign            | 所有者呼号，不足 6 位补 0
-30            | 1             | SSID                | 所有者 SSID
-31            | 1             | DevModel            | 设备型号
+30            | 1             | SSID                | 所有者 SSID  0保留，1-99硬件， 100-199软件，200-255 服务器特殊用途
+31            | 1             | DevModel            | 设备型号    0保留 1-99硬件， 100-199软件，200-255 服务器特殊用途
 32-45         | 16            | Reserved/Extended   | 保留项或扩展内容
 46-47         | 2             | CRC                 | 校验码
 48-           | -             | DATA                | 上层协议数据负载
 
 
 //扩展内容 设备型号是200或者255，或者 Type 是 9 的报文，扩展内容定义如下：（9之后版本废弃）
-32-37         | 6             | OrigCallsign        | 原始呼号 (仅 Type 9 使用；其余类型作为扩展内容)
-38            | 1             | OrigSSID            | 原始 SSID (仅 Type 9 使用；其余类型作为扩展内容)
-39-42         | 4             | OrigIP              | 原始 IP 地址 (仅 Type 9 使用；其余类型作为扩展内容)
+32-37         | 6             | OrigCallsign        | 原始呼号 (仅 dev200,255 使用；其余类型作为扩展内容)
+38            | 1             | OrigSSID            | 原始 SSID (仅 dev200,255 使用；其余类型作为扩展内容)
+39-42         | 4             | OrigIP              | 原始 IP 地址 (仅 dev200,255使用；其余类型作为扩展内容)
 
 
 //type 5 文本消息子类型规范，使用[]头表达内容的媒体类型,不带方括号的默认为纯文本类型，
