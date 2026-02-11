@@ -116,23 +116,25 @@ func checkdeviceOnline() {
 					continue
 				}
 
-				switch {
-				case t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline || kkk != vvv.udpAddr.String():
-					log.Printf("public room device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+				// 清理过期条目：设备地址已变化，旧key需要删除，不影响设备在线状态
+				if vvv.udpAddr != nil && kkk != vvv.udpAddr.String() {
 					delete(vv.connPool.devConnMap, kkk)
-					delete(vv.connPool.devConnMap, vvv.udpAddr.String())
-					vvv.ISOnline = false
-					vvv.udpAddr = nil
-
 					change = true
-					//offlinelist = append(offlinelist, vvv)
-
-				default:
-					vv.OnlineDevNumber = vv.OnlineDevNumber + 1
-					onlineMap[vvv.ID] = vvv
+					continue
 				}
 
-				//fmt.Println("dev conn pool:", vv.ID, vv.Name, len(vv.connPool.devConnMap), kkk, vvv.udpAddr.String(), vvv.CallSign, vvv.SSID)
+				// 设备超时离线
+				if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
+					log.Printf("public room device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
+					delete(vv.connPool.devConnMap, kkk)
+					vvv.ISOnline = false
+					vvv.udpAddr = nil
+					change = true
+					continue
+				}
+
+				vv.OnlineDevNumber = vv.OnlineDevNumber + 1
+				onlineMap[vvv.ID] = vvv
 			}
 
 			//如果群组设备变化过，更新列表
@@ -158,21 +160,23 @@ func checkdeviceOnline() {
 
 				for kkk, vvv := range vv.connPool.devConnMap {
 
-					switch {
-					case t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline || kkk != vvv.udpAddr.String():
+					// 清理过期条目：设备地址已变化，旧key需要删除，不影响设备在线状态
+					if vvv.udpAddr != nil && kkk != vvv.udpAddr.String() {
+						delete(vv.connPool.devConnMap, kkk)
+						continue
+					}
+
+					// 设备超时离线
+					if t.Sub(vvv.LastPacketTime) > 6*time.Second && vvv.ISOnline {
 						log.Printf("privite room device offline : %v-%v  %v, %v", vvv.CallSign, vvv.SSID, vvv.GroupID, vvv.udpAddr)
 						delete(vv.connPool.devConnMap, kkk)
-						delete(vv.connPool.devConnMap, vvv.udpAddr.String())
 						vvv.ISOnline = false
 						vvv.udpAddr = nil
-
-						//offlinelist = append(offlinelist, vvv)
-
-					default:
-						vv.OnlineDevNumber = vv.OnlineDevNumber + 1
-						onlineMap[vvv.ID] = vvv
-
+						continue
 					}
+
+					vv.OnlineDevNumber = vv.OnlineDevNumber + 1
+					onlineMap[vvv.ID] = vvv
 
 				}
 
@@ -854,7 +858,11 @@ func updateDevice(e *deviceInfo) error {
 
 			if d.DevModel == 255 || d.SSID == 255 {
 				d.GroupID = 999
-				return nil
+				return errors.New("255设备不能移出999组")
+			}
+
+			if d.DevModel == 200 && e.GroupID == 999 {
+				return errors.New("200设备不能加入255组")
 			}
 
 			_, err := changeDevGroup(d, e.GroupID)

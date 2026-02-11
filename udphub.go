@@ -292,8 +292,6 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//判断设备是否已经在组内，有可能设备网络重新连接过，udp端口号变化过，需要重新加入组内
 		if _, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; !ok {
 
-			//如果设备新地址不在组内，需要先删除之前的设备地址key
-
 			gp.connPool.devConnMap[nrl.UDPAddrStr] = dev
 
 			//非常重要，非常重要，如果没有，设备list就没有初始化
@@ -692,6 +690,12 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 
 	//200设备转发给其他设备
 	if nrl.DevModel == 200 {
+
+		// 999房间不接收200设备的消息
+		if dev.GroupID == 999 {
+			return
+		}
+
 		newpacket := NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 
 		for kk, vv := range connpool.devConnMap {
@@ -703,6 +707,10 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 					newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.OriginalIP, nrl.DMRID, packet)
 
 					conn.WriteToUDP(newpacket, vv.udpAddr)
+
+					// 200和255不允许相互转发
+				} else if vv.DevModel == 255 || vv.SSID == 255 {
+					continue
 				} else {
 
 					conn.WriteToUDP(newpacket, vv.udpAddr)
@@ -720,10 +728,12 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 		for kk, vv := range connpool.devConnMap {
 
 			if clientAddrStr != kk {
-				//200设备转发给其他200设备，需要替换包头的呼号为新200设备的呼号
+				// 255不转发给255设备
 				if vv.DevModel == 255 || vv.SSID == 255 {
 					continue
-					//200设备转发给普通设备
+					// 255和200不允许相互转发
+				} else if vv.DevModel == 200 {
+					continue
 				} else {
 
 					conn.WriteToUDP(newpacket, vv.udpAddr)
@@ -742,6 +752,12 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 
 			//普通设备转发给200设备
 			if vv.DevModel == 200 {
+
+				// 999房间不转发给200设备
+				if dev.GroupID == 999 {
+					continue
+				}
+
 				newpacket := NRL21replace200and255dev(vv.CallSign, vv.SSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.UDPAddr.IP.To4(), vv.DMRID, packet)
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
