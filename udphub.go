@@ -258,12 +258,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//来自其他服务器255的包
 		if nrl.DevModel == 255 && nrl.SSID == 255 {
 			dev.ISOnline = true
-			forwardServerVoice(nrl, packet, conn, gp)
+			forwardServerVoice(nrl, dev, packet, conn, gp)
 			return
 		}
 
 		if nrl.DevModel == 200 && nrl.SSID == 200 {
-			forwardServerVoice(nrl, packet, conn, gp)
+			forwardServerVoice(nrl, dev, packet, conn, gp)
 			return
 		}
 
@@ -442,22 +442,10 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		// 	return
 		// }
 
-		//保存外部设备信息，用于解析QTH
-
-		Originalcallsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
-
-		if q, ok := QTHmapNew[Originalcallsignssid]; !ok {
-			update200QTH(Originalcallsignssid, nrl, dev)
-
-		} else if time.Since(q.JoinTime) > 10*time.Minute {
-			update200QTH(Originalcallsignssid, nrl, dev)
-
-		}
-
 		//dev.LastPacketTime = nrl.timeStamp
 		dev.LastVoiceEndTime = nrl.timeStamp
 		dev.LastCtlEndTime = nrl.timeStamp
-		forwardServerVoice(nrl, packet, conn, gp)
+		forwardServerVoice(nrl, dev, packet, conn, gp)
 
 	case 11: //AT  01 读取，02写入多条 0x0d,0x0a分割，03读取所有，
 
@@ -633,7 +621,17 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	}
 
 }
-func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
+func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *net.UDPConn, gp *group) {
+
+	Originalcallsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
+
+	if q, ok := QTHmapNew[Originalcallsignssid]; !ok {
+		update200QTH(Originalcallsignssid, nrl, dev)
+
+	} else if time.Since(q.JoinTime) > 10*time.Minute {
+		update200QTH(Originalcallsignssid, nrl, dev)
+
+	}
 
 	if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond {
 

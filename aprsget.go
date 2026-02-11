@@ -150,6 +150,9 @@ func (a *APRSTV) GetNRL() {
 		return
 	}
 
+	// 用于按 host:port 去重，防止同一服务器多条beacon导致重复转发
+	seen := make(map[string]bool)
+
 	// 打印解析后的数据
 	for _, item := range apiResponse.Data {
 		host, port, err := apiResponse.decodeMsg(item.Msg)
@@ -163,14 +166,21 @@ func (a *APRSTV) GetNRL() {
 			continue
 		}
 
-		targetAddr, err := net.ResolveUDPAddr("udp", host+":"+port)
+		// 按 host:port 去重
+		hostPort := host + ":" + port
+		if seen[hostPort] {
+			continue
+		}
+		seen[hostPort] = true
+
+		targetAddr, err := net.ResolveUDPAddr("udp", hostPort)
 		if err != nil {
 			log.Println("APRS: host or port err：", err)
 		}
 
-		if host == conf.APRS.APRSServerHost {
+		// 过滤自身，使用 SelfAddress 匹配
+		if host == conf.APRS.SelfAddress {
 			targetAddr = nil
-			log.Println("APRS: host is me ,skip ", err)
 		}
 
 		p := Platformitem{
