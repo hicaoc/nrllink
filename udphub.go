@@ -557,11 +557,6 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
-		//语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音，
-		if nrl.Status&0x01 == 0 {
-			return
-		}
-
 		//房间类型为会议室的时候，需要将语音进行混音，语音先放入缓存，等待其他设备的语音包
 		if gp.Type == 7 && nrl.Type == 1 && len(nrl.DATA) == 160 {
 			// 必须拷贝数据，因为 udphub 的读取缓冲区是重复使用的。
@@ -642,7 +637,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 }
 func forwardServerVoice(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
-	if ((nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+	if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String()) && nrl.timeStamp.Sub(gp.connPool.lastVoiceTime) < 200*time.Millisecond {
 
 		if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 			k.LastVoiceEndTime = nrl.timeStamp
@@ -820,8 +815,8 @@ func forwardCtl(nrl *NRL21packet, packet []byte, conn *net.UDPConn, gp *group) {
 
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
-		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文, 或者语音包的DCD/PTT标志是0的时候，代表设备可能打开的是监听模式，丢弃无效语音
-		if (nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond) || nrl.Status&0x01 == 0 {
+		// 如果当前有会话，并且会话结束时间没超过1秒， 那么不转发其它设备报文,  丢弃无效语音
+		if nrl.UDPAddrStr != gp.connPool.UDPAddr.String() && nrl.timeStamp.Sub(gp.connPool.lastCtlTime) < 200*time.Millisecond {
 
 			if k, ok := gp.connPool.devConnMap[nrl.UDPAddrStr]; ok {
 				k.LastCtlEndTime = nrl.timeStamp

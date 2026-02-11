@@ -70,7 +70,7 @@ NRL2 协议规范 (NRL2 Protocol Specification)
 			  |			      |                     | 8: Opus 16K
               |               |                     | 9: 服务器互联语音 (Server Interconnect Voice) //后续版本废弃
               |               |                     | 11: AT 透传 (AT Passthrough)
-21            | 1             | Status              | 设备状态位
+21            | 1             | Status              | 设备状态位 //下个版本去掉，变成保留字段
 22-23         | 2             | Count               | 报文计数器
 24-29         | 6             | CallSign            | 所有者呼号，不足 6 位补 0
 30            | 1             | SSID                | 所有者 SSID
