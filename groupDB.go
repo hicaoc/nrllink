@@ -36,8 +36,8 @@ type group struct {
 	AllowCALLSSID     string   `db:"allow_callsign_ssid"`
 	DevList           []int    `json:"devlist" db:"devlist"`
 	//KeepTime     int           `json:"keep_time" db:"keep_time"`
-	Password     string `json:"password" db:"password"`
-	Status       int    `json:"status" db:"status"`
+	Password string `json:"password" db:"password"`
+	//Status       int    `json:"status" db:"status"`
 	OwerID       int    `json:"ower_id" db:"ower_id"`
 	OwerCallsign string `json:"callsign" db:"callsign"`
 
@@ -58,7 +58,7 @@ type group struct {
 
 func (p *group) String() string {
 
-	return fmt.Sprintf("id:%v,name:%v,type:%v,status:%v", p.ID, p.Name, p.Type, p.Status)
+	return fmt.Sprintf("id:%v,name:%v,type:%v ", p.ID, p.Name, p.Type)
 
 }
 
@@ -245,8 +245,7 @@ func initPublicGroup() {
 			password,
 			ower_id,
 			allow_callsign_ssid,
-			devlist,
-			status,
+			devlist, 
 			create_time,update_time,note
 		from  public_groups `)
 
@@ -267,7 +266,6 @@ func initPublicGroup() {
 			&pg.OwerID,
 			&pg.AllowCALLSSID,
 			&devlist,
-			&pg.Status,
 			&pg.CreateTime,
 			&pg.UpdateTime,
 			&pg.Note)
@@ -310,6 +308,83 @@ func initPublicGroup() {
 
 }
 
+type minigroup struct {
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	Type            int    `json:"type"`
+	OnlineDevNumber int    `json:"online_dev_number"`
+	TotalDevNumber  int    `json:"total_dev_number"`
+}
+
+func getUserGroupList(u *userinfo) []minigroup {
+
+	grouplist := make([]minigroup, 0)
+
+	if user, okok := userlist.Load(u.CallSign); okok {
+		gp1 := user.(*userinfo).Groups[1]
+		gp2 := user.(*userinfo).Groups[2]
+		gp3 := user.(*userinfo).Groups[3]
+
+		g1 := minigroup{
+			ID:              1,
+			Name:            gp1.Name,
+			Type:            gp1.Type,
+			OnlineDevNumber: gp1.OnlineDevNumber,
+			TotalDevNumber:  gp1.TotalDevNumber,
+		}
+
+		g2 := minigroup{
+			ID:              2,
+			Name:            gp2.Name,
+			Type:            gp2.Type,
+			OnlineDevNumber: gp2.OnlineDevNumber,
+			TotalDevNumber:  gp2.TotalDevNumber,
+		}
+
+		g3 := minigroup{
+			ID:              3,
+			Name:            gp3.Name,
+			Type:            gp3.Type,
+			OnlineDevNumber: gp3.OnlineDevNumber,
+			TotalDevNumber:  gp3.TotalDevNumber,
+		}
+
+		grouplist = append(grouplist, g1)
+		grouplist = append(grouplist, g2)
+		grouplist = append(grouplist, g3)
+
+	} else {
+		log.Println("user not found")
+	}
+
+	return grouplist
+
+}
+
+func getMiniGroupList(u *userinfo) []minigroup {
+
+	grouplist := getUserGroupList(u)
+
+	for _, v := range publicGroupMap {
+
+		g := minigroup{
+			ID:              v.ID,
+			Name:            v.Name,
+			Type:            v.Type,
+			OnlineDevNumber: v.OnlineDevNumber,
+			TotalDevNumber:  v.TotalDevNumber,
+		}
+		grouplist = append(grouplist, g)
+
+	}
+
+	sort.Slice(grouplist, func(i, j int) bool {
+		return grouplist[i].ID < grouplist[j].ID
+	})
+
+	return grouplist
+}
+
 func getGroup(name string) (pg *group) {
 	pg = &group{}
 	var devlist string
@@ -322,8 +397,7 @@ func getGroup(name string) (pg *group) {
 	ower_id,
 	password,
 	allow_callsign_ssid,
-	devlist,
-	status,
+	devlist, 
 	create_time,update_time,note 
 	FROM public_groups  where name=?`, name)
 	err := row.Scan(
@@ -337,7 +411,6 @@ func getGroup(name string) (pg *group) {
 		&devlist,
 		//&pg.MasterServer,
 		//&pg.SlaveServer,
-		&pg.Status,
 		&pg.CreateTime,
 		&pg.UpdateTime,
 		&pg.Note)
@@ -452,11 +525,11 @@ func addPublicGroup(pg *group) error {
 	//	fmt.Println("user:", e)
 	var devllist = convertIntArray2Str(pg.DevList)
 	query := `INSERT INTO public_groups (name,type,allow_callsign_ssid,callsign,ower_id,password,devlist,
-		status,note,create_time,update_time	) 
+		note,create_time,update_time	) 
 	VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
 	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCALLSSID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
-		pg.Status, pg.Note)
+		pg.Note)
 
 	if err != nil {
 		log.Println("add public group failed, ", err, '\n', query)
@@ -493,9 +566,9 @@ func updatePublicGroup(pg *group) error {
 
 	pg.AllowCALLSSID = strings.Join(pg.AllowCALLSSIDList, ",")
 
-	_, err := db.Exec(`update public_groups set name=?, type=?, allow_callsign_ssid=?, password=?, status=?,
+	_, err := db.Exec(`update public_groups set name=?, type=?, allow_callsign_ssid=?, password=?, 
 	 note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,
-		pg.Name, pg.Type, pg.AllowCALLSSID, pg.Password, pg.Status, pg.Note, pg.ID)
+		pg.Name, pg.Type, pg.AllowCALLSSID, pg.Password, pg.Note, pg.ID)
 
 	if err != nil {
 		log.Println("update public group failed, ", err)
@@ -526,7 +599,6 @@ func updatePublicGroup(pg *group) error {
 
 		p.Type = pg.Type
 
-		p.Status = pg.Status
 		p.Note = pg.Note
 		p.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 		p.AllowCALLSSID = pg.AllowCALLSSID
@@ -563,36 +635,30 @@ func deletePublicGroup(pg *group) error {
 
 }
 
-type groupItem struct {
-	ID   int
-	Name string
-}
-
-func convertPublicGroupMapToArray() []groupItem {
-	groups := make([]groupItem, 0, len(publicGroupMap))
-
-	for _, group := range publicGroupMap {
-		if group.Status == 1 {
-			groups = append(groups, groupItem{
-				ID:   group.ID,
-				Name: group.Name,
-			})
-		}
-	}
-
-	sort.Slice(groups, func(i, j int) bool {
-		return groups[i].ID < groups[j].ID
-	})
-
-	return groups
-}
-
 func getGroupListForDevice(packet []byte) []byte {
 
-	groups := convertPublicGroupMapToArray()
+	grouplist := make([]minigroup, 0)
 
-	csv := make([]string, len(groups))
-	for i, group := range groups {
+	for _, v := range publicGroupMap {
+
+		g := minigroup{
+			ID:              v.ID,
+			Name:            v.Name,
+			Type:            v.Type,
+			OnlineDevNumber: v.OnlineDevNumber,
+			TotalDevNumber:  v.TotalDevNumber,
+		}
+		grouplist = append(grouplist, g)
+
+	}
+
+	sort.Slice(grouplist, func(i, j int) bool {
+		return grouplist[i].ID < grouplist[j].ID
+	})
+
+	csv := make([]string, len(grouplist))
+
+	for i, group := range grouplist {
 		csv[i] = fmt.Sprintf("%d,%s", group.ID, group.Name)
 	}
 

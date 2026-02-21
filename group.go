@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"sort"
 	"strconv"
 )
 
@@ -120,14 +119,6 @@ func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 
 }
 
-type minigroup struct {
-	ID              int    `json:"id"`
-	Name            string `json:"name"`
-	Type            int    `json:"type"`
-	OnlineDevNumber int    `json:"online_dev_number"`
-	TotalDevNumber  int    `json:"total_dev_number"`
-}
-
 func (j *jsonapi) httpGetGroupList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
@@ -149,75 +140,7 @@ func (j *jsonapi) httpGetGroupList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	grouplist := make([]minigroup, 0)
-
-	if g, ok := publicGroupMap[0]; ok {
-		g := minigroup{
-			ID:              g.ID,
-			Name:            g.Name,
-			Type:            g.Type,
-			OnlineDevNumber: g.OnlineDevNumber,
-			TotalDevNumber:  g.TotalDevNumber,
-		}
-		grouplist = append(grouplist, g)
-
-	}
-
-	if user, okok := userlist.Load(u.CallSign); okok {
-		gp1 := user.(*userinfo).Groups[1]
-		gp2 := user.(*userinfo).Groups[2]
-		gp3 := user.(*userinfo).Groups[3]
-
-		g1 := minigroup{
-			ID:              1,
-			Name:            gp1.Name,
-			Type:            gp1.Type,
-			OnlineDevNumber: gp1.OnlineDevNumber,
-			TotalDevNumber:  gp1.TotalDevNumber,
-		}
-
-		g2 := minigroup{
-			ID:              2,
-			Name:            gp2.Name,
-			Type:            gp2.Type,
-			OnlineDevNumber: gp2.OnlineDevNumber,
-			TotalDevNumber:  gp2.TotalDevNumber,
-		}
-
-		g3 := minigroup{
-			ID:              3,
-			Name:            gp3.Name,
-			Type:            gp3.Type,
-			OnlineDevNumber: gp3.OnlineDevNumber,
-			TotalDevNumber:  gp3.TotalDevNumber,
-		}
-
-		grouplist = append(grouplist, g1)
-		grouplist = append(grouplist, g2)
-		grouplist = append(grouplist, g3)
-
-	} else {
-		log.Println("user not found")
-	}
-
-	for _, v := range publicGroupMap {
-
-		if v.ID != 0 {
-			g := minigroup{
-				ID:              v.ID,
-				Name:            v.Name,
-				Type:            v.Type,
-				OnlineDevNumber: v.OnlineDevNumber,
-				TotalDevNumber:  v.TotalDevNumber,
-			}
-			grouplist = append(grouplist, g)
-		}
-
-	}
-
-	sort.Slice(grouplist, func(i, j int) bool {
-		return grouplist[i].ID < grouplist[j].ID
-	})
+	grouplist := getMiniGroupList(u)
 
 	writeJSONResponseItem(w, grouplist)
 
