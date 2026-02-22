@@ -684,6 +684,9 @@ func changeDevice1W(ctr *control) (res []byte, err error) {
 	if d, ok := devCallsignSSIDMap[getCallsignSSID(ctr.CallSign, ctr.SSID)]; ok {
 
 		oneParm := bytes.Split(bytes.Split(d.DeviceParm.data[128:160], []byte{0x00})[0], []byte{','})
+		if len(oneParm) < 6 {
+			oneParm = make([][]byte, 6)
+		}
 		//oneParm[0] = []byte{'0'}  //无需修改，使用原始的GBW数据
 		oneParm[1] = []byte(ctr.OneTransmitFreq)
 		oneParm[2] = []byte(ctr.OneReciveFreq)
