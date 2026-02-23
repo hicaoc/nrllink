@@ -224,6 +224,8 @@ func getuser(username string) (*userinfo, error) {
 
 	var roles string
 
+	username = strings.ToUpper(username)
+
 	query := `SELECT id,pid,name,phone,
 	callsign,gird,birthday,mdcid,dmrid,
 	sex,nickname,openid,avatar,address, status,
@@ -316,6 +318,8 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 
 	//fmt.Println("user login:", username, password, string(pass), err)
 
+	username = strings.ToUpper(username)
+
 	type resault struct {
 		Password      string   `db:"password"`
 		Roles         []string `db:"roles"`
@@ -343,7 +347,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 	}
 
 	if r.LoginErrTimes < 10 && passwordOK {
-		_, err = db.Exec(`update users set last_login_time=CURRENT_TIMESTAMP,last_login_ip=?,login_err_times=1 where phone=?`, ip, username)
+		_, err = db.Exec(`update users set last_login_time=CURRENT_TIMESTAMP,last_login_ip=?,login_err_times=1 where phone=? or callsign=?`, ip, username, username)
 		if err != nil {
 			log.Println("update users last_login_time and last_login_ip  failed, ", err)
 			return nil, false
@@ -352,7 +356,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 	}
 
 	if !passwordOK {
-		_, err = db.Exec(`update users set login_err_times = login_err_times + 1 where phone=?`, username)
+		_, err = db.Exec(`update users set login_err_times = login_err_times + 1 where phone=? or callsign=?`, username, username)
 		if err != nil {
 			log.Println("update user login_err_times failed ,and password err ", err)
 			return nil, false
