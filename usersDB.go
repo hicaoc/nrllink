@@ -228,9 +228,9 @@ func getuser(username string) (*userinfo, error) {
 	callsign,gird,birthday,mdcid,dmrid,
 	sex,nickname,openid,avatar,address, status,
 	last_login_time, login_err_times, last_login_ip,
-	alarm_msg,roles,create_time,update_time FROM users where phone=?  `
+	alarm_msg,roles,create_time,update_time FROM users where phone=? or callsign=? `
 
-	row := db.QueryRow(query, username)
+	row := db.QueryRow(query, username, username)
 	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
 		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
 		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
@@ -326,7 +326,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 
 	var roles string
 
-	row := db.QueryRow("SELECT password ,login_err_times,status,roles FROM users where phone=?", username)
+	row := db.QueryRow("SELECT password ,login_err_times,status,roles FROM users where phone=? or callsign=?", username, username)
 	err := row.Scan(&r.Password, &r.LoginErrTimes, &r.Status, &roles)
 	if err != nil {
 		log.Println("login err:", err, r, password, username)
