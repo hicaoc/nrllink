@@ -526,7 +526,7 @@ func addPublicGroup(pg *group) error {
 	var devllist = convertIntArray2Str(pg.DevList)
 	query := `INSERT INTO public_groups (name,type,allow_callsign_ssid,callsign,ower_id,password,devlist,
 		note,create_time,update_time	) 
-	VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
+	VALUES (?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
 	_, err := db.Exec(query, pg.Name, pg.Type, pg.AllowCALLSSID, pg.OwerCallsign, pg.OwerID, pg.Password, devllist,
 		pg.Note)
