@@ -264,16 +264,11 @@ func findNRL() {
 
 	aprstv := NewAPRSTV()
 
-	// 启动定时发送（每分钟一次）
+	// 仅保留统计信息同步，平台列表由 startPlatformServerSync() 负责维护。
 	Timer := time.NewTicker(60 * time.Second)
 
 	for range Timer.C {
-		aprstv.GetNRL()
-
-		time.Sleep(10 * time.Second)
-
 		aprstv.GetNRLStat()
-
 	}
 
 }

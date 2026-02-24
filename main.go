@@ -55,7 +55,9 @@ func main() {
 
 	go NewAPRS().OnLoad()
 
-	go findNRL()
+	//go findNRL()
+
+	go startPlatformServerSync()
 
 	udpServer()
 
