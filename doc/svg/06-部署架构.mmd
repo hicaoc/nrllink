@@ -1,0 +1,58 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "tertiaryColor": "#081828", "lineColor": "#00b4d8", "clusterBkg": "#060c18", "clusterBorder": "#1565c0", "titleColor": "#00e5ff", "edgeLabelBackground": "#0a1628", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+graph TB
+
+    ADMIN["`管理员浏览器
+HTTPS 443`"]:::clientNode
+
+    subgraph NGINX["nginx 反向代理"]
+        NG["`HTTPS 443  对外
+→ HTTP 80  内部
+TLS 证书终止`"]:::nginxNode
+    end
+
+    subgraph DEPLOY["部署方式（三选一）"]
+        subgraph LINUX["Linux 原生"]
+            L1["CentOS / Ubuntu"]:::osNode
+            L2["`systemctl
+nrllink.service`"]:::svcNode
+            L3["`内部 TCP 80
+设备 UDP 60050`"]:::portNode
+            L1 --> L2 --> L3
+        end
+
+        subgraph DOCKER["Docker 容器"]
+            D1["`hicaoc/nrllink
+:latest`"]:::osNode
+            D2["`80:80  web
+60050:60050/udp`"]:::portNode
+            D3["`/data  /conf
+持久化挂载`"]:::svcNode
+            D1 --> D2 --> D3
+        end
+
+        subgraph WINDOWS["Windows"]
+            W1["`nrllink
+_windows_x86_64.exe`"]:::osNode
+            W2["直接运行"]:::svcNode
+            W1 --> W2
+        end
+    end
+
+    subgraph DEVICE["终端设备"]
+        DEV["`NRL 硬件 / App
+UDP 60050`"]:::devNode
+    end
+
+    ADMIN -->|"HTTPS 443"| NG
+    NG -->|"HTTP 80 反代"| LINUX
+    NG -->|"HTTP 80 反代"| DOCKER
+    DEV -->|"UDP 60050"| LINUX
+    DEV -->|"UDP 60050"| DOCKER
+    DEV -->|"UDP 60050"| WINDOWS
+
+    classDef clientNode fill:#2d1b4e,stroke:#a78bfa,stroke-width:2px,color:#ddd6fe
+    classDef nginxNode fill:#1a2d0a,stroke:#4ade80,stroke-width:2px,color:#bbf7d0
+    classDef osNode fill:#0d2d5e,stroke:#00d4ff,stroke-width:2px,color:#caf0f8
+    classDef svcNode fill:#0d1f35,stroke:#38bdf8,stroke-width:1px,color:#7dd3fc
+    classDef portNode fill:#0a2d5a,stroke:#00e5ff,stroke-width:2px,color:#00e5ff
+    classDef devNode fill:#0d3d2d,stroke:#00e5b0,stroke-width:2px,color:#b2f5ea

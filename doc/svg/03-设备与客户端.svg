@@ -1,0 +1,241 @@
+<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 2650.62px; background-color: transparent;" viewBox="0 0 2650.61962890625 893" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:monospace;font-size:14px;fill:#caf0f8;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#081828;}#my-svg .error-text{fill:#f7e7d7;stroke:#f7e7d7;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#00b4d8;stroke:#00b4d8;}#my-svg .marker.cross{stroke:#00b4d8;}#my-svg svg{font-family:monospace;font-size:14px;}#my-svg p{margin:0;}#my-svg .label{font-family:monospace;color:#caf0f8;}#my-svg .cluster-label text{fill:#00e5ff;}#my-svg .cluster-label span{color:#00e5ff;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#caf0f8;color:#caf0f8;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#0d1f35;stroke:#00d4ff;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#00b4d8!important;stroke-width:0;stroke:#00b4d8;}#my-svg .arrowheadPath{fill:#f5f1e5;}#my-svg .edgePath .path{stroke:#00b4d8;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#00b4d8;fill:none;}#my-svg .edgeLabel{background-color:#0a1628;text-align:center;}#my-svg .edgeLabel p{background-color:#0a1628;}#my-svg .edgeLabel rect{opacity:0.5;background-color:#0a1628;fill:#0a1628;}#my-svg .labelBkg{background-color:rgba(10, 22, 40, 0.5);}#my-svg .cluster rect{fill:#060c18;stroke:#1565c0;stroke-width:1px;}#my-svg .cluster text{fill:#00e5ff;}#my-svg .cluster span{color:#00e5ff;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:monospace;font-size:12px;background:#081828;border:1px solid hsl(210, 26.6666666667%, 0%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#caf0f8;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:#0a1628;text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:#0a1628;padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:#0a1628;fill:#0a1628;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .hwNode rect{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .hwNode polygon{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .hwNode ellipse{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .hwNode circle{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .hwNode path{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .hwNode tspan{fill:#b2f5ea!important;}#my-svg .appNode rect{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .appNode polygon{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .appNode ellipse{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .appNode circle{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .appNode path{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .appNode tspan{fill:#ddd6fe!important;}#my-svg .auxNode rect{fill:#3d2500!important;stroke:#fb923c!important;stroke-width:2px!important;color:#fed7aa!important;}#my-svg .auxNode polygon{fill:#3d2500!important;stroke:#fb923c!important;stroke-width:2px!important;color:#fed7aa!important;}#my-svg .auxNode ellipse{fill:#3d2500!important;stroke:#fb923c!important;stroke-width:2px!important;color:#fed7aa!important;}#my-svg .auxNode circle{fill:#3d2500!important;stroke:#fb923c!important;stroke-width:2px!important;color:#fed7aa!important;}#my-svg .auxNode path{fill:#3d2500!important;stroke:#fb923c!important;stroke-width:2px!important;color:#fed7aa!important;}#my-svg .auxNode tspan{fill:#fed7aa!important;}#my-svg .enhNode rect{fill:#2d1500!important;stroke:#f59e0b!important;stroke-width:2px!important;color:#fde68a!important;}#my-svg .enhNode polygon{fill:#2d1500!important;stroke:#f59e0b!important;stroke-width:2px!important;color:#fde68a!important;}#my-svg .enhNode ellipse{fill:#2d1500!important;stroke:#f59e0b!important;stroke-width:2px!important;color:#fde68a!important;}#my-svg .enhNode circle{fill:#2d1500!important;stroke:#f59e0b!important;stroke-width:2px!important;color:#fde68a!important;}#my-svg .enhNode path{fill:#2d1500!important;stroke:#f59e0b!important;stroke-width:2px!important;color:#fde68a!important;}#my-svg .enhNode tspan{fill:#fde68a!important;}#my-svg .rfNode rect{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode polygon{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode ellipse{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode circle{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode path{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode tspan{fill:#fecaca!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"><g class="cluster" id="RF_LOCAL" data-look="classic"><rect style="" x="769.86962890625" y="8" width="411.15625" height="493"/><g class="cluster-label" transform="translate(940.44775390625, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">本地无线电</tspan></tspan></text></g></g></g><g class="cluster" id="HW" data-look="classic"><rect style="" x="8" y="570.9999980926514" width="1371.3173828125" height="314"/><g class="cluster-label" transform="translate(665.65869140625, 570.9999980926514)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">硬件终端</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M882.518,290.5L882.518,325.583C882.518,360.667,882.518,430.833,882.518,471.75C882.518,512.667,882.518,524.333,882.518,536C882.518,547.667,882.518,559.333,891.093,578.934C899.668,598.535,916.819,626.07,925.394,639.837L933.969,653.605" id="L_WALKIE_MAGONG_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_WALKIE_MAGONG_0" data-points="W3sieCI6ODgyLjUxODA2NjQwNjI1LCJ5IjoyOTAuNX0seyJ4Ijo4ODIuNTE4MDY2NDA2MjUsInkiOjUwMX0seyJ4Ijo4ODIuNTE4MDY2NDA2MjUsInkiOjUzNS45OTk5OTkwNDYzMjU3fSx7IngiOjg4Mi41MTgwNjY0MDYyNSwieSI6NTcwLjk5OTk5ODA5MjY1MTR9LHsieCI6OTM2LjA4NDA0OTY4NjUwNDcsInkiOjY1Ni45OTk5OTgwOTI2NTE0fV0=" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1078.096,290.5L1078.096,325.583C1078.096,360.667,1078.096,430.833,1078.096,471.75C1078.096,512.667,1078.096,524.333,1078.096,536C1078.096,547.667,1078.096,559.333,1069.521,578.934C1060.946,598.535,1043.795,626.07,1035.22,639.837L1026.645,653.605" id="L_RELAY_MAGONG_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_RELAY_MAGONG_0" data-points="W3sieCI6MTA3OC4wOTYxOTE0MDYyNSwieSI6MjkwLjV9LHsieCI6MTA3OC4wOTYxOTE0MDYyNSwieSI6NTAxfSx7IngiOjEwNzguMDk2MTkxNDA2MjUsInkiOjUzNS45OTk5OTkwNDYzMjU3fSx7IngiOjEwNzguMDk2MTkxNDA2MjUsInkiOjU3MC45OTk5OTgwOTI2NTE0fSx7IngiOjEwMjQuNTMwMjA4MTI1OTk1MiwieSI6NjU2Ljk5OTk5ODA5MjY1MTR9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(882.51806640625, 535.9999990463257)"><g class="label" data-id="L_WALKIE_MAGONG_0" transform="translate(-28.6484375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="57.296875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">RF</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 射频</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1078.09619140625, 535.9999990463257)"><g class="label" data-id="L_RELAY_MAGONG_0" transform="translate(-28.6484375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="57.296875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">RF</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 射频</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="root" transform="translate(1208.02587890625, 35.5)"><g class="clusters"><g class="cluster" id="NANNY_GRP" data-look="classic"><rect style="" x="8" y="8" width="941" height="422"/><g class="cluster-label" transform="translate(450.5, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">辅助软件</tspan></tspan></text></g></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="root" transform="translate(37.5, 35)"><g class="clusters"><g class="cluster" id="ENHANCED" data-look="classic"><rect style="" x="8" y="8" width="866" height="151"/><g class="cluster-label" transform="translate(366.78125, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">增强版保姆</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 爱好者开发</tspan></tspan></text></g></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="node default enhNode" id="flowchart-EN1-17" transform="translate(129, 83.5)"><rect class="basic label-container" style="fill:#2d1500 !important;stroke:#f59e0b !important;stroke-width:2px !important" x="-86" y="-25.5" width="172" height="51"/><g class="label" style="color:#fde68a !important" transform="translate(-56, -10.5)"><rect/><foreignObject width="112" height="21"><div style="color: rgb(253, 230, 138) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fde68a !important" class="nodeLabel"><p>多服务器并发连接</p></span></div></foreignObject></g></g><g class="node default enhNode" id="flowchart-EN2-18" transform="translate(344, 83.5)"><rect class="basic label-container" style="fill:#2d1500 !important;stroke:#f59e0b !important;stroke-width:2px !important" x="-79" y="-25.5" width="158" height="51"/><g class="label" style="color:#fde68a !important" transform="translate(-49, -10.5)"><rect/><foreignObject width="98" height="21"><div style="color: rgb(253, 230, 138) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fde68a !important" class="nodeLabel"><p>多房间同时监听</p></span></div></foreignObject></g></g><g class="node default enhNode" id="flowchart-EN3-19" transform="translate(552, 83.5)"><rect class="basic label-container" style="fill:#2d1500 !important;stroke:#f59e0b !important;stroke-width:2px !important" x="-79" y="-25.5" width="158" height="51"/><g class="label" style="color:#fde68a !important" transform="translate(-49, -10.5)"><rect/><foreignObject width="98" height="21"><div style="color: rgb(253, 230, 138) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fde68a !important" class="nodeLabel"><p>多路中继台监控</p></span></div></foreignObject></g></g><g class="node default enhNode" id="flowchart-EN4-20" transform="translate(760, 83.5)"><rect class="basic label-container" style="fill:#2d1500 !important;stroke:#f59e0b !important;stroke-width:2px !important" x="-79" y="-25.5" width="158" height="51"/><g class="label" style="color:#fde68a !important" transform="translate(-49, -10.5)"><rect/><foreignObject width="98" height="21"><div style="color: rgb(253, 230, 138) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fde68a !important" class="nodeLabel"><p>语音流聚合输出</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(183.5, 236)"><g class="clusters"><g class="cluster" id="BASIC" data-look="classic"><rect style="" x="8" y="8" width="574" height="151"/><g class="cluster-label" transform="translate(243.0625, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">NRLNANNY</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 保姆</tspan></tspan></text></g></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="node default auxNode" id="flowchart-N1-14" transform="translate(101, 83.5)"><rect class="basic label-container" style="fill:#3d2500 !important;stroke:#fb923c !important;stroke-width:2px !important" x="-58" y="-25.5" width="116" height="51"/><g class="label" style="color:#fed7aa !important" transform="translate(-28, -10.5)"><rect/><foreignObject width="56" height="21"><div style="color: rgb(254, 215, 170) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fed7aa !important" class="nodeLabel"><p>录音存档</p></span></div></foreignObject></g></g><g class="node default auxNode" id="flowchart-N2-15" transform="translate(281, 83.5)"><rect class="basic label-container" style="fill:#3d2500 !important;stroke:#fb923c !important;stroke-width:2px !important" x="-72" y="-25.5" width="144" height="51"/><g class="label" style="color:#fed7aa !important" transform="translate(-42, -10.5)"><rect/><foreignObject width="84" height="21"><div style="color: rgb(254, 215, 170) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fed7aa !important" class="nodeLabel"><p>定时语音信标</p></span></div></foreignObject></g></g><g class="node default auxNode" id="flowchart-N3-16" transform="translate(475, 83.5)"><rect class="basic label-container" style="fill:#3d2500 !important;stroke:#fb923c !important;stroke-width:2px !important" x="-72" y="-25.5" width="144" height="51"/><g class="label" style="color:#fed7aa !important" transform="translate(-42, -10.5)"><rect/><foreignObject width="84" height="21"><div style="color: rgb(254, 215, 170) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fed7aa !important" class="nodeLabel"><p>实时语音播放</p></span></div></foreignObject></g></g></g></g></g></g><g class="root" transform="translate(2199.02587890625, 25)"><g class="clusters"><g class="cluster" id="SW" data-look="classic"><rect style="" x="8" y="8" width="435.59375" height="443"/><g class="cluster-label" transform="translate(197.796875, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">软件终端</tspan></tspan></text></g></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="root" transform="translate(37.5, 35)"><g class="clusters"><g class="cluster" id="IOS" data-look="classic"><rect style="" x="8" y="8" width="360.59375" height="151"/><g class="cluster-label" transform="translate(175.6484375, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">iOS</tspan></tspan></text></g></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="node default appNode" id="flowchart-NRLIOS-12" transform="translate(99.6484375, 83.5)"><rect class="basic label-container" style="fill:#2d1b4e !important;stroke:#a78bfa !important;stroke-width:2px !important" x="-56.6484375" y="-25.5" width="113.296875" height="51"/><g class="label" style="color:#ddd6fe !important" transform="translate(-26.6484375, -10.5)"><rect/><foreignObject width="53.296875" height="21"><div style="color: rgb(221, 214, 254) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#ddd6fe !important" class="nodeLabel"><p>NRL互联</p></span></div></foreignObject></g></g><g class="node default appNode" id="flowchart-NRLTOOL-13" transform="translate(269.9453125, 83.5)"><rect class="basic label-container" style="fill:#2d1b4e !important;stroke:#a78bfa !important;stroke-width:2px !important" x="-63.6484375" y="-25.5" width="127.296875" height="51"/><g class="label" style="color:#ddd6fe !important" transform="translate(-33.6484375, -10.5)"><rect/><foreignObject width="67.296875" height="21"><div style="color: rgb(221, 214, 254) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#ddd6fe !important" class="nodeLabel"><p>NRL工具集</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(114.9375, 236)"><g class="clusters"><g class="cluster" id="ANDROID" data-look="classic"><rect style="" x="8" y="8" width="205.71875" height="172"/><g class="cluster-label" transform="translate(81.3515625, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Android</tspan></tspan></text></g></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="node default appNode" id="flowchart-APP73-11" transform="translate(110.859375, 94)"><rect class="basic label-container" style="fill:#2d1b4e !important;stroke:#a78bfa !important;stroke-width:2px !important" x="-67.859375" y="-36" width="135.71875" height="72"/><g class="label" style="color:#ddd6fe !important" transform="translate(-37.859375, -21)"><rect/><foreignObject width="75.71875" height="42"><div style="color: rgb(221, 214, 254) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#ddd6fe !important" class="nodeLabel"><p>73HAM<br />全功能 PTT</p></span></div></foreignObject></g></g></g></g></g></g><g class="root" transform="translate(35, 587.9999980926514)"><g class="clusters"><g class="cluster" id="ESP32_DEV" data-look="classic"><rect style="" x="8" y="8" width="523.296875" height="264"/><g class="cluster-label" transform="translate(191.1328125, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">ESP32</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 终端</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 爱好者自制</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M218.797,79L228.214,79C237.63,79,256.464,79,278.32,79C300.177,79,325.057,79,337.497,79L349.938,79" id="L_E_MIC_E_NET_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_MIC_E_NET_0" data-points="W3sieCI6MjE0Ljc5Njg3NSwieSI6Nzl9LHsieCI6Mjc1LjI5Njg3NSwieSI6Nzl9LHsieCI6MzUzLjkzNzUsInkiOjc5fV0=" marker-start="url(#my-svg_flowchart-v2-pointStart)" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(275.296875, 79)"><g class="label" data-id="L_E_MIC_E_NET_0" transform="translate(-23, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="46" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">全双工</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default hwNode" id="flowchart-E_MIC-6" transform="translate(130.1484375, 79)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-84.6484375" y="-36" width="169.296875" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-54.6484375, -21)"><rect/><foreignObject width="109.296875" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>麦克风 / 扬声器<br />全双工</p></span></div></foreignObject></g></g><g class="node default hwNode" id="flowchart-E_NET-8" transform="translate(414.796875, 79)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-60.859375" y="-36" width="121.71875" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-30.859375, -21)"><rect/><foreignObject width="61.71875" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>NRL 协议<br />WiFi</p></span></div></foreignObject></g></g><g class="node default hwNode" id="flowchart-E_DISP-7" transform="translate(414.796875, 201)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-79" y="-36" width="158" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-49, -21)"><rect/><foreignObject width="98" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>显示屏（可选）<br />状态 / 房间</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(608.296875, 648.9999980926514)"><g class="clusters"><g class="cluster" id="MAGONG" data-look="classic"><rect style="" x="8" y="8" width="728.0205078125" height="142"/><g class="cluster-label" transform="translate(308.93212890625, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">马工盒子</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> NRL</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 系列</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M198.219,79L209.993,79C221.766,79,245.314,79,268.195,79C291.076,79,313.291,79,324.398,79L335.505,79" id="L_M_RF_M_CODEC_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M_RF_M_CODEC_0" data-points="W3sieCI6MTk4LjIxODc1LCJ5Ijo3OX0seyJ4IjoyNjguODYxODE2NDA2MjUsInkiOjc5fSx7IngiOjMzOS41MDQ4ODI4MTI1LCJ5Ijo3OX1d" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M441.661,79L451.744,79C461.828,79,481.994,79,501.494,79C520.994,79,539.828,79,549.244,79L558.661,79" id="L_M_CODEC_M_NET_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M_CODEC_M_NET_0" data-points="W3sieCI6NDQxLjY2MTEzMjgxMjUsInkiOjc5fSx7IngiOjUwMi4xNjExMzI4MTI1LCJ5Ijo3OX0seyJ4Ijo1NjIuNjYxMTMyODEyNSwieSI6Nzl9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(268.86181640625, 79)"><g class="label" data-id="L_M_RF_M_CODEC_0" transform="translate(-33.14306640625, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="66.2861328125" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">单工</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> PTT</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(502.1611328125, 79)"><g class="label" data-id="L_M_CODEC_M_NET_0" transform="translate(-23, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="46" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">编码帧</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default hwNode" id="flowchart-M_RF-0" transform="translate(121.859375, 79)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-76.359375" y="-36" width="152.71875" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-46.359375, -21)"><rect/><foreignObject width="92.71875" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>射频接口<br />RF In / Out</p></span></div></foreignObject></g></g><g class="node default hwNode" id="flowchart-M_CODEC-1" transform="translate(390.5830078125, 79)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-51.078125" y="-36" width="102.15625" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-21.078125, -21)"><rect/><foreignObject width="42.15625" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>G.711<br />编解码</p></span></div></foreignObject></g></g><g class="node default hwNode" id="flowchart-M_NET-2" transform="translate(630.5908203125, 79)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-67.9296875" y="-36" width="135.859375" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-37.9296875, -21)"><rect/><foreignObject width="75.859375" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>NRL 协议<br />UDP 60050</p></span></div></foreignObject></g></g></g></g><g class="node default rfNode" id="flowchart-RELAY-21" transform="translate(1078.09619140625, 254.5)"><rect class="basic label-container" style="fill:#2d1a1a !important;stroke:#f87171 !important;stroke-width:2px !important" x="-67.9296875" y="-36" width="135.859375" height="72"/><g class="label" style="color:#fecaca !important" transform="translate(-37.9296875, -21)"><rect/><foreignObject width="75.859375" height="42"><div style="color: rgb(254, 202, 202) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fecaca !important" class="nodeLabel"><p>模拟中继台<br />VHF / UHF</p></span></div></foreignObject></g></g><g class="node default rfNode" id="flowchart-WALKIE-22" transform="translate(882.51806640625, 254.5)"><rect class="basic label-container" style="fill:#2d1a1a !important;stroke:#f87171 !important;stroke-width:2px !important" x="-77.6484375" y="-36" width="155.296875" height="72"/><g class="label" style="color:#fecaca !important" transform="translate(-47.6484375, -21)"><rect/><foreignObject width="95.296875" height="42"><div style="color: rgb(254, 202, 202) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fecaca !important" class="nodeLabel"><p>手台 / 对讲机<br />单工 PTT</p></span></div></foreignObject></g></g></g></g></g>
+
+<script type="text/javascript"><![CDATA[
+(function(){
+  var svg = document.querySelector('svg');
+  var pt = svg.createSVGPoint();
+  var dragTarget = null;
+  var startX, startY, origTx, origTy;
+  var connectedEdges = [];  // [{path, label, end:'start'|'end'|'both', origD, origLabelTr}]
+
+  function getTranslate(el) {
+    var m = /translate\(([\d.e+-]+)[,\s]+([\d.e+-]+)\)/.exec(el.getAttribute('transform') || '');
+    return m ? [parseFloat(m[1]), parseFloat(m[2])] : null;
+  }
+
+  function setTranslate(el, x, y) {
+    var t = el.getAttribute('transform') || '';
+    var nt = 'translate(' + x + ', ' + y + ')';
+    if (/translate\(/.test(t)) {
+      el.setAttribute('transform', t.replace(/translate\([^)]+\)/, nt));
+    } else {
+      el.setAttribute('transform', nt + ' ' + t);
+    }
+  }
+
+  function toSVG(evt) {
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  function findDraggable(el) {
+    while (el && el !== svg) {
+      if (el.classList && el.classList.contains('node')) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  // Build node ID -> mermaid short name mapping
+  // Node id like "flowchart-APRS-0" -> short name "APRS"
+  function getNodeShortId(node) {
+    var id = node.id || '';
+    var m = /^flowchart-(.+)-\d+$/.exec(id);
+    return m ? m[1] : id;
+  }
+
+  // Parse SVG path d attribute into segments for manipulation
+  function parsePath(d) {
+    var segs = [];
+    var re = /([MLCQTSAHVZ])\s*((?:[^MLCQTSAHVZ])*)/gi;
+    var m;
+    while ((m = re.exec(d)) !== null) {
+      var cmd = m[1];
+      var nums = m[2].trim().match(/-?[\d.]+(?:e[+-]?\d+)?/gi);
+      segs.push({ cmd: cmd, nums: nums ? nums.map(Number) : [] });
+    }
+    return segs;
+  }
+
+  function segsToD(segs) {
+    return segs.map(function(s) {
+      return s.cmd + s.nums.join(',');
+    }).join('');
+  }
+
+  // Shift the start portion of path segments by (dx, dy)
+  function shiftPathStart(segs, dx, dy) {
+    if (segs.length === 0) return;
+    // First segment is M x,y
+    if (segs[0].cmd === 'M' && segs[0].nums.length >= 2) {
+      segs[0].nums[0] += dx;
+      segs[0].nums[1] += dy;
+    }
+    // Shift first curve/line segment's first control point
+    if (segs.length > 1) {
+      var s = segs[1];
+      if (s.cmd === 'L' && s.nums.length >= 2) {
+        s.nums[0] += dx; s.nums[1] += dy;
+      } else if (s.cmd === 'C' && s.nums.length >= 6) {
+        // first control point
+        s.nums[0] += dx; s.nums[1] += dy;
+      }
+    }
+  }
+
+  // Shift the end portion of path segments by (dx, dy)
+  function shiftPathEnd(segs, dx, dy) {
+    if (segs.length === 0) return;
+    var last = segs[segs.length - 1];
+    if (last.cmd === 'L' && last.nums.length >= 2) {
+      last.nums[last.nums.length - 2] += dx;
+      last.nums[last.nums.length - 1] += dy;
+    } else if (last.cmd === 'C' && last.nums.length >= 6) {
+      // last control point and end point
+      last.nums[last.nums.length - 4] += dx;
+      last.nums[last.nums.length - 3] += dy;
+      last.nums[last.nums.length - 2] += dx;
+      last.nums[last.nums.length - 1] += dy;
+    }
+    // Also shift the previous segment's endpoint if it feeds into the last
+    if (segs.length > 1) {
+      var prev = segs[segs.length - 2];
+      if (prev.cmd === 'C' && prev.nums.length >= 6) {
+        prev.nums[prev.nums.length - 2] += dx;
+        prev.nums[prev.nums.length - 1] += dy;
+      }
+    }
+  }
+
+  // Find all edges and labels connected to a node
+  function findEdges(nodeId) {
+    var results = [];
+    var paths = svg.querySelectorAll('path[data-id]');
+    for (var i = 0; i < paths.length; i++) {
+      var p = paths[i];
+      var eid = p.getAttribute('data-id') || '';
+      // Edge ID format: L_SOURCE_TARGET_N
+      // But node names can contain underscores, so we use a smarter match
+      var parts = parseEdgeId(eid);
+      if (!parts) continue;
+      var end = null;
+      if (parts.src === nodeId && parts.dst === nodeId) end = 'both';
+      else if (parts.src === nodeId) end = 'start';
+      else if (parts.dst === nodeId) end = 'end';
+      if (!end) continue;
+
+      // Find matching edge label
+      var labelEl = svg.querySelector('.edgeLabel g.label[data-id="' + eid + '"]');
+      var labelParent = labelEl ? labelEl.closest('.edgeLabel') : null;
+
+      results.push({
+        path: p,
+        end: end,
+        origD: p.getAttribute('d'),
+        label: labelParent,
+        origLabelTr: labelParent ? getTranslate(labelParent) : null
+      });
+    }
+    return results;
+  }
+
+  // Parse edge ID like "L_APRS_APRSTV_0" -> {src: "APRS", dst: "APRSTV"}
+  // Handle multi-underscore node names by matching against known node IDs
+  var allNodeIds = [];
+  function buildNodeList() {
+    var nodes = svg.querySelectorAll('.node');
+    for (var i = 0; i < nodes.length; i++) {
+      allNodeIds.push(getNodeShortId(nodes[i]));
+    }
+    // Sort by length descending for greedy matching
+    allNodeIds.sort(function(a, b) { return b.length - a.length; });
+  }
+
+  function parseEdgeId(eid) {
+    // Format: L_<src>_<dst>_<index>
+    if (eid.charAt(0) !== 'L' || eid.charAt(1) !== '_') return null;
+    var body = eid.substring(2); // remove "L_"
+    // Try to match known node IDs
+    for (var i = 0; i < allNodeIds.length; i++) {
+      var src = allNodeIds[i];
+      if (body.indexOf(src + '_') === 0) {
+        var rest = body.substring(src.length + 1);
+        for (var j = 0; j < allNodeIds.length; j++) {
+          var dst = allNodeIds[j];
+          if (rest.indexOf(dst + '_') === 0) {
+            return { src: src, dst: dst };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  buildNodeList();
+
+  svg.addEventListener('mousedown', function(e) {
+    var target = findDraggable(e.target);
+    if (!target) return;
+    var tr = getTranslate(target);
+    if (!tr) return;
+    dragTarget = target;
+    origTx = tr[0]; origTy = tr[1];
+    var p = toSVG(e);
+    startX = p.x; startY = p.y;
+    // Collect connected edges
+    connectedEdges = findEdges(getNodeShortId(target));
+    dragTarget.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  svg.addEventListener('mousemove', function(e) {
+    if (!dragTarget) return;
+    var p = toSVG(e);
+    var dx = p.x - startX, dy = p.y - startY;
+
+    // Move node
+    setTranslate(dragTarget, origTx + dx, origTy + dy);
+
+    // Update connected edges
+    for (var i = 0; i < connectedEdges.length; i++) {
+      var ce = connectedEdges[i];
+      var segs = parsePath(ce.origD);
+      if (ce.end === 'start' || ce.end === 'both') {
+        shiftPathStart(segs, dx, dy);
+      }
+      if (ce.end === 'end' || ce.end === 'both') {
+        shiftPathEnd(segs, dx, dy);
+      }
+      ce.path.setAttribute('d', segsToD(segs));
+
+      // Move label proportionally
+      if (ce.label && ce.origLabelTr) {
+        var ratio = (ce.end === 'both') ? 1 : 0.5;
+        setTranslate(ce.label,
+          ce.origLabelTr[0] + dx * ratio,
+          ce.origLabelTr[1] + dy * ratio);
+      }
+    }
+
+    // Update marker arrow positions (re-rendered by browser automatically)
+    e.preventDefault();
+  });
+
+  function endDrag() {
+    if (dragTarget) {
+      dragTarget.style.cursor = '';
+      dragTarget = null;
+      connectedEdges = [];
+    }
+  }
+  svg.addEventListener('mouseup', endDrag);
+  svg.addEventListener('mouseleave', endDrag);
+
+  // Add grab cursor
+  var allNodes = svg.querySelectorAll('.node');
+  for (var i = 0; i < allNodes.length; i++) {
+    allNodes[i].style.cursor = 'grab';
+  }
+})();
+]]></script>
+</svg>

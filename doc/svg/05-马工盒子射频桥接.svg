@@ -1,0 +1,241 @@
+<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 1360.5px; background-color: transparent;" viewBox="0 0 1360.5048828125 385.5" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:monospace;font-size:14px;fill:#caf0f8;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#081828;}#my-svg .error-text{fill:#f7e7d7;stroke:#f7e7d7;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#00b4d8;stroke:#00b4d8;}#my-svg .marker.cross{stroke:#00b4d8;}#my-svg svg{font-family:monospace;font-size:14px;}#my-svg p{margin:0;}#my-svg .label{font-family:monospace;color:#caf0f8;}#my-svg .cluster-label text{fill:#00e5ff;}#my-svg .cluster-label span{color:#00e5ff;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#caf0f8;color:#caf0f8;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#0d1f35;stroke:#00d4ff;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#00b4d8!important;stroke-width:0;stroke:#00b4d8;}#my-svg .arrowheadPath{fill:#f5f1e5;}#my-svg .edgePath .path{stroke:#00b4d8;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#00b4d8;fill:none;}#my-svg .edgeLabel{background-color:#0a1628;text-align:center;}#my-svg .edgeLabel p{background-color:#0a1628;}#my-svg .edgeLabel rect{opacity:0.5;background-color:#0a1628;fill:#0a1628;}#my-svg .labelBkg{background-color:rgba(10, 22, 40, 0.5);}#my-svg .cluster rect{fill:#060c18;stroke:#1565c0;stroke-width:1px;}#my-svg .cluster text{fill:#00e5ff;}#my-svg .cluster span{color:#00e5ff;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:monospace;font-size:12px;background:#081828;border:1px solid hsl(210, 26.6666666667%, 0%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#caf0f8;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:#0a1628;text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:#0a1628;padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:#0a1628;fill:#0a1628;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .rfNode rect{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode polygon{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode ellipse{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode circle{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode path{fill:#2d1a1a!important;stroke:#f87171!important;stroke-width:2px!important;color:#fecaca!important;}#my-svg .rfNode tspan{fill:#fecaca!important;}#my-svg .boxNode rect{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .boxNode polygon{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .boxNode ellipse{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .boxNode circle{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .boxNode path{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .boxNode tspan{fill:#b2f5ea!important;}#my-svg .serverNode rect{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .serverNode polygon{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .serverNode ellipse{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .serverNode circle{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .serverNode path{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .serverNode tspan{fill:#caf0f8!important;}#my-svg .warnNode rect{fill:#3d1a00!important;stroke:#fb923c!important;stroke-width:1px!important;color:#fed7aa!important;font-style:italic!important;}#my-svg .warnNode polygon{fill:#3d1a00!important;stroke:#fb923c!important;stroke-width:1px!important;color:#fed7aa!important;font-style:italic!important;}#my-svg .warnNode ellipse{fill:#3d1a00!important;stroke:#fb923c!important;stroke-width:1px!important;color:#fed7aa!important;font-style:italic!important;}#my-svg .warnNode circle{fill:#3d1a00!important;stroke:#fb923c!important;stroke-width:1px!important;color:#fed7aa!important;font-style:italic!important;}#my-svg .warnNode path{fill:#3d1a00!important;stroke:#fb923c!important;stroke-width:1px!important;color:#fed7aa!important;font-style:italic!important;}#my-svg .warnNode tspan{fill:#fed7aa!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"><g class="cluster" id="NET_SIDE" data-look="classic"><rect style="" x="1161.2080078125" y="231.00000095367432" width="191.296875" height="146.49999904632568"/><g class="cluster-label" transform="translate(1225.9892578125, 231.00000095367432)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">NRL</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 网络</tspan></tspan></text></g></g></g><g class="cluster" id="BOX" data-look="classic"><rect style="" x="380.3017578125" y="170" width="665.171875" height="207.5"/><g class="cluster-label" transform="translate(684.8876953125, 170)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">马工盒子</tspan></tspan></text></g></g></g><g class="cluster" id="RF_SIDE" data-look="classic"><rect style="" x="8" y="8" width="1344.5048828125" height="142"/><g class="cluster-label" transform="translate(634.03369140625, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">无线电侧</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 单工</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M591.342,287L598.838,290.25C606.334,293.5,621.325,300,632.321,303.25C643.317,306.5,650.317,306.5,653.817,306.5L657.317,306.5" id="L_PTT_CODEC_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_PTT_CODEC_0" data-points="W3sieCI6NTkxLjM0MTY2NjMzMzg2MTgsInkiOjI4Ny4wMDAwMDA5NTM2NzQzfSx7IngiOjYzNi4zMTczODI4MTI1LCJ5IjozMDYuNX0seyJ4Ijo2NjEuMzE3MzgyODEyNSwieSI6MzA2LjV9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M777.317,306.5L786.259,306.5C795.2,306.5,813.083,306.5,830.299,306.5C847.515,306.5,864.065,306.5,872.34,306.5L880.614,306.5" id="L_CODEC_CLIENT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CODEC_CLIENT_0" data-points="W3sieCI6Nzc3LjMxNzM4MjgxMjUsInkiOjMwNi41fSx7IngiOjgzMC45NjU4MjAzMTI1LCJ5IjozMDYuNX0seyJ4Ijo4ODQuNjE0MjU3ODEyNSwieSI6MzA2LjV9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M178.43,79L198.872,79C219.313,79,260.197,79,293.842,79C327.488,79,353.895,79,383.569,101.132C413.244,123.264,446.187,167.527,462.658,189.659L479.129,211.791" id="L_HT_PTT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_HT_PTT_0" data-points="W3sieCI6MTc4LjQyOTY4NzUsInkiOjc5fSx7IngiOjMwMS4wODA1NjY0MDYyNSwieSI6Nzl9LHsieCI6MzgwLjMwMTc1NzgxMjUsInkiOjc5fSx7IngiOjQ4MS41MTcyMzc2MTIyMTYwNCwieSI6MjE1LjAwMDAwMDk1MzY3NDMyfV0=" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1205.856,92.597L1198.415,94.581C1190.974,96.564,1176.091,100.532,1159.005,102.516C1141.919,104.5,1122.63,104.5,1103.341,126.333C1084.052,148.167,1064.763,191.833,1039.63,213.667C1014.497,235.5,983.521,235.5,947.769,235.5C912.018,235.5,871.492,235.5,832.621,235.5C793.75,235.5,756.534,235.5,724.092,235.5C691.651,235.5,663.984,235.5,646.646,235.924C629.308,236.349,622.298,237.198,618.793,237.622L615.288,238.046" id="L_REP_PTT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_REP_PTT_0" data-points="W3sieCI6MTIwNS44NTY0NDUzMTI1LCJ5Ijo5Mi41OTY2Njc0ODM0NTk5NH0seyJ4IjoxMTYxLjIwODAwNzgxMjUsInkiOjEwNC41fSx7IngiOjExMDMuMzQwODIwMzEyNSwieSI6MTA0LjV9LHsieCI6MTA0NS40NzM2MzI4MTI1LCJ5IjoyMzUuNX0seyJ4Ijo5NTIuNTQzOTQ1MzEyNSwieSI6MjM1LjV9LHsieCI6ODMwLjk2NTgyMDMxMjUsInkiOjIzNS41fSx7IngiOjcxOS4zMTczODI4MTI1LCJ5IjoyMzUuNX0seyJ4Ijo2MzYuMzE3MzgyODEyNSwieSI6MjM1LjV9LHsieCI6NjExLjMxNzM4MjgxMjUsInkiOjIzOC41MjcxNTkxNzMxMzE0fV0=" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1020.474,291.88L1024.64,290.984C1028.807,290.087,1037.14,288.293,1050.951,287.397C1064.763,286.5,1084.052,286.5,1103.341,286.5C1122.63,286.5,1141.919,286.5,1155.078,287.235C1168.236,287.97,1175.264,289.439,1178.779,290.174L1182.293,290.909" id="L_CLIENT_SRV_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CLIENT_SRV_0" data-points="W3sieCI6MTAyMC40NzM2MzI4MTI1LCJ5IjoyOTEuODgwNDEyNjM0OTA1Mjd9LHsieCI6MTA0NS40NzM2MzI4MTI1LCJ5IjoyODYuNTAwMDAwOTUzNjc0M30seyJ4IjoxMTAzLjM0MDgyMDMxMjUsInkiOjI4Ni41MDAwMDA5NTM2NzQzfSx7IngiOjExNjEuMjA4MDA3ODEyNSwieSI6Mjg2LjUwMDAwMDk1MzY3NDN9LHsieCI6MTE4Ni4yMDgwMDc4MTI1LCJ5IjoyOTEuNzI3NDc3NjI5OTk4OTN9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1186.208,325.335L1182.041,326.446C1177.875,327.557,1169.541,329.778,1155.73,330.889C1141.919,332,1122.63,332,1103.341,332C1084.052,332,1064.763,332,1051.594,331.033C1038.426,330.066,1031.379,328.132,1027.855,327.165L1024.331,326.198" id="L_SRV_CLIENT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_SRV_CLIENT_0" data-points="W3sieCI6MTE4Ni4yMDgwMDc4MTI1LCJ5IjozMjUuMzM0OTY2OTE5ODcyNTZ9LHsieCI6MTE2MS4yMDgwMDc4MTI1LCJ5IjozMzJ9LHsieCI6MTEwMy4zNDA4MjAzMTI1LCJ5IjozMzJ9LHsieCI6MTA0NS40NzM2MzI4MTI1LCJ5IjozMzJ9LHsieCI6MTAyMC40NzM2MzI4MTI1LCJ5IjozMjUuMTM5OTc0Nzc5MzE5MDZ9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M989.307,270.5L998.668,261.333C1008.029,252.167,1026.752,233.833,1045.757,198.5C1064.763,163.167,1084.052,110.833,1103.341,84.667C1122.63,58.5,1141.919,58.5,1158.353,59.955C1174.787,61.41,1188.366,64.321,1195.156,65.776L1201.945,67.231" id="L_CLIENT_REP_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CLIENT_REP_0" data-points="W3sieCI6OTg5LjMwNzMzODE2OTY0MjksInkiOjI3MC41fSx7IngiOjEwNDUuNDczNjMyODEyNSwieSI6MjE1LjV9LHsieCI6MTEwMy4zNDA4MjAzMTI1LCJ5Ijo1OC40OTk5OTk1MjMxNjI4NH0seyJ4IjoxMTYxLjIwODAwNzgxMjUsInkiOjU4LjQ5OTk5OTUyMzE2Mjg0fSx7IngiOjEyMDUuODU2NDQ1MzEyNSwieSI6NjguMDY5MzQ1NDk0MzQwMn1d" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g><rect class="background" style="stroke: none"/></g><g><rect class="background" style="stroke: none"/></g><g class="edgeLabel"><g class="label" data-id="L_PTT_CODEC_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g><g class="edgeLabel"><g class="label" data-id="L_CODEC_CLIENT_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g><g class="edgeLabel" transform="translate(301.08056640625, 79)"><g class="label" data-id="L_HT_PTT_0" transform="translate(-54.22119140625, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="108.4423828125" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">RF</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 语音</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> +</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> PTT</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(830.9658203125, 235.5)"><g class="label" data-id="L_REP_PTT_0" transform="translate(-28.6484375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="57.296875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">RF</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 语音</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1103.3408203125, 286.5000009536743)"><g class="label" data-id="L_CLIENT_SRV_0" transform="translate(-32.8671875, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="65.734375" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">UDP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 上行</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1103.3408203125, 332)"><g class="label" data-id="L_SRV_CLIENT_0" transform="translate(-32.8671875, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="65.734375" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">UDP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 下行</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1103.3408203125, 58.49999952316284)"><g class="label" data-id="L_CLIENT_REP_0" transform="translate(-30, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="60" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">解码回放</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default rfNode" id="flowchart-HT-0" transform="translate(127.4296875, 79)"><rect class="basic label-container" style="fill:#2d1a1a !important;stroke:#f87171 !important;stroke-width:2px !important" x="-51" y="-36" width="102" height="72"/><g class="label" style="color:#fecaca !important" transform="translate(-21, -21)"><rect/><foreignObject width="42" height="42"><div style="color: rgb(254, 202, 202) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fecaca !important" class="nodeLabel"><p>手台<br />对讲机</p></span></div></foreignObject></g></g><g class="node default rfNode" id="flowchart-REP-1" transform="translate(1256.8564453125, 79)"><rect class="basic label-container" style="fill:#2d1a1a !important;stroke:#f87171 !important;stroke-width:2px !important" x="-51" y="-36" width="102" height="72"/><g class="label" style="color:#fecaca !important" transform="translate(-21, -21)"><rect/><foreignObject width="42" height="42"><div style="color: rgb(254, 202, 202) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fecaca !important" class="nodeLabel"><p>中继台<br />公网台</p></span></div></foreignObject></g></g><g class="node default boxNode" id="flowchart-PTT-2" transform="translate(508.3095703125, 251.00000095367432)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-103.0078125" y="-36" width="206.015625" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-73.0078125, -21)"><rect/><foreignObject width="146.015625" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>PTT 检测<br />载波 / CTCSS / DCS</p></span></div></foreignObject></g></g><g class="node default boxNode" id="flowchart-CODEC-3" transform="translate(719.3173828125, 306.5)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-58" y="-36" width="116" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-28, -21)"><rect/><foreignObject width="56" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>G.711<br />编解码器</p></span></div></foreignObject></g></g><g class="node default boxNode" id="flowchart-CLIENT-4" transform="translate(952.5439453125, 306.5)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-67.9296875" y="-36" width="135.859375" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-37.9296875, -21)"><rect/><foreignObject width="75.859375" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>NRL 客户端<br />UDP 60050</p></span></div></foreignObject></g></g><g class="node default serverNode" id="flowchart-SRV-8" transform="translate(1256.8564453125, 306.5)"><rect class="basic label-container" style="fill:#0d2d5e !important;stroke:#00d4ff !important;stroke-width:2px !important" x="-70.6484375" y="-36" width="141.296875" height="72"/><g class="label" style="color:#caf0f8 !important" transform="translate(-40.6484375, -21)"><rect/><foreignObject width="81.296875" height="42"><div style="color: rgb(202, 240, 248) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#caf0f8 !important" class="nodeLabel"><p>NRL 服务器<br />房间 / 群组</p></span></div></foreignObject></g></g><g class="node default warnNode" id="flowchart-WARN-9" transform="translate(127.4296875, 221)"><rect class="basic label-container" style="fill:#3d1a00 !important;stroke:#fb923c !important;stroke-width:1px !important" x="-94.4296875" y="-36" width="188.859375" height="72"/><g class="label" style="color:#fed7aa !important;font-style:italic !important" transform="translate(-64.4296875, -21)"><rect/><foreignObject width="128.859375" height="42"><div style="color: rgb(254, 215, 170) !important; font-style: italic !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#fed7aa !important;font-style:italic !important" class="nodeLabel"><p>注意: 对讲机为单工<br />不支持全双工操作</p></span></div></foreignObject></g></g></g></g></g>
+
+<script type="text/javascript"><![CDATA[
+(function(){
+  var svg = document.querySelector('svg');
+  var pt = svg.createSVGPoint();
+  var dragTarget = null;
+  var startX, startY, origTx, origTy;
+  var connectedEdges = [];  // [{path, label, end:'start'|'end'|'both', origD, origLabelTr}]
+
+  function getTranslate(el) {
+    var m = /translate\(([\d.e+-]+)[,\s]+([\d.e+-]+)\)/.exec(el.getAttribute('transform') || '');
+    return m ? [parseFloat(m[1]), parseFloat(m[2])] : null;
+  }
+
+  function setTranslate(el, x, y) {
+    var t = el.getAttribute('transform') || '';
+    var nt = 'translate(' + x + ', ' + y + ')';
+    if (/translate\(/.test(t)) {
+      el.setAttribute('transform', t.replace(/translate\([^)]+\)/, nt));
+    } else {
+      el.setAttribute('transform', nt + ' ' + t);
+    }
+  }
+
+  function toSVG(evt) {
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  function findDraggable(el) {
+    while (el && el !== svg) {
+      if (el.classList && el.classList.contains('node')) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  // Build node ID -> mermaid short name mapping
+  // Node id like "flowchart-APRS-0" -> short name "APRS"
+  function getNodeShortId(node) {
+    var id = node.id || '';
+    var m = /^flowchart-(.+)-\d+$/.exec(id);
+    return m ? m[1] : id;
+  }
+
+  // Parse SVG path d attribute into segments for manipulation
+  function parsePath(d) {
+    var segs = [];
+    var re = /([MLCQTSAHVZ])\s*((?:[^MLCQTSAHVZ])*)/gi;
+    var m;
+    while ((m = re.exec(d)) !== null) {
+      var cmd = m[1];
+      var nums = m[2].trim().match(/-?[\d.]+(?:e[+-]?\d+)?/gi);
+      segs.push({ cmd: cmd, nums: nums ? nums.map(Number) : [] });
+    }
+    return segs;
+  }
+
+  function segsToD(segs) {
+    return segs.map(function(s) {
+      return s.cmd + s.nums.join(',');
+    }).join('');
+  }
+
+  // Shift the start portion of path segments by (dx, dy)
+  function shiftPathStart(segs, dx, dy) {
+    if (segs.length === 0) return;
+    // First segment is M x,y
+    if (segs[0].cmd === 'M' && segs[0].nums.length >= 2) {
+      segs[0].nums[0] += dx;
+      segs[0].nums[1] += dy;
+    }
+    // Shift first curve/line segment's first control point
+    if (segs.length > 1) {
+      var s = segs[1];
+      if (s.cmd === 'L' && s.nums.length >= 2) {
+        s.nums[0] += dx; s.nums[1] += dy;
+      } else if (s.cmd === 'C' && s.nums.length >= 6) {
+        // first control point
+        s.nums[0] += dx; s.nums[1] += dy;
+      }
+    }
+  }
+
+  // Shift the end portion of path segments by (dx, dy)
+  function shiftPathEnd(segs, dx, dy) {
+    if (segs.length === 0) return;
+    var last = segs[segs.length - 1];
+    if (last.cmd === 'L' && last.nums.length >= 2) {
+      last.nums[last.nums.length - 2] += dx;
+      last.nums[last.nums.length - 1] += dy;
+    } else if (last.cmd === 'C' && last.nums.length >= 6) {
+      // last control point and end point
+      last.nums[last.nums.length - 4] += dx;
+      last.nums[last.nums.length - 3] += dy;
+      last.nums[last.nums.length - 2] += dx;
+      last.nums[last.nums.length - 1] += dy;
+    }
+    // Also shift the previous segment's endpoint if it feeds into the last
+    if (segs.length > 1) {
+      var prev = segs[segs.length - 2];
+      if (prev.cmd === 'C' && prev.nums.length >= 6) {
+        prev.nums[prev.nums.length - 2] += dx;
+        prev.nums[prev.nums.length - 1] += dy;
+      }
+    }
+  }
+
+  // Find all edges and labels connected to a node
+  function findEdges(nodeId) {
+    var results = [];
+    var paths = svg.querySelectorAll('path[data-id]');
+    for (var i = 0; i < paths.length; i++) {
+      var p = paths[i];
+      var eid = p.getAttribute('data-id') || '';
+      // Edge ID format: L_SOURCE_TARGET_N
+      // But node names can contain underscores, so we use a smarter match
+      var parts = parseEdgeId(eid);
+      if (!parts) continue;
+      var end = null;
+      if (parts.src === nodeId && parts.dst === nodeId) end = 'both';
+      else if (parts.src === nodeId) end = 'start';
+      else if (parts.dst === nodeId) end = 'end';
+      if (!end) continue;
+
+      // Find matching edge label
+      var labelEl = svg.querySelector('.edgeLabel g.label[data-id="' + eid + '"]');
+      var labelParent = labelEl ? labelEl.closest('.edgeLabel') : null;
+
+      results.push({
+        path: p,
+        end: end,
+        origD: p.getAttribute('d'),
+        label: labelParent,
+        origLabelTr: labelParent ? getTranslate(labelParent) : null
+      });
+    }
+    return results;
+  }
+
+  // Parse edge ID like "L_APRS_APRSTV_0" -> {src: "APRS", dst: "APRSTV"}
+  // Handle multi-underscore node names by matching against known node IDs
+  var allNodeIds = [];
+  function buildNodeList() {
+    var nodes = svg.querySelectorAll('.node');
+    for (var i = 0; i < nodes.length; i++) {
+      allNodeIds.push(getNodeShortId(nodes[i]));
+    }
+    // Sort by length descending for greedy matching
+    allNodeIds.sort(function(a, b) { return b.length - a.length; });
+  }
+
+  function parseEdgeId(eid) {
+    // Format: L_<src>_<dst>_<index>
+    if (eid.charAt(0) !== 'L' || eid.charAt(1) !== '_') return null;
+    var body = eid.substring(2); // remove "L_"
+    // Try to match known node IDs
+    for (var i = 0; i < allNodeIds.length; i++) {
+      var src = allNodeIds[i];
+      if (body.indexOf(src + '_') === 0) {
+        var rest = body.substring(src.length + 1);
+        for (var j = 0; j < allNodeIds.length; j++) {
+          var dst = allNodeIds[j];
+          if (rest.indexOf(dst + '_') === 0) {
+            return { src: src, dst: dst };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  buildNodeList();
+
+  svg.addEventListener('mousedown', function(e) {
+    var target = findDraggable(e.target);
+    if (!target) return;
+    var tr = getTranslate(target);
+    if (!tr) return;
+    dragTarget = target;
+    origTx = tr[0]; origTy = tr[1];
+    var p = toSVG(e);
+    startX = p.x; startY = p.y;
+    // Collect connected edges
+    connectedEdges = findEdges(getNodeShortId(target));
+    dragTarget.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  svg.addEventListener('mousemove', function(e) {
+    if (!dragTarget) return;
+    var p = toSVG(e);
+    var dx = p.x - startX, dy = p.y - startY;
+
+    // Move node
+    setTranslate(dragTarget, origTx + dx, origTy + dy);
+
+    // Update connected edges
+    for (var i = 0; i < connectedEdges.length; i++) {
+      var ce = connectedEdges[i];
+      var segs = parsePath(ce.origD);
+      if (ce.end === 'start' || ce.end === 'both') {
+        shiftPathStart(segs, dx, dy);
+      }
+      if (ce.end === 'end' || ce.end === 'both') {
+        shiftPathEnd(segs, dx, dy);
+      }
+      ce.path.setAttribute('d', segsToD(segs));
+
+      // Move label proportionally
+      if (ce.label && ce.origLabelTr) {
+        var ratio = (ce.end === 'both') ? 1 : 0.5;
+        setTranslate(ce.label,
+          ce.origLabelTr[0] + dx * ratio,
+          ce.origLabelTr[1] + dy * ratio);
+      }
+    }
+
+    // Update marker arrow positions (re-rendered by browser automatically)
+    e.preventDefault();
+  });
+
+  function endDrag() {
+    if (dragTarget) {
+      dragTarget.style.cursor = '';
+      dragTarget = null;
+      connectedEdges = [];
+    }
+  }
+  svg.addEventListener('mouseup', endDrag);
+  svg.addEventListener('mouseleave', endDrag);
+
+  // Add grab cursor
+  var allNodes = svg.querySelectorAll('.node');
+  for (var i = 0; i < allNodes.length; i++) {
+    allNodes[i].style.cursor = 'grab';
+  }
+})();
+]]></script>
+</svg>

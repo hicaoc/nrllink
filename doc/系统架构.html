@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NRL 系统架构文档</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: monospace, "Microsoft YaHei", sans-serif;
+    background: #0a0e1a;
+    color: #caf0f8;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* --- sidebar nav --- */
+  nav {
+    position: fixed; left: 0; top: 0;
+    width: 220px; height: 100vh;
+    background: #060c18;
+    border-right: 1px solid #1565c0;
+    padding: 24px 0;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  nav .logo {
+    text-align: center;
+    font-size: 18px; font-weight: bold;
+    color: #00e5ff;
+    padding: 0 16px 20px;
+    border-bottom: 1px solid #1565c0;
+    margin-bottom: 12px;
+  }
+  nav a {
+    display: block;
+    padding: 8px 20px;
+    color: #7dd3fc;
+    text-decoration: none;
+    font-size: 13px;
+    transition: background .15s, color .15s;
+  }
+  nav a:hover, nav a.active {
+    background: #0d1f35;
+    color: #00e5ff;
+  }
+
+  /* --- main content --- */
+  main {
+    margin-left: 220px;
+    max-width: 1100px;
+    padding: 40px 48px 80px;
+  }
+
+  h1 {
+    font-size: 32px;
+    color: #00e5ff;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    color: #7dd3fc;
+    font-size: 16px;
+    margin-bottom: 40px;
+  }
+  h2 {
+    font-size: 22px;
+    color: #00e5ff;
+    margin: 56px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1565c0;
+  }
+  h3 {
+    font-size: 17px;
+    color: #38bdf8;
+    margin: 28px 0 12px;
+  }
+  h4 {
+    font-size: 15px;
+    color: #7dd3fc;
+    margin: 20px 0 8px;
+  }
+  p { margin: 10px 0; }
+  strong { color: #00e5ff; }
+  a { color: #38bdf8; }
+
+  /* --- SVG container --- */
+  .svg-wrap {
+    margin: 24px 0;
+    border: 1px solid #1565c0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #060c18;
+  }
+  .svg-wrap object {
+    display: block;
+    width: 100%;
+    min-height: 200px;
+  }
+  .svg-caption {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    padding: 8px;
+    border-top: 1px solid #1565c0;
+  }
+
+  /* --- tables --- */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: #0d1f35;
+    color: #00e5ff;
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid #1565c0;
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 14px;
+    border: 1px solid #1565c0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: rgba(13,31,53,.4); }
+
+  /* --- code blocks --- */
+  code {
+    background: #0d1f35;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #7dd3fc;
+  }
+  pre {
+    background: #0d1f35;
+    border: 1px solid #1565c0;
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    color: #caf0f8;
+    margin: 12px 0;
+  }
+
+  /* --- blockquote --- */
+  blockquote {
+    border-left: 3px solid #7c3aed;
+    padding: 8px 16px;
+    margin: 12px 0;
+    background: rgba(26,13,53,.3);
+    color: #c4b5fd;
+  }
+
+  /* --- list --- */
+  ul, ol { padding-left: 24px; margin: 8px 0; }
+  li { margin: 4px 0; }
+
+  /* --- scene blocks --- */
+  .scene {
+    background: #0d1f35;
+    border: 1px solid #1565c0;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .scene .label {
+    color: #00e5ff;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .scene .flow { color: #7dd3fc; }
+
+  /* --- responsive --- */
+  @media (max-width: 860px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 24px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">NRL</div>
+  <a href="#overview">一、系统总览</a>
+  <a href="#rooms">二、房间结构</a>
+  <a href="#devices">三、设备与客户端</a>
+  <a href="#room999">四、999 全网互通</a>
+  <a href="#rfbridge">五、射频桥接</a>
+  <a href="#deploy">六、部署架构</a>
+  <a href="#aprs">七、APRS 集成</a>
+  <a href="#discovery">八、自动发现</a>
+  <a href="#website">九、官网发现</a>
+  <a href="#specs">十、技术规格</a>
+</nav>
+
+<main>
+
+<!-- ========== HEADER ========== -->
+<h1>NRL 系统架构文档</h1>
+<p class="subtitle">NRL (Network Radio Link) &mdash; 通过网络连接无线电，实现跨地域、跨设备的语音互联系统</p>
+
+<!-- ========== 一、系统总览 ========== -->
+<h2 id="overview">一、系统总览</h2>
+
+<p>NRL 系统由<strong>云端服务发现层</strong>、<strong>全球分布的 NRL 服务器集群</strong>、<strong>硬件终端</strong>、<strong>软件终端</strong>和<strong>辅助工具</strong>五个层次组成。服务器之间通过 APRS 网络和 nrlptt.com 官网双机制自动发现并建立互联，999 房间的语音在所有互联服务器之间自动转发。</p>
+
+<div class="svg-wrap">
+  <object data="svg/01-系统总览.svg" type="image/svg+xml">系统总览</object>
+  <div class="svg-caption">图 01 &mdash; NRL 系统总览</div>
+</div>
+
+<!-- ========== 二、房间结构 ========== -->
+<h2 id="rooms">二、服务器房间（群组）结构</h2>
+
+<h3>房间类型说明</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>房间范围</th><th>类型</th><th>访问权限</th><th>说明</th></tr>
+  <tr><td>1 &ndash; 3</td><td>用户私有</td><td>仅该用户</td><td>每个用户独享，外人无法进入</td></tr>
+  <tr><td>999</td><td>全网互通</td><td>所有服务器用户</td><td>发言后自动转发至所有互联服务器的 999 房间</td></tr>
+  <tr><td>1000+</td><td>公共房间</td><td>所有用户</td><td>多用户多设备在同一房间内通联</td></tr>
+  <tr><td>任意</td><td>会议模式</td><td>同房间用户</td><td>开启后切换为全双工 PCM 混音模式</td></tr>
+</table>
+</div>
+
+<div class="svg-wrap">
+  <object data="svg/02-房间结构.svg" type="image/svg+xml">房间结构</object>
+  <div class="svg-caption">图 02 &mdash; 服务器房间结构与语音发言模式</div>
+</div>
+
+<h3>发言机制详述</h3>
+<p>语音发言模式由<strong>在线设备数</strong>和<strong>房间类型</strong>共同决定，服务器自动切换，无需手动配置。</p>
+
+<h4>按在线设备数自动切换</h4>
+<div class="table-wrap">
+<table>
+  <tr><th>在线设备数</th><th>模式</th><th>行为说明</th></tr>
+  <tr><td>1 台（非中继类型）</td><td>回音反射</td><td>服务器将该设备的音频原路反射回去，设备可听到自身语音，便于自检</td></tr>
+  <tr><td>2 台</td><td>自动全双工</td><td>服务器自动切换为全双工模式；ESP32 / App 类终端无需按住 PTT，可像电话一样自由通联</td></tr>
+  <tr><td>3 台及以上</td><td>默认单工</td><td>先到先得抢占发言权，PTT 松开后 <strong>200ms</strong> 释放，其他设备方可发言</td></tr>
+</table>
+</div>
+
+<blockquote>所有模式下语音释放时间均为 <strong>200ms</strong>（松开 PTT 后）。</blockquote>
+
+<h4>会议模式（Conference Mode）</h4>
+<p>任意房间均可由管理员开启会议模式，开启后覆盖上述单工/全双工规则：</p>
+<ul>
+  <li><strong>服务器端 PCM 混音</strong>：对同时到达的多路音频进行实时叠加混音</li>
+  <li><strong>全双工广播</strong>：混音结果转发给房间内所有在线设备</li>
+  <li><strong>无发言抢占</strong>：所有人可同时讲话，互不阻塞</li>
+</ul>
+
+<!-- ========== 三、设备与客户端 ========== -->
+<h2 id="devices">三、设备与客户端</h2>
+
+<div class="svg-wrap">
+  <object data="svg/03-设备与客户端.svg" type="image/svg+xml">设备与客户端</object>
+  <div class="svg-caption">图 03 &mdash; 设备与客户端分类</div>
+</div>
+
+<h3>硬件终端</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>设备</th><th>型号</th><th>特性</th></tr>
+  <tr><td>马工盒子</td><td>NRL2100 / 2200 / 2300 / 3188 / 2600</td><td>射频桥接，单工，G.711 编解码</td></tr>
+  <tr><td>ESP32 终端</td><td>爱好者自制</td><td>全双工，可选显示屏，WiFi 连接</td></tr>
+</table>
+</div>
+
+<h3>软件终端</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>平台</th><th>应用</th><th>说明</th></tr>
+  <tr><td>Android</td><td>73HAM</td><td>全功能 NRL 对讲客户端</td></tr>
+  <tr><td>iOS</td><td>NRL互联</td><td>iOS NRL 客户端</td></tr>
+  <tr><td>iOS</td><td>NRL工具集</td><td>iOS NRL 工具客户端</td></tr>
+</table>
+</div>
+
+<h3>辅助软件</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>软件</th><th>功能</th></tr>
+  <tr><td>NRLNANNY 保姆</td><td>房间录音、定时语音信标播放、实时语音监听</td></tr>
+  <tr><td>增强版保姆</td><td>同时连接多服务器多房间、多路中继台并发监听、语音聚合</td></tr>
+</table>
+</div>
+
+<!-- ========== 四、999 全网互通 ========== -->
+<h2 id="room999">四、全网互通（999 房间）数据流</h2>
+
+<p>999 房间是 NRL 系统的核心互联通道。用户在任意服务器的 999 房间发言后，语音帧会自动转发至所有互联服务器的 999 房间，实现全网通联。</p>
+
+<div class="svg-wrap">
+  <object data="svg/04-999全网互通时序.svg" type="image/svg+xml">999全网互通时序</object>
+  <div class="svg-caption">图 04 &mdash; 999 全网互通时序</div>
+</div>
+
+<!-- ========== 五、射频桥接 ========== -->
+<h2 id="rfbridge">五、马工盒子射频桥接数据流</h2>
+
+<p>马工盒子是 NRL 系统的硬件核心，负责将本地无线电 RF 信号桥接到互联网。盒子内部完成 PTT 检测、G.711 编解码和 NRL 协议封装，通过 UDP 60050 端口与服务器通信。</p>
+
+<div class="svg-wrap">
+  <object data="svg/05-马工盒子射频桥接.svg" type="image/svg+xml">射频桥接</object>
+  <div class="svg-caption">图 05 &mdash; 马工盒子射频桥接流程</div>
+</div>
+
+<!-- ========== 六、部署架构 ========== -->
+<h2 id="deploy">六、部署架构</h2>
+
+<p>NRL 服务器支持三种部署方式，适配不同运维环境：</p>
+<ul>
+  <li><strong>Linux 原生</strong>：CentOS / Ubuntu，通过 systemctl 管理 nrllink.service</li>
+  <li><strong>Docker 容器</strong>：<code>docker pull hicaoc/nrllink:latest</code>，端口映射 80（Web）+ 60050/udp（语音），/data /conf 持久化挂载</li>
+  <li><strong>Windows</strong>：直接运行 <code>nrllink_windows_x86_64.exe</code></li>
+</ul>
+<p>Web 管理后台内部监听 TCP 80，通过 nginx 反向代理以 HTTPS 443 对外发布。设备语音/信令使用 UDP 60050。</p>
+
+<div class="svg-wrap">
+  <object data="svg/06-部署架构.svg" type="image/svg+xml">部署架构</object>
+  <div class="svg-caption">图 06 &mdash; 部署架构</div>
+</div>
+
+<!-- ========== 七、APRS 集成 ========== -->
+<h2 id="aprs">七、APRS 集成与自动发现</h2>
+
+<h3>APRS 是什么</h3>
+<p>APRS（Automatic Packet Reporting System，自动分组报告系统）是业余无线电领域广泛使用的实时数字通信网络，可传播位置、状态、消息等信息，并通过互联网网关（APRS-IS）实现全球汇聚。NRL 系统利用 APRS-IS 实现节点的自动发布与发现，无需手动配置服务器列表。</p>
+
+<h3>各类节点的 APRS 标识</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>APRS 目的地标识</th><th>对应节点类型</th></tr>
+  <tr><td><code>NRLSRV</code></td><td>NRL 服务器</td></tr>
+  <tr><td><code>NRLBOX</code></td><td>马工盒子及爱好者自制硬件终端（ESP32 等）</td></tr>
+  <tr><td><code>NRLAPP</code></td><td>Android / iOS 手机 App（73HAM、NRL互联等）</td></tr>
+  <tr><td><code>NRLMP</code></td><td>微信小程序客户端</td></tr>
+</table>
+</div>
+
+<h3>服务器 APRS 上报机制</h3>
+
+<div class="svg-wrap">
+  <object data="svg/07-APRS上报机制.svg" type="image/svg+xml">APRS上报机制</object>
+  <div class="svg-caption">图 07 &mdash; APRS 上报机制时序</div>
+</div>
+
+<h4>APRS 位置包格式</h4>
+<pre>BH4TDV-9&gt;NRLSRV,TCPIP*:!2330.00N/11300.00EI @udp://182.92.158.141:60050,NRL互联服务器</pre>
+<div class="table-wrap">
+<table>
+  <tr><th>字段</th><th>说明</th></tr>
+  <tr><td><code>BH4TDV-9</code></td><td>呼号-SSID（运营者的业余无线电呼号）</td></tr>
+  <tr><td><code>NRLSRV</code></td><td>APRS 目的地标识，用于过滤查询 NRL 服务器</td></tr>
+  <tr><td><code>TCPIP*</code></td><td>经由 APRS-IS 互联网网关发送</td></tr>
+  <tr><td><code>!...I</code></td><td>位置格式（纬度/经度，I 为符号代码）</td></tr>
+  <tr><td><code>@udp://...</code></td><td>服务器接入地址，供其他节点自动解析连接</td></tr>
+</table>
+</div>
+
+<h4>APRS 状态包格式</h4>
+<pre>BH4TDV-9&gt;NRLSRV,TCPIP*:&gt;在线:5,高峰:20,我的NRL平台</pre>
+<div class="table-wrap">
+<table>
+  <tr><th>字段</th><th>说明</th></tr>
+  <tr><td><code>在线:5</code></td><td>当前在线设备数</td></tr>
+  <tr><td><code>高峰:20</code></td><td>历史最高同时在线设备数</td></tr>
+  <tr><td><code>我的NRL平台</code></td><td>平台自定义名称</td></tr>
+</table>
+</div>
+
+<h3>APRS 配置参数</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>配置项</th><th>说明</th><th>示例</th></tr>
+  <tr><td><code>APRSServerHost</code></td><td>APRS-IS 服务器地址</td><td>rotate.aprs2.net</td></tr>
+  <tr><td><code>APRSServerPort</code></td><td>APRS-IS 服务器端口</td><td>14580</td></tr>
+  <tr><td><code>CallSign</code></td><td>运营者业余无线电呼号</td><td>BH4TDV</td></tr>
+  <tr><td><code>SSID</code></td><td>副台标识</td><td>9</td></tr>
+  <tr><td><code>Passcode</code></td><td>APRS 认证码（留 0 则自动计算）</td><td>0</td></tr>
+  <tr><td><code>SelfAddress</code></td><td>本服务器公网 IP / 域名</td><td>182.92.158.141</td></tr>
+  <tr><td><code>SelfPort</code></td><td>本服务器 UDP 端口</td><td>60050</td></tr>
+  <tr><td><code>Latitude</code></td><td>纬度（十进制度）</td><td>23.5</td></tr>
+  <tr><td><code>Longitude</code></td><td>经度（十进制度）</td><td>113.0</td></tr>
+  <tr><td><code>Altitude</code></td><td>高度（可选）</td><td>50</td></tr>
+</table>
+</div>
+
+<h3>爱好者如何通过 APRS 找到 NRL 节点</h3>
+<ol>
+  <li>访问 <a href="https://aprs.tv" target="_blank">aprs.tv</a> 或 <a href="https://aprs.fi" target="_blank">aprs.fi</a></li>
+  <li>搜索 APRS 目的地 <code>NRLSRV</code>（服务器）、<code>NRLBOX</code>（盒子）、<code>NRLAPP</code>（App）</li>
+  <li>地图上可见所有活跃节点的位置、呼号、在线人数</li>
+  <li>点击节点可查看接入地址（<code>udp://IP:60050</code>），输入 App 即可直接连接</li>
+</ol>
+
+<!-- ========== 八、自动发现 ========== -->
+<h2 id="discovery">八、双机制服务器自动发现</h2>
+
+<p>NRL 服务器通过两套机制并行发现其他服务器，互为补充：</p>
+
+<div class="svg-wrap">
+  <object data="svg/08-APRS自动发现流程.svg" type="image/svg+xml">APRS自动发现</object>
+  <div class="svg-caption">图 08 &mdash; 双机制服务器自动发现流程（APRS + 官网）</div>
+</div>
+
+<h3>双机制对比</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>对比项</th><th>APRS 机制</th><th>nrlptt.com 官网机制</th></tr>
+  <tr><td>定位</td><td>主要机制</td><td>备用机制</td></tr>
+  <tr><td>上报周期</td><td>立即 &rarr; 1分钟 &rarr; 5分钟 &rarr; 每10分钟</td><td>启动立即，之后每 3 分钟</td></tr>
+  <tr><td>同步周期</td><td>每 60 秒（查询 aprs.tv）</td><td>启动立即，之后每 5 分钟</td></tr>
+  <tr><td>中转服务</td><td>APRS-IS + aprs.tv</td><td>nrlptt.com 官网直连</td></tr>
+  <tr><td>附加功能</td><td>含 GPS 位置，全球地图可见</td><td>仅服务器列表</td></tr>
+  <tr><td>需要配置</td><td>呼号、位置、APRS 服务器</td><td>仅 SelfAddress + SelfPort</td></tr>
+</table>
+</div>
+
+<!-- ========== 九、官网发现 ========== -->
+<h2 id="website">九、nrlptt.com 官网服务器发现</h2>
+
+<p>服务器启动后自动向 <code>https://nrlptt.com</code> 官网上报自身信息，同时从官网下载全网服务器列表，作为 APRS 机制的补充/备用。</p>
+
+<div class="svg-wrap">
+  <object data="svg/09-官网服务器发现流程.svg" type="image/svg+xml">官网服务器发现</object>
+  <div class="svg-caption">图 09 &mdash; nrlptt.com 官网服务器发现流程</div>
+</div>
+
+<h4>上报接口（POST）</h4>
+<pre>POST https://nrlptt.com/api/platform-servers/report
+Content-Type: application/json
+
+{"name":"平台名称","host":"182.92.x.x","port":"60050","online":5,"total":20}</pre>
+
+<h4>获取列表接口（GET）</h4>
+<pre>GET https://nrlptt.com/api/platform-servers</pre>
+<p>返回全网所有已注册的 NRL 服务器列表，系统自动解析 <code>host:port</code>、过滤自身后加入互联转发列表。</p>
+
+<div class="table-wrap">
+<table>
+  <tr><th>字段</th><th>说明</th></tr>
+  <tr><td><code>name</code></td><td>平台名称（取 PlatformName 或 NameShorthand）</td></tr>
+  <tr><td><code>host</code></td><td>服务器公网 IP 或域名</td></tr>
+  <tr><td><code>port</code></td><td>UDP 语音端口（通常为 60050）</td></tr>
+  <tr><td><code>online</code></td><td>当前在线设备数</td></tr>
+  <tr><td><code>total</code></td><td>历史最高在线设备数（峰值）</td></tr>
+</table>
+</div>
+
+<!-- ========== 十、技术规格 ========== -->
+<h2 id="specs">十、协议与技术规格</h2>
+
+<div class="table-wrap">
+<table>
+  <tr><th>项目</th><th>规格</th></tr>
+  <tr><td>传输协议</td><td>UDP（语音/控制），TCP（Web 管理）</td></tr>
+  <tr><td>语音编码</td><td>G.711 (a-law / &mu;-law)</td></tr>
+  <tr><td>语音端口</td><td>UDP 60050</td></tr>
+  <tr><td>Web 端口（内部）</td><td>TCP 80</td></tr>
+  <tr><td>Web 端口（对外）</td><td>HTTPS 443，经 nginx 反向代理</td></tr>
+  <tr><td>发言机制</td><td>抢占制（先到先得，语音结束后 200ms 释放）</td></tr>
+  <tr><td>混音支持</td><td>会议模式（服务器端多路 PCM 混音）</td></tr>
+  <tr><td>数据存储</td><td>SQLite</td></tr>
+  <tr><td>容器支持</td><td>Docker (<code>hicaoc/nrllink:latest</code>)</td></tr>
+  <tr><td>系统支持</td><td>Linux、Windows、Docker</td></tr>
+  <tr><td>APRS 上报周期</td><td>立即 &rarr; 1 分钟 &rarr; 5 分钟 &rarr; 之后每 10 分钟</td></tr>
+  <tr><td>APRS 服务发现</td><td>每 60 秒查询 aprs.tv，自动更新互联列表</td></tr>
+  <tr><td>APRS 节点标识</td><td>NRLSRV（服务器）/ NRLBOX（硬件）/ NRLAPP（App）/ NRLMP（小程序）</td></tr>
+  <tr><td>官网上报周期</td><td>启动立即，之后每 3 分钟</td></tr>
+  <tr><td>官网同步周期</td><td>启动立即，之后每 5 分钟</td></tr>
+</table>
+</div>
+
+<!-- ========== 典型场景 ========== -->
+<h2>典型应用场景</h2>
+
+<div class="scene">
+  <div class="label">场景一：本地中继台接入全网</div>
+  <div class="flow">本地中继台 &rarr; 马工盒子 &rarr; NRL服务器A(999房间) &rarr; 所有互联服务器(999) &rarr; 全网用户</div>
+</div>
+<div class="scene">
+  <div class="label">场景二：手机用户与无线电用户通联</div>
+  <div class="flow">手机 73HAM App &rarr; 服务器B(1000号房间) &larr; ESP32终端 &larr; 本地对讲机(通过马工盒子)</div>
+</div>
+<div class="scene">
+  <div class="label">场景三：爱好者监听多地中继台</div>
+  <div class="flow">增强版保姆 &rarr; 同时连接 服务器A(999) + 服务器B(1000) + 服务器C(1001) &rarr; 多地中继台同步监听</div>
+</div>
+<div class="scene">
+  <div class="label">场景四：用户私有通信</div>
+  <div class="flow">用户设备A(房间1) &rarr; 服务器(房间1，私有) &rarr; 用户设备B(同一用户) &mdash; 外部用户无法进入</div>
+</div>
+
+</main>
+
+<script>
+// highlight active nav link on scroll
+(function(){
+  var sections = document.querySelectorAll('h2[id]');
+  var links = document.querySelectorAll('nav a');
+  function onScroll() {
+    var scrollY = window.scrollY + 80;
+    var current = '';
+    sections.forEach(function(s) {
+      if (s.offsetTop <= scrollY) current = s.id;
+    });
+    links.forEach(function(a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "tertiaryColor": "#081828", "lineColor": "#00b4d8", "clusterBkg": "#060c18", "clusterBorder": "#1565c0", "titleColor": "#00e5ff", "edgeLabelBackground": "#0a1628", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+graph TB
+
+    subgraph CLOUD["云端服务 — 服务器发现层"]
+        APRS["`APRS-IS 网络
+rotate.aprs2.net:14580`"]:::cloudNode
+        APRSTV["`aprs.tv / aprs.fi
+全球节点查询 & 地图`"]:::cloudNode
+        WEB["`nrlptt.com  官网
+/api/platform-servers`"]:::webNode
+        APRS <--> APRSTV
+    end
+
+    subgraph SERVERS["NRL 服务器集群  全球分布"]
+        SA["`服务器 A
+Linux / CentOS`"]:::serverNode
+        SB["`服务器 B
+Docker`"]:::serverNode
+        SC["`服务器 C
+Windows`"]:::serverNode
+        SA <-->|"999 全网互通"| SB
+        SB <-->|"999 全网互通"| SC
+        SA <-->|"999 全网互通"| SC
+    end
+
+    subgraph HW["硬件终端"]
+        BOX["`马工盒子
+NRL2100/2200/2300
+射频桥接  NRLBOX`"]:::hwNode
+        ESP32["`ESP32 终端
+爱好者自制  全双工
+NRLBOX`"]:::hwNode
+    end
+
+    subgraph RF["本地无线电 RF"]
+        RELAY["中继台 / 公网台"]:::rfNode
+        HT["手台 / 对讲机  单工"]:::rfNode
+    end
+
+    subgraph APP["软件终端"]
+        A73["`73HAM
+Android  NRLAPP`"]:::appNode
+        IOS1["`NRL互联
+iOS  NRLAPP`"]:::appNode
+        IOS2["`NRL工具集
+iOS  NRLAPP`"]:::appNode
+    end
+
+    subgraph AUX["辅助软件"]
+        NANNY["`NRLNANNY 保姆
+录音 / 信标 / 监听`"]:::auxNode
+        ENANNY["`增强版保姆
+多服务器多房间并发`"]:::auxNode
+    end
+
+    RELAY & HT -->|"RF 音频"| BOX
+    BOX -->|"NRL 协议  UDP 60050"| SA
+    ESP32 -->|"NRL 协议  UDP 60050"| SA
+    A73 & IOS1 -->|"NRL 协议"| SB
+    IOS2 -->|"NRL 协议"| SC
+    NANNY -->|"NRL 协议"| SA
+    ENANNY -->|"NRL 协议"| SA & SB & SC
+
+    SA & SB & SC -->|"APRS 上报  NRLSRV"| APRS
+    BOX -->|"APRS  NRLBOX"| APRS
+    A73 -->|"APRS  NRLAPP"| APRS
+    SA & SB -->|"查询活跃节点"| APRSTV
+    SA & SB & SC <-->|"上报状态 / 同步列表"| WEB
+
+    classDef serverNode fill:#0d2d5e,stroke:#00d4ff,stroke-width:2px,color:#caf0f8
+    classDef hwNode fill:#0d3d2d,stroke:#00e5b0,stroke-width:2px,color:#b2f5ea
+    classDef rfNode fill:#2d1a1a,stroke:#f87171,stroke-width:2px,color:#fecaca
+    classDef appNode fill:#2d1b4e,stroke:#a78bfa,stroke-width:2px,color:#ddd6fe
+    classDef auxNode fill:#3d2500,stroke:#fb923c,stroke-width:2px,color:#fed7aa
+    classDef cloudNode fill:#1a0d35,stroke:#7c3aed,stroke-width:2px,color:#c4b5fd
+    classDef webNode fill:#0d2d1a,stroke:#4ade80,stroke-width:2px,color:#bbf7d0

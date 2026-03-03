@@ -1,0 +1,62 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "tertiaryColor": "#081828", "lineColor": "#00b4d8", "clusterBkg": "#060c18", "clusterBorder": "#1565c0", "titleColor": "#00e5ff", "edgeLabelBackground": "#0a1628", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+flowchart TD
+
+    subgraph ROOMS["NRL 服务器 · 房间类型"]
+        direction LR
+
+        subgraph PRIV["私有 (1-3)  仅归属用户"]
+            R1["房间 1"]:::privNode
+            R2["房间 2"]:::privNode
+            R3["房间 3"]:::privNode
+        end
+
+        subgraph GLOBAL["全网互通  跨服务器转发"]
+            R999["`房间 999
+全网互通核心`"]:::globalNode
+        end
+
+        subgraph PUBLIC["公共 (1000+)  任意用户"]
+            R1000["房间 1000"]:::pubNode
+            RDOT["  ···  "]:::dotNode
+            RN["房间 N"]:::pubNode
+        end
+
+        RCONF["`会议模式
+可设于任意房间`"]:::confNode
+    end
+
+    subgraph MODES["语音发言模式"]
+        direction LR
+
+        M1["`1 台在线
+音频回音反射
+设备可听到自身语音
+（非中继类型房间）`"]:::modeEchoNode
+
+        M2["`2 台在线
+自动切换全双工
+ESP32 / App 无需按 PTT
+像电话一样自由通联`"]:::modeDuplexNode
+
+        M3["`3+ 台在线  默认单工
+先到先得发言权
+PTT 松开 200ms 后释放
+其他设备再有机会发言`"]:::modeSimplexNode
+
+        MCF["`会议模式（覆盖上述规则）
+多路语音 PCM 混音转发
+全双工  所有人可同时讲话`"]:::modeConfNode
+    end
+
+    ROOMS --> MODES
+    RCONF -.->|"激活"| MCF
+
+    classDef globalNode fill:#0a2d5a,stroke:#00e5ff,stroke-width:3px,color:#00e5ff,font-weight:bold
+    classDef privNode fill:#1a2d0a,stroke:#4ade80,stroke-width:2px,color:#86efac
+    classDef pubNode fill:#0d2d3a,stroke:#38bdf8,stroke-width:2px,color:#7dd3fc
+    classDef dotNode fill:#0a0e1a,stroke:#334155,stroke-width:1px,color:#475569
+    classDef confNode fill:#3d1a00,stroke:#fb923c,stroke-width:2px,color:#fed7aa
+    classDef modeEchoNode fill:#1a1a35,stroke:#7c3aed,stroke-width:1px,color:#c4b5fd
+    classDef modeDuplexNode fill:#0d3d2d,stroke:#00e5b0,stroke-width:2px,color:#b2f5ea
+    classDef modeSimplexNode fill:#0d2d3a,stroke:#38bdf8,stroke-width:1px,color:#7dd3fc
+    classDef modeConfNode fill:#3d1a00,stroke:#fb923c,stroke-width:2px,color:#fed7aa

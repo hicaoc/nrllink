@@ -1,0 +1,38 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "tertiaryColor": "#081828", "lineColor": "#00b4d8", "clusterBkg": "#060c18", "clusterBorder": "#1565c0", "titleColor": "#00e5ff", "edgeLabelBackground": "#0a1628", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+flowchart LR
+
+    subgraph RF_SIDE["无线电侧  单工"]
+        HT["`手台
+对讲机`"]:::rfNode
+        REP["`中继台
+公网台`"]:::rfNode
+    end
+
+    subgraph BOX["马工盒子"]
+        PTT["`PTT 检测
+载波 / CTCSS / DCS`"]:::boxNode
+        CODEC["`G.711
+编解码器`"]:::boxNode
+        CLIENT["`NRL 客户端
+UDP 60050`"]:::boxNode
+        PTT --> CODEC --> CLIENT
+    end
+
+    subgraph NET_SIDE["NRL 网络"]
+        SRV["`NRL 服务器
+房间 / 群组`"]:::serverNode
+    end
+
+    WARN["`注意: 对讲机为单工
+不支持全双工操作`"]:::warnNode
+
+    HT -->|"RF 语音 + PTT"| PTT
+    REP -->|"RF 语音"| PTT
+    CLIENT -->|"UDP 上行"| SRV
+    SRV -->|"UDP 下行"| CLIENT
+    CLIENT -.->|"解码回放"| REP
+
+    classDef rfNode fill:#2d1a1a,stroke:#f87171,stroke-width:2px,color:#fecaca
+    classDef boxNode fill:#0d3d2d,stroke:#00e5b0,stroke-width:2px,color:#b2f5ea
+    classDef serverNode fill:#0d2d5e,stroke:#00d4ff,stroke-width:2px,color:#caf0f8
+    classDef warnNode fill:#3d1a00,stroke:#fb923c,stroke-width:1px,color:#fed7aa,font-style:italic

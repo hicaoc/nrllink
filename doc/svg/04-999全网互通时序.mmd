@@ -1,0 +1,30 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "lineColor": "#00b4d8", "actorBkg": "#0d1f35", "actorBorder": "#00d4ff", "actorTextColor": "#caf0f8", "actorLineColor": "#00b4d8", "signalColor": "#00e5ff", "signalTextColor": "#caf0f8", "activationBorderColor": "#00d4ff", "activationBkgColor": "#0d2d5e", "noteBkgColor": "#1a0d35", "noteBorderColor": "#7c3aed", "noteTextColor": "#c4b5fd", "loopTextColor": "#caf0f8", "labelBoxBkgColor": "#0d1f35", "labelBoxBorderColor": "#1565c0", "labelTextColor": "#7dd3fc", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+sequenceDiagram
+    participant U as 用户设备
+    participant SA as 服务器 A
+    participant SB as 服务器 B
+    participant SC as 服务器 C
+    participant OA as 服务器A 其他设备
+    participant OB as 服务器B 其他设备
+    participant OC as 服务器C 其他设备
+
+    Note over U,SC: 所有设备均在各自服务器的 999 房间
+
+    U->>SA: ▶ PTT 按下，发送语音帧 (UDP)
+    activate SA
+
+    SA->>OA: 转发至本服务器 999 房间其他设备
+    SA->>SB: 跨服务器转发语音帧
+    SA->>SC: 跨服务器转发语音帧
+
+    activate SB
+    activate SC
+    SB->>OB: 转发至服务器 B 内设备
+    SC->>OC: 转发至服务器 C 内设备
+    deactivate SB
+    deactivate SC
+
+    U->>SA: ■ PTT 释放
+    deactivate SA
+
+    Note over SA,SC: 语音结束 1 秒后，发言权重置

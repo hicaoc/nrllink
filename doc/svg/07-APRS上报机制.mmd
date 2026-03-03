@@ -1,0 +1,33 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "lineColor": "#00b4d8", "actorBkg": "#0d1f35", "actorBorder": "#00d4ff", "actorTextColor": "#caf0f8", "actorLineColor": "#00b4d8", "signalColor": "#00e5ff", "signalTextColor": "#caf0f8", "activationBorderColor": "#00d4ff", "activationBkgColor": "#0d2d5e", "noteBkgColor": "#1a0d35", "noteBorderColor": "#7c3aed", "noteTextColor": "#c4b5fd", "loopTextColor": "#caf0f8", "labelBoxBkgColor": "#0d1f35", "labelBoxBorderColor": "#1565c0", "labelTextColor": "#7dd3fc", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+sequenceDiagram
+    participant SRV as NRL 服务器
+    participant IS as APRS-IS 服务器
+    participant TV as aprs.tv API
+
+    SRV->>IS: TCP 连接 + 呼号认证
+    Note over SRV,IS: user BH4TDV-9 pass ***** vers NRL 1.0
+
+    activate IS
+    IS-->>SRV: 认证成功
+
+    SRV->>IS: 📍 位置包（立即）
+    Note over IS: BH4TDV-9>NRLSRV,TCPIP*:!LAT/LONI @udp://IP:60050
+    SRV->>IS: 📊 状态包（立即）
+    Note over IS: BH4TDV-9>NRLSRV,TCPIP*:>在线:N,高峰:M,平台名
+
+    Note over SRV: 等待 1 分钟
+    SRV->>IS: 位置包 + 状态包（第二次）
+
+    Note over SRV: 等待 5 分钟
+    SRV->>IS: 位置包 + 状态包（第三次）
+
+    loop ♻ 每 10 分钟保活
+        SRV->>IS: 位置包 + 状态包
+    end
+    deactivate IS
+
+    Note over SRV: 独立定时任务，每 60 秒
+    SRV->>TV: POST /api/findnrl?dest=NRLSRV&duration=60
+    TV-->>SRV: 返回活跃服务器列表 [{host, port, name, online}]
+    SRV->>TV: POST /api/findnrltotal?duration=60
+    TV-->>SRV: 全网统计 NRLSRV / NRLBOX / NRLAPP / NRLMP

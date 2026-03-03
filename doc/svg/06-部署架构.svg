@@ -1,0 +1,241 @@
+<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 2184.5px; background-color: transparent;" viewBox="0 0 2184.5 563" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:monospace;font-size:14px;fill:#caf0f8;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#081828;}#my-svg .error-text{fill:#f7e7d7;stroke:#f7e7d7;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#00b4d8;stroke:#00b4d8;}#my-svg .marker.cross{stroke:#00b4d8;}#my-svg svg{font-family:monospace;font-size:14px;}#my-svg p{margin:0;}#my-svg .label{font-family:monospace;color:#caf0f8;}#my-svg .cluster-label text{fill:#00e5ff;}#my-svg .cluster-label span{color:#00e5ff;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#caf0f8;color:#caf0f8;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#0d1f35;stroke:#00d4ff;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#00b4d8!important;stroke-width:0;stroke:#00b4d8;}#my-svg .arrowheadPath{fill:#f5f1e5;}#my-svg .edgePath .path{stroke:#00b4d8;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#00b4d8;fill:none;}#my-svg .edgeLabel{background-color:#0a1628;text-align:center;}#my-svg .edgeLabel p{background-color:#0a1628;}#my-svg .edgeLabel rect{opacity:0.5;background-color:#0a1628;fill:#0a1628;}#my-svg .labelBkg{background-color:rgba(10, 22, 40, 0.5);}#my-svg .cluster rect{fill:#060c18;stroke:#1565c0;stroke-width:1px;}#my-svg .cluster text{fill:#00e5ff;}#my-svg .cluster span{color:#00e5ff;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:monospace;font-size:12px;background:#081828;border:1px solid hsl(210, 26.6666666667%, 0%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#caf0f8;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:#0a1628;text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:#0a1628;padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:#0a1628;fill:#0a1628;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .clientNode rect{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .clientNode polygon{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .clientNode ellipse{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .clientNode circle{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .clientNode path{fill:#2d1b4e!important;stroke:#a78bfa!important;stroke-width:2px!important;color:#ddd6fe!important;}#my-svg .clientNode tspan{fill:#ddd6fe!important;}#my-svg .nginxNode rect{fill:#1a2d0a!important;stroke:#4ade80!important;stroke-width:2px!important;color:#bbf7d0!important;}#my-svg .nginxNode polygon{fill:#1a2d0a!important;stroke:#4ade80!important;stroke-width:2px!important;color:#bbf7d0!important;}#my-svg .nginxNode ellipse{fill:#1a2d0a!important;stroke:#4ade80!important;stroke-width:2px!important;color:#bbf7d0!important;}#my-svg .nginxNode circle{fill:#1a2d0a!important;stroke:#4ade80!important;stroke-width:2px!important;color:#bbf7d0!important;}#my-svg .nginxNode path{fill:#1a2d0a!important;stroke:#4ade80!important;stroke-width:2px!important;color:#bbf7d0!important;}#my-svg .nginxNode tspan{fill:#bbf7d0!important;}#my-svg .osNode rect{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .osNode polygon{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .osNode ellipse{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .osNode circle{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .osNode path{fill:#0d2d5e!important;stroke:#00d4ff!important;stroke-width:2px!important;color:#caf0f8!important;}#my-svg .osNode tspan{fill:#caf0f8!important;}#my-svg .svcNode rect{fill:#0d1f35!important;stroke:#38bdf8!important;stroke-width:1px!important;color:#7dd3fc!important;}#my-svg .svcNode polygon{fill:#0d1f35!important;stroke:#38bdf8!important;stroke-width:1px!important;color:#7dd3fc!important;}#my-svg .svcNode ellipse{fill:#0d1f35!important;stroke:#38bdf8!important;stroke-width:1px!important;color:#7dd3fc!important;}#my-svg .svcNode circle{fill:#0d1f35!important;stroke:#38bdf8!important;stroke-width:1px!important;color:#7dd3fc!important;}#my-svg .svcNode path{fill:#0d1f35!important;stroke:#38bdf8!important;stroke-width:1px!important;color:#7dd3fc!important;}#my-svg .svcNode tspan{fill:#7dd3fc!important;}#my-svg .portNode rect{fill:#0a2d5a!important;stroke:#00e5ff!important;stroke-width:2px!important;color:#00e5ff!important;}#my-svg .portNode polygon{fill:#0a2d5a!important;stroke:#00e5ff!important;stroke-width:2px!important;color:#00e5ff!important;}#my-svg .portNode ellipse{fill:#0a2d5a!important;stroke:#00e5ff!important;stroke-width:2px!important;color:#00e5ff!important;}#my-svg .portNode circle{fill:#0a2d5a!important;stroke:#00e5ff!important;stroke-width:2px!important;color:#00e5ff!important;}#my-svg .portNode path{fill:#0a2d5a!important;stroke:#00e5ff!important;stroke-width:2px!important;color:#00e5ff!important;}#my-svg .portNode tspan{fill:#00e5ff!important;}#my-svg .devNode rect{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .devNode polygon{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .devNode ellipse{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .devNode circle{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .devNode path{fill:#0d3d2d!important;stroke:#00e5b0!important;stroke-width:2px!important;color:#b2f5ea!important;}#my-svg .devNode tspan{fill:#b2f5ea!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"><g class="cluster" id="DEVICE" data-look="classic"><rect style="" x="246.078125" y="149.99999809265137" width="839.5703125" height="143"/><g class="cluster-label" transform="translate(637.86328125, 149.99999809265137)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">终端设备</tspan></tspan></text></g></g></g><g class="cluster" id="DEPLOY" data-look="classic"><rect style="" x="8" y="362.99999618530273" width="2168.5" height="192"/><g class="cluster-label" transform="translate(1029.25, 362.99999618530273)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">部署方式（三选一）</tspan></tspan></text></g></g></g><g class="cluster" id="NGINX" data-look="classic"><rect style="" x="1580.43359375" y="149.99999809265137" width="301.38671875" height="143"/><g class="cluster-label" transform="translate(1677.830078125, 149.99999809265137)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">nginx</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 反向代理</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M1756.414,80L1756.414,85.833C1756.414,91.667,1756.414,103.333,1756.414,115C1756.414,126.667,1756.414,138.333,1756.414,147.667C1756.414,157,1756.414,164,1756.414,167.5L1756.414,171" id="L_ADMIN_NG_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_ADMIN_NG_0" data-points="W3sieCI6MTc1Ni40MTQwNjI1LCJ5Ijo4MH0seyJ4IjoxNzU2LjQxNDA2MjUsInkiOjExNC45OTk5OTkwNDYzMjU2OH0seyJ4IjoxNzU2LjQxNDA2MjUsInkiOjE0OS45OTk5OTgwOTI2NTEzN30seyJ4IjoxNzU2LjQxNDA2MjUsInkiOjE3NC45OTk5OTgwOTI2NTEzN31d" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1792.074,268L1795.269,272.167C1798.465,276.333,1804.855,284.667,1808.051,294.667C1811.246,304.667,1811.246,316.333,1811.246,328C1811.246,339.667,1811.246,351.333,1809.197,360.754C1807.148,370.176,1803.049,377.351,1801,380.939L1798.951,384.527" id="L_NG_LINUX_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_NG_LINUX_0" data-points="W3sieCI6MTc5Mi4wNzQwNTQ4NTEzOTg2LCJ5IjoyNjcuOTk5OTk4MDkyNjUxMzd9LHsieCI6MTgxMS4yNDYwOTM3NSwieSI6MjkyLjk5OTk5ODA5MjY1MTM3fSx7IngiOjE4MTEuMjQ2MDkzNzUsInkiOjMyNy45OTk5OTcxMzg5NzcwNX0seyJ4IjoxODExLjI0NjA5Mzc1LCJ5IjozNjIuOTk5OTk2MTg1MzAyNzN9LHsieCI6MTc5Ni45NjY5MTg5NDUzMTI1LCJ5IjozODcuOTk5OTk2MTg1MzAyNzN9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1694.367,268L1688.807,272.167C1683.247,276.333,1672.127,284.667,1606.149,294.667C1540.171,304.667,1419.333,316.333,1358.915,328C1298.496,339.667,1298.496,351.333,1284.024,361.156C1269.551,370.979,1240.606,378.958,1226.134,382.948L1211.661,386.937" id="L_NG_DOCKER_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_NG_DOCKER_0" data-points="W3sieCI6MTY5NC4zNjY2NDExNzEzMjg2LCJ5IjoyNjcuOTk5OTk4MDkyNjUxMzd9LHsieCI6MTY2MS4wMDc4MTI1LCJ5IjoyOTIuOTk5OTk4MDkyNjUxMzd9LHsieCI6MTI5OC40OTYwOTM3NSwieSI6MzI3Ljk5OTk5NzEzODk3NzA1fSx7IngiOjEyOTguNDk2MDkzNzUsInkiOjM2Mi45OTk5OTYxODUzMDI3M30seyJ4IjoxMjA3LjgwNDk3MjMzMDcyOTIsInkiOjM4Ny45OTk5OTYxODUzMDI3M31d" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M754.246,239.252L797.717,248.21C841.189,257.168,928.132,275.084,1037.117,289.875C1146.103,304.667,1277.132,316.333,1342.646,328C1408.16,339.667,1408.16,351.333,1422.633,361.156C1437.105,370.979,1466.05,378.958,1480.523,382.948L1494.995,386.937" id="L_DEV_LINUX_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_DEV_LINUX_0" data-points="W3sieCI6NzU0LjI0NjA5Mzc1LCJ5IjoyMzkuMjUyMjQ0MDU2NjcwOTJ9LHsieCI6MTAxNS4wNzQyMTg3NSwieSI6MjkyLjk5OTk5ODA5MjY1MTM3fSx7IngiOjE0MDguMTYwMTU2MjUsInkiOjMyNy45OTk5OTcxMzg5NzcwNX0seyJ4IjoxNDA4LjE2MDE1NjI1LCJ5IjozNjIuOTk5OTk2MTg1MzAyNzN9LHsieCI6MTQ5OC44NTEyNzc2NjkyNzA4LCJ5IjozODcuOTk5OTk2MTg1MzAyNzN9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M668.098,257.5L668.098,263.417C668.098,269.333,668.098,281.167,668.098,292.917C668.098,304.667,668.098,316.333,668.098,328C668.098,339.667,668.098,351.333,679.712,361.119C691.327,370.904,714.557,378.808,726.171,382.76L737.786,386.712" id="L_DEV_DOCKER_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_DEV_DOCKER_0" data-points="W3sieCI6NjY4LjA5NzY1NjI1LCJ5IjoyNTcuNDk5OTk4MDkyNjUxMzd9LHsieCI6NjY4LjA5NzY1NjI1LCJ5IjoyOTIuOTk5OTk4MDkyNjUxMzd9LHsieCI6NjY4LjA5NzY1NjI1LCJ5IjozMjcuOTk5OTk3MTM4OTc3MDV9LHsieCI6NjY4LjA5NzY1NjI1LCJ5IjozNjIuOTk5OTk2MTg1MzAyNzN9LHsieCI6NzQxLjU3Mjc5NDU5NjM1NDEsInkiOjM4Ny45OTk5OTYxODUzMDI3M31d" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M581.949,237.624L532.637,246.853C483.326,256.083,384.702,274.541,335.39,289.604C286.078,304.667,286.078,316.333,286.078,328C286.078,339.667,286.078,351.333,286.078,360.667C286.078,370,286.078,377,286.078,380.5L286.078,384" id="L_DEV_WINDOWS_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_DEV_WINDOWS_0" data-points="W3sieCI6NTgxLjk0OTIxODc1LCJ5IjoyMzcuNjIzODE1Nzk2NjcwOTN9LHsieCI6Mjg2LjA3ODEyNSwieSI6MjkyLjk5OTk5ODA5MjY1MTM3fSx7IngiOjI4Ni4wNzgxMjUsInkiOjMyNy45OTk5OTcxMzg5NzcwNX0seyJ4IjoyODYuMDc4MTI1LCJ5IjozNjIuOTk5OTk2MTg1MzAyNzN9LHsieCI6Mjg2LjA3ODEyNSwieSI6Mzg3Ljk5OTk5NjE4NTMwMjczfV0=" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(1756.4140625, 114.99999904632568)"><g class="label" data-id="L_ADMIN_NG_0" transform="translate(-39.9375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="79.875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">HTTPS</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 443</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1811.24609375, 327.99999713897705)"><g class="label" data-id="L_NG_LINUX_0" transform="translate(-49.7265625, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="99.453125" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">HTTP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 80</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 反代</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1298.49609375, 327.99999713897705)"><g class="label" data-id="L_NG_DOCKER_0" transform="translate(-49.7265625, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="99.453125" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">HTTP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 80</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 反代</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1408.16015625, 327.99999713897705)"><g class="label" data-id="L_DEV_LINUX_0" transform="translate(-39.9375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="79.875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">UDP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 60050</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(668.09765625, 327.99999713897705)"><g class="label" data-id="L_DEV_DOCKER_0" transform="translate(-39.9375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="79.875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">UDP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 60050</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(286.078125, 327.99999713897705)"><g class="label" data-id="L_DEV_WINDOWS_0" transform="translate(-39.9375, -9.999999046325684)"><g><rect class="background" style="" x="-2" y="-0.9999990463256836" width="79.875" height="19.999999046325684"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">UDP</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 60050</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="root" transform="translate(35, 379.99999618530273)"><g class="clusters"><g class="cluster" id="WINDOWS" data-look="classic"><rect style="" x="8" y="8" width="486.15625" height="142"/><g class="cluster-label" transform="translate(221.5703125, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Windows</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M265.656,79L271.906,79C278.156,79,290.656,79,302.49,79C314.323,79,325.49,79,331.073,79L336.656,79" id="L_W1_W2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_W1_W2_0" data-points="W3sieCI6MjY1LjY1NjI1LCJ5Ijo3OX0seyJ4IjozMDMuMTU2MjUsInkiOjc5fSx7IngiOjM0MC42NTYyNSwieSI6Nzl9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g><rect class="background" style="stroke: none"/></g><g class="edgeLabel"><g class="label" data-id="L_W1_W2_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g></g><g class="nodes"><g class="node default osNode" id="flowchart-W1-14" transform="translate(155.578125, 79)"><rect class="basic label-container" style="fill:#0d2d5e !important;stroke:#00d4ff !important;stroke-width:2px !important" x="-110.078125" y="-36" width="220.15625" height="72"/><g class="label" style="color:#caf0f8 !important" transform="translate(-80.078125, -21)"><rect/><foreignObject width="160.15625" height="42"><div style="color: rgb(202, 240, 248) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#caf0f8 !important" class="nodeLabel"><p>nrllink<br />_windows_x86_64.exe</p></span></div></foreignObject></g></g><g class="node default svcNode" id="flowchart-W2-15" transform="translate(398.65625, 79)"><rect class="basic label-container" style="fill:#0d1f35 !important;stroke:#38bdf8 !important;stroke-width:1px !important" x="-58" y="-25.5" width="116" height="51"/><g class="label" style="color:#7dd3fc !important" transform="translate(-28, -10.5)"><rect/><foreignObject width="56" height="21"><div style="color: rgb(125, 211, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#7dd3fc !important" class="nodeLabel"><p>直接运行</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(571.15625, 379.99999618530273)"><g class="clusters"><g class="cluster" id="DOCKER" data-look="classic"><rect style="" x="8" y="8" width="742.171875" height="142"/><g class="cluster-label" transform="translate(335.578125, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Docker</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 容器</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M223.516,79L229.766,79C236.016,79,248.516,79,260.349,79C272.182,79,283.349,79,288.932,79L294.516,79" id="L_D1_D2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D1_D2_0" data-points="W3sieCI6MjIzLjUxNTYyNSwieSI6Nzl9LHsieCI6MjYxLjAxNTYyNSwieSI6Nzl9LHsieCI6Mjk4LjUxNTYyNSwieSI6Nzl9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M484.953,79L491.203,79C497.453,79,509.953,79,521.786,79C533.62,79,544.786,79,550.37,79L555.953,79" id="L_D2_D3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D2_D3_0" data-points="W3sieCI6NDg0Ljk1MzEyNSwieSI6Nzl9LHsieCI6NTIyLjQ1MzEyNSwieSI6Nzl9LHsieCI6NTU5Ljk1MzEyNSwieSI6Nzl9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g><rect class="background" style="stroke: none"/></g><g><rect class="background" style="stroke: none"/></g><g class="edgeLabel"><g class="label" data-id="L_D1_D2_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g><g class="edgeLabel"><g class="label" data-id="L_D2_D3_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g></g><g class="nodes"><g class="node default osNode" id="flowchart-D1-8" transform="translate(134.5078125, 79)"><rect class="basic label-container" style="fill:#0d2d5e !important;stroke:#00d4ff !important;stroke-width:2px !important" x="-89.0078125" y="-36" width="178.015625" height="72"/><g class="label" style="color:#caf0f8 !important" transform="translate(-59.0078125, -21)"><rect/><foreignObject width="118.015625" height="42"><div style="color: rgb(202, 240, 248) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#caf0f8 !important" class="nodeLabel"><p>hicaoc/nrllink<br />:latest</p></span></div></foreignObject></g></g><g class="node default portNode" id="flowchart-D2-9" transform="translate(391.734375, 79)"><rect class="basic label-container" style="fill:#0a2d5a !important;stroke:#00e5ff !important;stroke-width:2px !important" x="-93.21875" y="-36" width="186.4375" height="72"/><g class="label" style="color:#00e5ff !important" transform="translate(-63.21875, -21)"><rect/><foreignObject width="126.4375" height="42"><div style="color: rgb(0, 229, 255) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#00e5ff !important" class="nodeLabel"><p>80:80  web<br />60050:60050/udp</p></span></div></foreignObject></g></g><g class="node default svcNode" id="flowchart-D3-10" transform="translate(636.3125, 79)"><rect class="basic label-container" style="fill:#0d1f35 !important;stroke:#38bdf8 !important;stroke-width:1px !important" x="-76.359375" y="-36" width="152.71875" height="72"/><g class="label" style="color:#7dd3fc !important" transform="translate(-46.359375, -21)"><rect/><foreignObject width="92.71875" height="42"><div style="color: rgb(125, 211, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#7dd3fc !important" class="nodeLabel"><p>/data  /conf<br />持久化挂载</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(1363.328125, 379.99999618530273)"><g class="clusters"><g class="cluster" id="LINUX" data-look="classic"><rect style="" x="8" y="8" width="770.171875" height="142"/><g class="cluster-label" transform="translate(353.7890625, 8)"><g><rect class="background" style="stroke: none"/><text y="-10.1" style=""><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Linux</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 原生</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M231.938,79L238.188,79C244.438,79,256.938,79,268.771,79C280.604,79,291.771,79,297.354,79L302.938,79" id="L_L1_L2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_L1_L2_0" data-points="W3sieCI6MjMxLjkzNzUsInkiOjc5fSx7IngiOjI2OS40Mzc1LCJ5Ijo3OX0seyJ4IjozMDYuOTM3NSwieSI6Nzl9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M493.375,79L499.625,79C505.875,79,518.375,79,530.208,79C542.042,79,553.208,79,558.792,79L564.375,79" id="L_L2_L3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_L2_L3_0" data-points="W3sieCI6NDkzLjM3NSwieSI6Nzl9LHsieCI6NTMwLjg3NSwieSI6Nzl9LHsieCI6NTY4LjM3NSwieSI6Nzl9XQ==" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g><rect class="background" style="stroke: none"/></g><g><rect class="background" style="stroke: none"/></g><g class="edgeLabel"><g class="label" data-id="L_L1_L2_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g><g class="edgeLabel"><g class="label" data-id="L_L2_L3_0" transform="translate(0, 0)"><text y="-10.1"><tspan class="text-outer-tspan" x="0" y="-0.1em" dy="1.1em"/></text></g></g></g><g class="nodes"><g class="node default osNode" id="flowchart-L1-2" transform="translate(138.71875, 79)"><rect class="basic label-container" style="fill:#0d2d5e !important;stroke:#00d4ff !important;stroke-width:2px !important" x="-93.21875" y="-25.5" width="186.4375" height="51"/><g class="label" style="color:#caf0f8 !important" transform="translate(-63.21875, -10.5)"><rect/><foreignObject width="126.4375" height="21"><div style="color: rgb(202, 240, 248) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#caf0f8 !important" class="nodeLabel"><p>CentOS / Ubuntu</p></span></div></foreignObject></g></g><g class="node default svcNode" id="flowchart-L2-3" transform="translate(400.15625, 79)"><rect class="basic label-container" style="fill:#0d1f35 !important;stroke:#38bdf8 !important;stroke-width:1px !important" x="-93.21875" y="-36" width="186.4375" height="72"/><g class="label" style="color:#7dd3fc !important" transform="translate(-63.21875, -21)"><rect/><foreignObject width="126.4375" height="42"><div style="color: rgb(125, 211, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#7dd3fc !important" class="nodeLabel"><p>systemctl<br />nrllink.service</p></span></div></foreignObject></g></g><g class="node default portNode" id="flowchart-L3-4" transform="translate(654.5234375, 79)"><rect class="basic label-container" style="fill:#0a2d5a !important;stroke:#00e5ff !important;stroke-width:2px !important" x="-86.1484375" y="-36" width="172.296875" height="72"/><g class="label" style="color:#00e5ff !important" transform="translate(-56.1484375, -21)"><rect/><foreignObject width="112.296875" height="42"><div style="color: rgb(0, 229, 255) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#00e5ff !important" class="nodeLabel"><p>内部 TCP 80<br />设备 UDP 60050</p></span></div></foreignObject></g></g></g></g><g class="node default clientNode" id="flowchart-ADMIN-0" transform="translate(1756.4140625, 44)"><rect class="basic label-container" style="fill:#2d1b4e !important;stroke:#a78bfa !important;stroke-width:2px !important" x="-72" y="-36" width="144" height="72"/><g class="label" style="color:#ddd6fe !important" transform="translate(-42, -21)"><rect/><foreignObject width="84" height="42"><div style="color: rgb(221, 214, 254) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#ddd6fe !important" class="nodeLabel"><p>管理员浏览器<br />HTTPS 443</p></span></div></foreignObject></g></g><g class="node default nginxNode" id="flowchart-NG-1" transform="translate(1756.4140625, 221.49999809265137)"><rect class="basic label-container" style="fill:#1a2d0a !important;stroke:#4ade80 !important;stroke-width:2px !important" x="-86.1484375" y="-46.5" width="172.296875" height="93"/><g class="label" style="color:#bbf7d0 !important" transform="translate(-56.1484375, -31.5)"><rect/><foreignObject width="112.296875" height="63"><div style="color: rgb(187, 247, 208) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#bbf7d0 !important" class="nodeLabel"><p>HTTPS 443  对外<br />→ HTTP 80  内部<br />TLS 证书终止</p></span></div></foreignObject></g></g><g class="node default devNode" id="flowchart-DEV-18" transform="translate(668.09765625, 221.49999809265137)"><rect class="basic label-container" style="fill:#0d3d2d !important;stroke:#00e5b0 !important;stroke-width:2px !important" x="-86.1484375" y="-36" width="172.296875" height="72"/><g class="label" style="color:#b2f5ea !important" transform="translate(-56.1484375, -21)"><rect/><foreignObject width="112.296875" height="42"><div style="color: rgb(178, 245, 234) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#b2f5ea !important" class="nodeLabel"><p>NRL 硬件 / App<br />UDP 60050</p></span></div></foreignObject></g></g></g></g></g>
+
+<script type="text/javascript"><![CDATA[
+(function(){
+  var svg = document.querySelector('svg');
+  var pt = svg.createSVGPoint();
+  var dragTarget = null;
+  var startX, startY, origTx, origTy;
+  var connectedEdges = [];  // [{path, label, end:'start'|'end'|'both', origD, origLabelTr}]
+
+  function getTranslate(el) {
+    var m = /translate\(([\d.e+-]+)[,\s]+([\d.e+-]+)\)/.exec(el.getAttribute('transform') || '');
+    return m ? [parseFloat(m[1]), parseFloat(m[2])] : null;
+  }
+
+  function setTranslate(el, x, y) {
+    var t = el.getAttribute('transform') || '';
+    var nt = 'translate(' + x + ', ' + y + ')';
+    if (/translate\(/.test(t)) {
+      el.setAttribute('transform', t.replace(/translate\([^)]+\)/, nt));
+    } else {
+      el.setAttribute('transform', nt + ' ' + t);
+    }
+  }
+
+  function toSVG(evt) {
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  function findDraggable(el) {
+    while (el && el !== svg) {
+      if (el.classList && el.classList.contains('node')) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  // Build node ID -> mermaid short name mapping
+  // Node id like "flowchart-APRS-0" -> short name "APRS"
+  function getNodeShortId(node) {
+    var id = node.id || '';
+    var m = /^flowchart-(.+)-\d+$/.exec(id);
+    return m ? m[1] : id;
+  }
+
+  // Parse SVG path d attribute into segments for manipulation
+  function parsePath(d) {
+    var segs = [];
+    var re = /([MLCQTSAHVZ])\s*((?:[^MLCQTSAHVZ])*)/gi;
+    var m;
+    while ((m = re.exec(d)) !== null) {
+      var cmd = m[1];
+      var nums = m[2].trim().match(/-?[\d.]+(?:e[+-]?\d+)?/gi);
+      segs.push({ cmd: cmd, nums: nums ? nums.map(Number) : [] });
+    }
+    return segs;
+  }
+
+  function segsToD(segs) {
+    return segs.map(function(s) {
+      return s.cmd + s.nums.join(',');
+    }).join('');
+  }
+
+  // Shift the start portion of path segments by (dx, dy)
+  function shiftPathStart(segs, dx, dy) {
+    if (segs.length === 0) return;
+    // First segment is M x,y
+    if (segs[0].cmd === 'M' && segs[0].nums.length >= 2) {
+      segs[0].nums[0] += dx;
+      segs[0].nums[1] += dy;
+    }
+    // Shift first curve/line segment's first control point
+    if (segs.length > 1) {
+      var s = segs[1];
+      if (s.cmd === 'L' && s.nums.length >= 2) {
+        s.nums[0] += dx; s.nums[1] += dy;
+      } else if (s.cmd === 'C' && s.nums.length >= 6) {
+        // first control point
+        s.nums[0] += dx; s.nums[1] += dy;
+      }
+    }
+  }
+
+  // Shift the end portion of path segments by (dx, dy)
+  function shiftPathEnd(segs, dx, dy) {
+    if (segs.length === 0) return;
+    var last = segs[segs.length - 1];
+    if (last.cmd === 'L' && last.nums.length >= 2) {
+      last.nums[last.nums.length - 2] += dx;
+      last.nums[last.nums.length - 1] += dy;
+    } else if (last.cmd === 'C' && last.nums.length >= 6) {
+      // last control point and end point
+      last.nums[last.nums.length - 4] += dx;
+      last.nums[last.nums.length - 3] += dy;
+      last.nums[last.nums.length - 2] += dx;
+      last.nums[last.nums.length - 1] += dy;
+    }
+    // Also shift the previous segment's endpoint if it feeds into the last
+    if (segs.length > 1) {
+      var prev = segs[segs.length - 2];
+      if (prev.cmd === 'C' && prev.nums.length >= 6) {
+        prev.nums[prev.nums.length - 2] += dx;
+        prev.nums[prev.nums.length - 1] += dy;
+      }
+    }
+  }
+
+  // Find all edges and labels connected to a node
+  function findEdges(nodeId) {
+    var results = [];
+    var paths = svg.querySelectorAll('path[data-id]');
+    for (var i = 0; i < paths.length; i++) {
+      var p = paths[i];
+      var eid = p.getAttribute('data-id') || '';
+      // Edge ID format: L_SOURCE_TARGET_N
+      // But node names can contain underscores, so we use a smarter match
+      var parts = parseEdgeId(eid);
+      if (!parts) continue;
+      var end = null;
+      if (parts.src === nodeId && parts.dst === nodeId) end = 'both';
+      else if (parts.src === nodeId) end = 'start';
+      else if (parts.dst === nodeId) end = 'end';
+      if (!end) continue;
+
+      // Find matching edge label
+      var labelEl = svg.querySelector('.edgeLabel g.label[data-id="' + eid + '"]');
+      var labelParent = labelEl ? labelEl.closest('.edgeLabel') : null;
+
+      results.push({
+        path: p,
+        end: end,
+        origD: p.getAttribute('d'),
+        label: labelParent,
+        origLabelTr: labelParent ? getTranslate(labelParent) : null
+      });
+    }
+    return results;
+  }
+
+  // Parse edge ID like "L_APRS_APRSTV_0" -> {src: "APRS", dst: "APRSTV"}
+  // Handle multi-underscore node names by matching against known node IDs
+  var allNodeIds = [];
+  function buildNodeList() {
+    var nodes = svg.querySelectorAll('.node');
+    for (var i = 0; i < nodes.length; i++) {
+      allNodeIds.push(getNodeShortId(nodes[i]));
+    }
+    // Sort by length descending for greedy matching
+    allNodeIds.sort(function(a, b) { return b.length - a.length; });
+  }
+
+  function parseEdgeId(eid) {
+    // Format: L_<src>_<dst>_<index>
+    if (eid.charAt(0) !== 'L' || eid.charAt(1) !== '_') return null;
+    var body = eid.substring(2); // remove "L_"
+    // Try to match known node IDs
+    for (var i = 0; i < allNodeIds.length; i++) {
+      var src = allNodeIds[i];
+      if (body.indexOf(src + '_') === 0) {
+        var rest = body.substring(src.length + 1);
+        for (var j = 0; j < allNodeIds.length; j++) {
+          var dst = allNodeIds[j];
+          if (rest.indexOf(dst + '_') === 0) {
+            return { src: src, dst: dst };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  buildNodeList();
+
+  svg.addEventListener('mousedown', function(e) {
+    var target = findDraggable(e.target);
+    if (!target) return;
+    var tr = getTranslate(target);
+    if (!tr) return;
+    dragTarget = target;
+    origTx = tr[0]; origTy = tr[1];
+    var p = toSVG(e);
+    startX = p.x; startY = p.y;
+    // Collect connected edges
+    connectedEdges = findEdges(getNodeShortId(target));
+    dragTarget.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  svg.addEventListener('mousemove', function(e) {
+    if (!dragTarget) return;
+    var p = toSVG(e);
+    var dx = p.x - startX, dy = p.y - startY;
+
+    // Move node
+    setTranslate(dragTarget, origTx + dx, origTy + dy);
+
+    // Update connected edges
+    for (var i = 0; i < connectedEdges.length; i++) {
+      var ce = connectedEdges[i];
+      var segs = parsePath(ce.origD);
+      if (ce.end === 'start' || ce.end === 'both') {
+        shiftPathStart(segs, dx, dy);
+      }
+      if (ce.end === 'end' || ce.end === 'both') {
+        shiftPathEnd(segs, dx, dy);
+      }
+      ce.path.setAttribute('d', segsToD(segs));
+
+      // Move label proportionally
+      if (ce.label && ce.origLabelTr) {
+        var ratio = (ce.end === 'both') ? 1 : 0.5;
+        setTranslate(ce.label,
+          ce.origLabelTr[0] + dx * ratio,
+          ce.origLabelTr[1] + dy * ratio);
+      }
+    }
+
+    // Update marker arrow positions (re-rendered by browser automatically)
+    e.preventDefault();
+  });
+
+  function endDrag() {
+    if (dragTarget) {
+      dragTarget.style.cursor = '';
+      dragTarget = null;
+      connectedEdges = [];
+    }
+  }
+  svg.addEventListener('mouseup', endDrag);
+  svg.addEventListener('mouseleave', endDrag);
+
+  // Add grab cursor
+  var allNodes = svg.querySelectorAll('.node');
+  for (var i = 0; i < allNodes.length; i++) {
+    allNodes[i].style.cursor = 'grab';
+  }
+})();
+]]></script>
+</svg>

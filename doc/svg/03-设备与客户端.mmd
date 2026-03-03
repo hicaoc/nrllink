@@ -1,0 +1,66 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#0a0e1a", "primaryColor": "#0d1f35", "primaryBorderColor": "#00d4ff", "primaryTextColor": "#caf0f8", "secondaryColor": "#06111f", "tertiaryColor": "#081828", "lineColor": "#00b4d8", "clusterBkg": "#060c18", "clusterBorder": "#1565c0", "titleColor": "#00e5ff", "edgeLabelBackground": "#0a1628", "fontFamily": "monospace", "fontSize": "14px"}}}%%
+graph TB
+
+    subgraph HW["硬件终端"]
+        subgraph MAGONG["马工盒子  NRL 系列"]
+            direction LR
+            M_RF["`射频接口
+RF In / Out`"]:::hwNode
+            M_CODEC["`G.711
+编解码`"]:::hwNode
+            M_NET["`NRL 协议
+UDP 60050`"]:::hwNode
+            M_RF -->|"单工 PTT"| M_CODEC -->|"编码帧"| M_NET
+        end
+
+        subgraph ESP32_DEV["ESP32 终端  爱好者自制"]
+            direction LR
+            E_MIC["`麦克风 / 扬声器
+全双工`"]:::hwNode
+            E_DISP["`显示屏（可选）
+状态 / 房间`"]:::hwNode
+            E_NET["`NRL 协议
+WiFi`"]:::hwNode
+            E_MIC <-->|"全双工"| E_NET
+        end
+    end
+
+    subgraph SW["软件终端"]
+        subgraph ANDROID["Android"]
+            APP73["`73HAM
+全功能 PTT`"]:::appNode
+        end
+        subgraph IOS["iOS"]
+            NRLIOS["`NRL互联`"]:::appNode
+            NRLTOOL["`NRL工具集`"]:::appNode
+        end
+    end
+
+    subgraph NANNY_GRP["辅助软件"]
+        subgraph BASIC["NRLNANNY 保姆"]
+            N1["录音存档"]:::auxNode
+            N2["定时语音信标"]:::auxNode
+            N3["实时语音播放"]:::auxNode
+        end
+        subgraph ENHANCED["增强版保姆  爱好者开发"]
+            EN1["多服务器并发连接"]:::enhNode
+            EN2["多房间同时监听"]:::enhNode
+            EN3["多路中继台监控"]:::enhNode
+            EN4["语音流聚合输出"]:::enhNode
+        end
+    end
+
+    subgraph RF_LOCAL["本地无线电"]
+        RELAY["`模拟中继台
+VHF / UHF`"]:::rfNode
+        WALKIE["`手台 / 对讲机
+单工 PTT`"]:::rfNode
+    end
+
+    WALKIE & RELAY -->|"RF 射频"| MAGONG
+
+    classDef hwNode fill:#0d3d2d,stroke:#00e5b0,stroke-width:2px,color:#b2f5ea
+    classDef appNode fill:#2d1b4e,stroke:#a78bfa,stroke-width:2px,color:#ddd6fe
+    classDef auxNode fill:#3d2500,stroke:#fb923c,stroke-width:2px,color:#fed7aa
+    classDef enhNode fill:#2d1500,stroke:#f59e0b,stroke-width:2px,color:#fde68a
+    classDef rfNode fill:#2d1a1a,stroke:#f87171,stroke-width:2px,color:#fecaca
