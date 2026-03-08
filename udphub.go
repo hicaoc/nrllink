@@ -237,6 +237,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			dev.LastVoiceBeginTime = nrl.timeStamp
 			logbuffer <- dev
 			dev.Loged = true
+
+			// APNs 推送通知：有人开始发言，唤醒后台 iOS 设备
+			go apnsPushNotify(dev, gp)
 		}
 
 		dev.Loged = false
@@ -428,6 +431,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			dev.LastVoiceBeginTime = nrl.timeStamp
 			logbuffer <- dev
 			dev.Loged = true
+
+			// APNs 推送通知：有人开始发言，唤醒后台 iOS 设备
+			go apnsPushNotify(dev, gp)
 		}
 
 		dev.Loged = false
