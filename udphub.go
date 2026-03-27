@@ -169,7 +169,7 @@ func udpProcess(conn *net.UDPConn) {
 				DevModel: nrl.DevModel,
 				Priority: 100,
 				//udpAddr:      nrl.UDPAddr,
-				ChanName:  make([]string, 8),
+				ChanName:  make([]string, 16),
 				pcmBuffer: make([]int, 160),
 			}
 
@@ -318,12 +318,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		}
 
-		if !dev.ISOnline {
+		// 心跳包里带了设备型号时，持续同步，避免首次上线拿到 0 或旧值后一直不刷新。
+		if nrl.DevModel != 0 {
+			dev.DevModel = nrl.DevModel
+		}
 
-			//如果设备没有携带型号，则使用用户指定的型号，不更新
-			if nrl.DevModel != 0 {
-				dev.DevModel = nrl.DevModel
-			}
+		if !dev.ISOnline {
 
 			//查询设备qth信息
 
@@ -363,7 +363,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 		forwardMsg(nrl, packet, dev, conn, gp.connPool)
 
-	case 6: //设备到设备控制通道
+	case 6, 10: //设备到设备控制通道
 
 		if (dev.Status & 1) == 1 {
 
@@ -699,6 +699,11 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 		for kk, vv := range connpool.devConnMap {
 
 			if clientAddrStr != kk {
+
+				//马工3188盒子，部分盒子使用5类型控制3188信道，会干扰，临时关闭
+				if vv.DevModel == 9 || vv.DevModel == 255 || vv.SSID == 255 {
+					continue
+				}
 				//200设备转发给其他200设备，需要替换包头的呼号为新200设备的呼号
 				if vv.DevModel == 200 {
 
@@ -707,8 +712,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 					conn.WriteToUDP(newpacket, vv.udpAddr)
 
 					// 200和255不允许相互转发
-				} else if vv.DevModel == 255 || vv.SSID == 255 {
-					continue
+
 				} else {
 
 					conn.WriteToUDP(newpacket, vv.udpAddr)
@@ -727,7 +731,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 
 			if clientAddrStr != kk {
 				// 255不转发给255设备
-				if vv.DevModel == 255 || vv.SSID == 255 {
+				if vv.DevModel == 9 || vv.DevModel == 255 || vv.SSID == 255 {
 					continue
 					// 255和200不允许相互转发
 				} else if vv.DevModel == 200 {
@@ -760,7 +764,7 @@ func forwardMsg(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPC
 				conn.WriteToUDP(newpacket, vv.udpAddr)
 
 				//普通设备不转发给255设备
-			} else if vv.DevModel == 255 || vv.SSID == 255 {
+			} else if vv.DevModel == 9 || vv.DevModel == 255 || vv.SSID == 255 {
 				continue
 
 				//普通设备转发给普通设备

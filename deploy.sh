@@ -4,7 +4,7 @@
 
 #bh4tdv.nrlptt.com
 
-hostlist='182.92.158.141 m.nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki.nrlptt.com  ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com  ham.73ham.com js.nrlptt.com  usa.nrlptt.com nrl.bd4two.site yz.hamuv.com'
+hostlist='182.92.158.141 m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd4vki.xyz bd4vki.nrlptt.com  www.bg1vif.com ah.nrlptt.com ptt.nrlptt.com bh1osw.nrlptt.com  ham.73ham.com js.nrlptt.com  usa.nrlptt.com nrl.bd4two.site yz.hamuv.com'
 
 #hostlist='bh1osw.nrlptt.com'
 
@@ -16,7 +16,7 @@ hostlist='182.92.158.141 m.nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
 
-#hostlist='js.nrlptt.com ah.nrlptt.com nrl.bd4two.site'
+hostlist='js.nrlptt.com ah.nrlptt.com nrl.bd4two.site'
 
 #hostlist='usa.nrlptt.com'
 
@@ -24,11 +24,11 @@ hostlist='182.92.158.141 m.nrlptt.com  ba1gm.nrlptt.com nrlptt.bd4vki.xyz bd4vki
 
 #hostlist='ba1gm.nrlptt.com'
 
-#hostlist='m.nrlptt.com'
+hostlist='js.nrlptt.com'
 
 #hostlist='ah.nrlptt.com'
 
-#hostlist='bg1vif.nrlptt.com'
+#hostlist='www.bg1vif.com'
 
 #hostlist='bh4tdv.nrlptt.com'
 
