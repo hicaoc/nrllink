@@ -173,20 +173,22 @@ func udpProcess(conn *net.UDPConn) {
 				pcmBuffer: make([]int, 160),
 			}
 
-			if nrl.DevModel == 255 && nrl.SSID == 255 {
+			if nrl.DevModel == 255 {
 				dd.GroupID = 999
 			}
 
 			err = addDevice(dd)
 
 			if err != nil {
-				fmt.Println("add dev failed, ", err, '\n', nrl)
+				log.Println("add dev failed, ", err, '\n', nrl)
 				continue
 			}
 
 			//}
 
 			d := getDevice(nrl.CallSign, nrl.SSID)
+
+			log.Println("add dev ok", dd.CallSign, dd.SSID, d.GroupID, "groupid:", dd.GroupID, dd.CallSign, dd.SSID, d)
 
 			d.pcmG711Chan = make(chan [][]byte, 3)
 			d.pcmBuffer = make([]int, 160)

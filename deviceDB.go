@@ -784,9 +784,9 @@ func addDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
 	query := `INSERT INTO devices (	name,gird,dev_type,dev_model,status,group_id,callsign,ssid,dmrid,chan_name,note,password,rf_type,is_certed,online_time,create_time,update_time)
-		 VALUES ('','',0,0,0,0,?,?,?,?,'','',0,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
+		 VALUES ('','',0,?,0,?,?,?,?,?,'','',0,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
-	_, err := db.Exec(query, dev.CallSign, strconv.Itoa(int(dev.SSID)), dev.DMRID, dev.ChanName)
+	_, err := db.Exec(query, dev.DevModel, dev.GroupID, dev.CallSign, strconv.Itoa(int(dev.SSID)), dev.DMRID, dev.ChanName)
 
 	if err != nil {
 		log.Println("add dev failed, ", err, '\n', query)
@@ -859,7 +859,7 @@ func updateDevice(e *deviceInfo) error {
 
 		if d.GroupID != e.GroupID {
 
-			if d.DevModel == 255 || d.SSID == 255 {
+			if d.DevModel == 255 {
 				d.GroupID = 999
 				return errors.New("255设备不能移出999组")
 			}
