@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"sync"
+
 	"github.com/lib/pq"
 )
 
@@ -58,11 +60,12 @@ type deviceInfo struct {
 	LastCtlEndTime   time.Time `json:"last_ctl_end_time"`   //最后控制时间
 	LastCtlDuration  int       `json:"last_ctl_duration"`   //上次控制持续时长  秒
 
-	Note          string        `json:"note" db:"note"` //设备上线时间
-	DeviceParm    *control      `json:"device_parm"`
-	LastATcommand *ATcommand    `json:"last_atcommand"`
-	pcmG711Chan   chan [][]byte //g711数据缓存通道
-	pcmBuffer     []int
+	Note          string      `json:"note" db:"note"` //设备上线时间
+	DeviceParm    *control    `json:"device_parm"`
+	LastATcommand *ATcommand  `json:"last_atcommand"`
+	pcmBuf    []byte     //g711语音缓存，发送端追加，混音端每次取160字节
+	pcmMu     sync.Mutex
+	pcmBuffer []int
 	speaking      bool
 	Ducked        bool `json:"ducted"`
 	//ticker        *time.Ticker
@@ -236,8 +239,7 @@ func initAllDevList() {
 		callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
 		dev.CallSignSSID = callsignSSID
 
-		dev.pcmG711Chan = make(chan [][]byte, 3)
-		dev.pcmBuffer = make([]int, 160)
+		dev.pcmBuffer = make([]int, 1500)
 
 		if dev.SSID == 255 || dev.DevModel == 255 {
 			dev.GroupID = 999

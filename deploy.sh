@@ -12,7 +12,7 @@ hostlist='182.92.158.141 m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd4vki.xyz bd4vk
 
 #hostlist='nrlptt.com bh4tdv.nrlptt.com ba1gm.nrlptt.com bd4vki.nrlptt.com  ah.nrlptt.com   ham.73ham.com '
 
-#hostlist='ham.73ham.com'
+hostlist='ham.73ham.com'
 
 #hostlist='nrlptt.com bd4vki.nrlptt.com ah.nrlptt.com'
 

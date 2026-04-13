@@ -190,8 +190,7 @@ func udpProcess(conn *net.UDPConn) {
 
 			log.Println("add dev ok", dd.CallSign, dd.SSID, d.GroupID, "groupid:", dd.GroupID, dd.CallSign, dd.SSID, d)
 
-			d.pcmG711Chan = make(chan [][]byte, 3)
-			d.pcmBuffer = make([]int, 160)
+			d.pcmBuffer = make([]int, 1000)
 
 			devCallsignSSIDMap[callsignSSID] = d
 
@@ -546,17 +545,12 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
 		//房间类型为会议室的时候，需要将语音进行混音，语音先放入缓存，等待其他设备的语音包
-		if gp.Type == 7 && nrl.Type == 1 && len(nrl.DATA) == 160 {
-			// 必须拷贝数据，因为 udphub 的读取缓冲区是重复使用的。
-			// 如果不拷贝，后续到达的报文会覆盖还在管道中等待处理的旧报文内容。
-			voiceData := make([]byte, len(nrl.DATA))
-			copy(voiceData, nrl.DATA)
-			select {
-			case dev.pcmG711Chan <- [][]byte{voiceData}:
-				//log.Println("PCMMIX: ", dev.CallSignSSID, "dev.PcmG711Chan", len(dev.pcmG711Chan))
-			default:
-				//fmt.Println("PCMMIX: ", dev.CallSignSSID, "dev.PcmG711Chan full")
-			}
+		if gp.Type == 7 && nrl.Type == 1 {
+
+			// 直接追加到设备缓存，混音端按需取160字节
+			dev.pcmMu.Lock()
+			dev.pcmBuf = append(dev.pcmBuf, nrl.DATA...)
+			dev.pcmMu.Unlock()
 			return
 		}
 

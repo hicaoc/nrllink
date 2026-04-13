@@ -90,15 +90,20 @@ func (p *group) mixPCM() {
 			continue
 		}
 
-		// 1. 收集发言者数据
+		// 1. 收集发言者数据：从设备缓存取160字节，不足则跳过
 		for _, vv := range p.connPool.devConnList {
 			vv.speaking = false
-			select {
-			case g711 := <-vv.pcmG711Chan:
-				raw := g711[0][:160]
+
+			vv.pcmMu.Lock()
+			if len(vv.pcmBuf) >= 160 {
+				frame := vv.pcmBuf[:160]
+				n := copy(vv.pcmBuf, vv.pcmBuf[160:])
+				vv.pcmBuf = vv.pcmBuf[:n]
+				vv.pcmMu.Unlock()
 				vv.speaking = true
-				speakers = append(speakers, activeSpeaker{vv, raw})
-			default:
+				speakers = append(speakers, activeSpeaker{vv, frame})
+			} else {
+				vv.pcmMu.Unlock()
 			}
 		}
 
