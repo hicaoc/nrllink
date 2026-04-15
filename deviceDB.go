@@ -113,6 +113,7 @@ func checkdeviceOnline() {
 			change := false
 			vv.OnlineDevNumber = 0
 
+			vv.connPool.mu.Lock()
 			for kkk, vvv := range vv.connPool.devConnMap {
 				//255设备不参与在线统计，永远在线
 				if vvv.DevModel == 255 || vvv.SSID == 255 {
@@ -142,12 +143,9 @@ func checkdeviceOnline() {
 
 			//如果群组设备变化过，更新列表
 			if change {
-				list := []*deviceInfo{}
-				for _, vvv := range vv.connPool.devConnMap {
-					list = append(list, vvv)
-				}
-				vv.connPool.devConnList = list
+				vv.connPool.rebuildListLocked()
 			}
+			vv.connPool.mu.Unlock()
 
 			vv.TotalDevNumber = len(vv.DevMap)
 
@@ -161,6 +159,7 @@ func checkdeviceOnline() {
 
 				vv.OnlineDevNumber = 0
 
+				vv.connPool.mu.Lock()
 				for kkk, vvv := range vv.connPool.devConnMap {
 
 					// 清理过期条目：设备地址已变化，旧key需要删除，不影响设备在线状态
@@ -182,6 +181,8 @@ func checkdeviceOnline() {
 					onlineMap[vvv.ID] = vvv
 
 				}
+				vv.connPool.rebuildListLocked()
+				vv.connPool.mu.Unlock()
 
 				vv.TotalDevNumber = len(vv.DevMap)
 				totalstats.OnlineDevNumber = totalstats.OnlineDevNumber + vv.OnlineDevNumber
@@ -829,7 +830,9 @@ func delDevice(dev *deviceInfo) error {
 	if d, ok := devCallsignSSIDMap[dev.CallSignSSID]; ok {
 		delete(devCallsignSSIDMap, dev.CallSignSSID)
 		delete(publicGroupMap[dev.GroupID].DevMap, dev.ID)
-		delete(publicGroupMap[dev.GroupID].connPool.devConnMap, d.udpAddr.String())
+		if d.udpAddr != nil {
+			publicGroupMap[dev.GroupID].connPool.removeDevice(d.udpAddr.String())
+		}
 	}
 
 	return nil

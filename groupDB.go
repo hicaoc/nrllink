@@ -86,12 +86,13 @@ func (p *group) mixPCM() {
 			pcm[i] = 0
 		}
 
-		if len(p.connPool.devConnList) <= 2 {
+		devConnList := p.connPool.snapshotList()
+		if len(devConnList) <= 2 {
 			continue
 		}
 
 		// 1. 收集发言者数据：从设备缓存取160字节，不足则跳过
-		for _, vv := range p.connPool.devConnList {
+		for _, vv := range devConnList {
 			vv.speaking = false
 
 			vv.pcmMu.Lock()
@@ -118,7 +119,7 @@ func (p *group) mixPCM() {
 			// 直接透传原始字节，音质无损
 			copy(globalPacket[48:], speakers[0].rawG711)
 
-			for _, vv := range p.connPool.devConnList {
+			for _, vv := range devConnList {
 				if vv.udpAddr == nil || vv.speaking {
 					continue
 				}
@@ -150,7 +151,7 @@ func (p *group) mixPCM() {
 				copy(speakerPacket[48:], speakers[1].rawG711)   // A 听 B
 				copy(speakerB_Packet[48:], speakers[0].rawG711) // B 听 A
 
-				for _, vv := range p.connPool.devConnList {
+				for _, vv := range devConnList {
 					if vv.udpAddr == nil {
 						continue
 					}
@@ -165,7 +166,7 @@ func (p *group) mixPCM() {
 				}
 			} else {
 				// --- 3人及以上标准混音 ---
-				for _, vv := range p.connPool.devConnList {
+				for _, vv := range devConnList {
 					if vv.udpAddr == nil {
 						continue
 					}
@@ -456,15 +457,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 	if dev.GroupID >= 999 || dev.GroupID == 0 {
 
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
-			delete(g.connPool.devConnMap, dev.udpAddr.String())
-
-			list := []*deviceInfo{}
-
-			for _, vv := range g.connPool.devConnMap {
-				list = append(list, vv)
-			}
-
-			g.connPool.devConnList = list
+			g.connPool.removeDevice(dev.udpAddr.String())
 
 			delete(g.DevMap, dev.ID)
 
@@ -478,14 +471,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
 			delete(user.(*userinfo).Groups[dev.GroupID].DevMap, dev.ID)
-			delete(user.(*userinfo).Groups[dev.GroupID].connPool.devConnMap, dev.udpAddr.String())
-			//delete(user.(*userinfo).Groups[dev.GroupID].connPool.devConnList, dev.udpAddr.String())
-
-			list := []*deviceInfo{}
-			for _, vv := range user.(*userinfo).Groups[dev.GroupID].connPool.devConnMap {
-				list = append(list, vv)
-			}
-			user.(*userinfo).Groups[dev.GroupID].connPool.devConnList = list
+			user.(*userinfo).Groups[dev.GroupID].connPool.removeDevice(dev.udpAddr.String())
 
 		}
 
@@ -498,6 +484,9 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 		if g, ok := publicGroupMap[groupid]; ok {
 			dev.GroupID = groupid
 			g.DevMap[dev.ID] = dev
+			if dev.udpAddr != nil {
+				g.connPool.ensureDevice(dev.udpAddr.String(), dev)
+			}
 			group = strconv.Itoa(g.ID) + g.Name
 
 		} else {
@@ -509,6 +498,9 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
 			user.(*userinfo).Groups[groupid].DevMap[dev.ID] = dev
+			if dev.udpAddr != nil {
+				user.(*userinfo).Groups[groupid].connPool.ensureDevice(dev.udpAddr.String(), dev)
+			}
 			group = strconv.Itoa(user.(*userinfo).Groups[groupid].ID) + user.(*userinfo).Groups[groupid].Name
 
 		}

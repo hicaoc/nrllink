@@ -144,14 +144,22 @@ func syncPlatformServerList() error {
 	}
 
 	for i := range list {
-		hostPort := net.JoinHostPort(list[i].Host, list[i].Port)
+		host := strings.TrimSpace(list[i].Host)
+		port := strings.TrimSpace(list[i].Port)
+		if parsedHost, parsedPort, err := net.SplitHostPort(host); err == nil {
+			host = parsedHost
+			if port == "" {
+				port = parsedPort
+			}
+		}
+		hostPort := net.JoinHostPort(host, port)
 		targetAddr, err := net.ResolveUDPAddr("udp", hostPort)
 		if err != nil {
 			log.Println("platform-servers: invalid udp addr:", hostPort, err)
 			list[i].udpAddr = nil
 			continue
 		}
-		if list[i].Host == conf.APRS.SelfAddress {
+		if host == conf.APRS.SelfAddress {
 			list[i].udpAddr = nil
 			continue
 		}
