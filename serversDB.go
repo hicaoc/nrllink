@@ -76,23 +76,27 @@ func (p *Server) Start() error {
 
 	}
 
-	dev := getDevice(p.OwerCallsign, 200)
+	dev, err := getDevice(p.OwerCallsign, 200)
+	if err != nil {
+		log.Printf("Failed to get device for server %d %v-200: %v", p.ID, p.OwerCallsign, err)
+		return fmt.Errorf("get device error")
+	}
 
 	if dev.ID == 0 {
 
 		fmt.Println("start device", p.OwerCallsign, 200)
 
 		dev = &deviceInfo{
-			Name:        p.IPAddr + ":" + p.UDPPort,
-			CallSign:    p.OwerCallsign,
-			udpSocket:   globelconn,
-			udpAddr:     addr,
-			SSID:        200,
-			Priority:    100,
-			DevModel:    200,
+			Name:      p.IPAddr + ":" + p.UDPPort,
+			CallSign:  p.OwerCallsign,
+			udpSocket: globelconn,
+			udpAddr:   addr,
+			SSID:      200,
+			Priority:  100,
+			DevModel:  200,
 			pcmBuffer: make([]int, 1500),
-			DMRID:       0,
-			Note:        "server"}
+			DMRID:     0,
+			Note:      "server"}
 
 		err = addDevice(dev)
 		if err != nil {
@@ -102,7 +106,11 @@ func (p *Server) Start() error {
 
 		fmt.Println("add device", p.OwerCallsign, 200)
 
-		dev = getDevice(p.OwerCallsign, 200)
+		dev, err = getDevice(p.OwerCallsign, 200)
+		if err != nil {
+			log.Printf("Failed to get device for server %d %v-200: %v", p.ID, p.OwerCallsign, err)
+			return fmt.Errorf("get device error")
+		}
 
 		dev.udpSocket = globelconn
 		dev.udpAddr = addr

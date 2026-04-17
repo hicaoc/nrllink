@@ -38,7 +38,7 @@ func (j *jsonapi) httpDevicesList(w http.ResponseWriter, req *http.Request) {
 	//stb.CurrentArea = strconv.Itoa(u.CurrentArea)
 	//员工漫游修改位常驻
 
-	var emplist []deviceInfo
+	var emplist []*deviceInfo
 
 	total := 0
 	if stb.IsOnline {
@@ -80,7 +80,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	devicelist := make(map[int]deviceInfo, 10)
+	devicelist := make(map[int]*deviceInfo, 10)
 
 	isadmin := checkrole(u, []string{"admin"})
 
@@ -94,7 +94,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 			totalstats.OnlineDevNumber++
 		}
 
-		dev := *vv
+		dev := vv
 
 		if !isadmin && dev.CallSign != u.CallSign {
 
@@ -195,11 +195,11 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	mydevicelist := make(map[string]deviceInfo, 10)
+	mydevicelist := make(map[string]*deviceInfo, 10)
 
 	for kk, vv := range devCallsignSSIDMap {
 		if vv.CallSign == u.CallSign {
-			mydevicelist[kk] = *vv
+			mydevicelist[kk] = devCallsignSSIDMap[kk]
 		}
 
 	}
@@ -362,7 +362,12 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	dev := getDevice(stb.CallSign, stb.SSID)
+	dev, err := getDevice(stb.CallSign, stb.SSID)
+	if err != nil {
+		log.Println("device update err :", err)
+		w.Write([]byte(`{"code":20001,"data":{"message":"设备信息更新错误，可能设备不存在"}}`))
+		return
+	}
 
 	switch {
 	case dev.Status != stb.Status:
@@ -468,7 +473,13 @@ func (j *jsonapi) httpChangeDeviceGroupNRL(w http.ResponseWriter, req *http.Requ
 
 	}
 
-	dev := getDevice(stb.CallSign, stb.SSID)
+	dev, err := getDevice(stb.CallSign, stb.SSID)
+	if err != nil {
+		log.Println("device update err :", err)
+		w.Write([]byte(`{"code":20001,"data":{"message":"设备信息更新错误，可能设备不存在"}}`))
+		return
+	}
+
 	content := fmt.Sprintf("%s房间从%d修改为%d", dev.CallSignSSID, dev.GroupID, stb.GroupID)
 	addOperatorLog(content, "修改设备房间", u)
 

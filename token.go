@@ -23,7 +23,7 @@ type Claims struct {
 // 生成 JWT token
 func GenerateToken(username string, roles []string) (string, error) {
 	// 设置过期时间
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(24 * 30 * time.Hour)
 	claims := &Claims{
 		Username: username,
 		Roles:    roles,

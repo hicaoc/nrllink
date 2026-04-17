@@ -60,12 +60,12 @@ type deviceInfo struct {
 	LastCtlEndTime   time.Time `json:"last_ctl_end_time"`   //最后控制时间
 	LastCtlDuration  int       `json:"last_ctl_duration"`   //上次控制持续时长  秒
 
-	Note          string      `json:"note" db:"note"` //设备上线时间
-	DeviceParm    *control    `json:"device_parm"`
-	LastATcommand *ATcommand  `json:"last_atcommand"`
-	pcmBuf    []byte     //g711语音缓存，发送端追加，混音端每次取160字节
-	pcmMu     sync.Mutex
-	pcmBuffer []int
+	Note          string     `json:"note" db:"note"` //设备上线时间
+	DeviceParm    *control   `json:"device_parm"`
+	LastATcommand *ATcommand `json:"last_atcommand"`
+	pcmBuf        []byte     //g711语音缓存，发送端追加，混音端每次取160字节
+	pcmMu         sync.Mutex
+	pcmBuffer     []int
 	speaking      bool
 	Ducked        bool `json:"ducted"`
 	//ticker        *time.Ticker
@@ -296,9 +296,9 @@ func (d *deviceInfo) String() string {
 
 }
 
-func getDevicelist(w string, p string, sort string) ([]deviceInfo, int) {
+func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 
-	devlist := []deviceInfo{}
+	devlist := []*deviceInfo{}
 
 	query := fmt.Sprintf(`	select 
 	id,
@@ -352,7 +352,7 @@ func getDevicelist(w string, p string, sort string) ([]deviceInfo, int) {
 
 		}
 
-		devlist = append(devlist, *dev)
+		devlist = append(devlist, dev)
 	}
 
 	var t int
@@ -370,9 +370,9 @@ func getDevicelist(w string, p string, sort string) ([]deviceInfo, int) {
 
 }
 
-func getOnlineDevicelist(limit, page int, callsign string, groupid string, sortstr string) ([]deviceInfo, int) {
+func getOnlineDevicelist(limit, page int, callsign string, groupid string, sortstr string) ([]*deviceInfo, int) {
 
-	devlist := make([]deviceInfo, 0)
+	devlist := make([]*deviceInfo, 0)
 
 	if limit <= 0 || page <= 0 {
 		return devlist, 0
@@ -380,7 +380,7 @@ func getOnlineDevicelist(limit, page int, callsign string, groupid string, sorts
 
 	callsign = strings.ToUpper(callsign)
 
-	for _, v := range onlinedevMap {
+	for k, v := range onlinedevMap {
 
 		match := true
 		yes, _ := regexp.MatchString(callsign, v.CallSign)
@@ -396,7 +396,7 @@ func getOnlineDevicelist(limit, page int, callsign string, groupid string, sorts
 		}
 
 		if match {
-			devlist = append(devlist, *v)
+			devlist = append(devlist, onlinedevMap[k])
 		}
 
 	}
@@ -422,7 +422,7 @@ func getDeviceFromMap(callsignssid string) (dev *deviceInfo) {
 	return nil
 }
 
-func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
+func getDevice(callsign string, ssid byte) (dev *deviceInfo, err error) {
 	dev = &deviceInfo{}
 
 	row := db.QueryRow(`select id,name,callsign,
@@ -432,18 +432,19 @@ func getDevice(callsign string, ssid byte) (dev *deviceInfo) {
 	create_time,update_time,online_time,note,rf_type  
  from  devices   where callsign=? and ssid=?`, callsign, ssid)
 
-	err := row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+	err = row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
 		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
 		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
 
 	if err != nil {
 		log.Println("query one device rows err:", err)
+		return nil, err
 	}
 
 	callsignSSID := getCallsignSSID(dev.CallSign, dev.SSID)
 	dev.CallSignSSID = callsignSSID
 
-	return dev
+	return dev, nil
 
 }
 
@@ -476,7 +477,7 @@ func getDeviceByDMRID(dmrid string) (dev *deviceInfo) {
 
 }
 
-func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
+func queryDeviceParm(callsignwithssid string) (dev *deviceInfo, err error) {
 
 	if dev, ok := devCallsignSSIDMap[callsignwithssid]; ok {
 
@@ -484,7 +485,7 @@ func queryDeviceParm(callsignwithssid string) (dev deviceInfo, err error) {
 
 		time.Sleep(300 * time.Millisecond)
 
-		return *dev, nil
+		return dev, nil
 
 	}
 

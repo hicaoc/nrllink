@@ -272,12 +272,14 @@ func udpProcess(conn *net.UDPConn) {
 
 			if err != nil {
 				log.Println("add dev failed, ", err, '\n', nrl)
-				continue
 			}
 
-			//}
+			d, err := getDevice(nrl.CallSign, nrl.SSID)
 
-			d := getDevice(nrl.CallSign, nrl.SSID)
+			if err != nil {
+				log.Printf("Failed to get device for server %v-%d: %v", nrl.CallSign, nrl.SSID, err)
+				continue
+			}
 
 			log.Println("add dev ok", dd.CallSign, dd.SSID, d.GroupID, "groupid:", dd.GroupID, dd.CallSign, dd.SSID, d)
 
