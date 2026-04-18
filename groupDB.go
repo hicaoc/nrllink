@@ -118,6 +118,10 @@ func (p *group) mixPCM() {
 			// --- 单人发言直通 (Bypass) ---
 			// 直接透传原始字节，音质无损
 			copy(globalPacket[48:], speakers[0].rawG711)
+			callWSHub.publishVoiceFrame(p, "", 0, speakers[0].rawG711, time.Now(), wsSpeaker{
+				Callsign: speakers[0].dev.CallSign,
+				SSID:     speakers[0].dev.SSID,
+			})
 
 			for _, vv := range devConnList {
 				if vv.udpAddr == nil || vv.speaking {
@@ -145,6 +149,14 @@ func (p *group) mixPCM() {
 				globalG711[i] = Linear2Alaw(int16(v))
 			}
 			copy(globalPacket[48:], globalG711)
+			wsSpeakers := make([]wsSpeaker, 0, len(speakers))
+			for _, speaker := range speakers {
+				wsSpeakers = append(wsSpeakers, wsSpeaker{
+					Callsign: speaker.dev.CallSign,
+					SSID:     speaker.dev.SSID,
+				})
+			}
+			callWSHub.publishVoiceFrame(p, "", 0, globalG711, time.Now(), wsSpeakers...)
 
 			if numbs == 2 {
 				// --- 双人对讲互传优化 ---

@@ -45,6 +45,7 @@ func main() {
 	initAllDevList()
 
 	go jsonhttp.init()
+	go callWSHub.run()
 
 	logbuffer = make(chan *deviceInfo, 1000)
 	go saveLog()

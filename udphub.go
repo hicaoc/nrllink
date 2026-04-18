@@ -331,6 +331,11 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			dev.LastVoiceBeginTime = nrl.timeStamp
 			logbuffer <- dev
 			dev.Loged = true
+			if nrl.DevModel == 200 || (nrl.DevModel == 255 && nrl.SSID == 255) {
+				callWSHub.trackCallStart(gp, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.timeStamp)
+			} else {
+				callWSHub.trackCallStart(gp, dev.CallSign, dev.SSID, nrl.timeStamp)
+			}
 		}
 
 		dev.Loged = false
@@ -512,6 +517,11 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			dev.LastVoiceBeginTime = nrl.timeStamp
 			logbuffer <- dev
 			dev.Loged = true
+			if nrl.DevModel == 200 || (nrl.DevModel == 255 && nrl.SSID == 255) {
+				callWSHub.trackCallStart(gp, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.timeStamp)
+			} else {
+				callWSHub.trackCallStart(gp, dev.CallSign, dev.SSID, nrl.timeStamp)
+			}
 		}
 
 		dev.Loged = false
@@ -600,8 +610,10 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 		//fmt.Println("case 1 :", clientAddrStr)
 		globelconn.WriteToUDP(packet, nrl.UDPAddr)
 		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
+		callWSHub.publishVoiceFrame(gp, dev.CallSign, dev.SSID, nrl.DATA, nrl.timeStamp)
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
+		callWSHub.publishVoiceFrame(gp, dev.CallSign, dev.SSID, nrl.DATA, nrl.timeStamp)
 
 		for _, vv := range gp.connPool.snapshotMap() {
 
@@ -663,6 +675,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 			gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
 
 		}
+		callWSHub.publishVoiceFrame(gp, dev.CallSign, dev.SSID, nrl.DATA, nrl.timeStamp)
 
 		for _, vv := range gp.connPool.snapshotList() {
 			// if nrl.timeStamp.Sub(vv.lastTime) > 10*time.Second {
@@ -742,6 +755,7 @@ func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *
 	} else if nrl.DevModel == 255 && nrl.SSID == 255 {
 		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	}
+	callWSHub.publishVoiceFrame(gp, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.DATA, nrl.timeStamp)
 
 	for _, vv := range gp.connPool.snapshotList() {
 

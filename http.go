@@ -109,6 +109,10 @@ func sethttphead(w http.ResponseWriter) {
 
 }
 
+func allowWebsocketHandshake(config *websocket.Config, req *http.Request) error {
+	return nil
+}
+
 func (j *jsonapi) msghttp() {
 
 	router := mux.NewRouter()
@@ -210,7 +214,14 @@ func (j *jsonapi) msghttp() {
 	//http.HandleFunc("/login", j.httplogin)
 	//http.HandleFunc("/reg", j.httpreg)
 
-	http.Handle("/ws", websocket.Handler(upper))
+	http.Handle("/ws", websocket.Server{
+		Handler:   websocket.Handler(upper),
+		Handshake: allowWebsocketHandshake,
+	})
+	http.Handle("/ws/calls", websocket.Server{
+		Handler:   websocket.Handler(j.wsCallStream),
+		Handshake: allowWebsocketHandshake,
+	})
 
 	http.Handle("/", http.FileServer(http.Dir(conf.Web.Path)))
 
