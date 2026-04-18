@@ -48,12 +48,14 @@ type wsCallCommand struct {
 }
 
 type wsCallMessage struct {
-	Type          string         `json:"type"`
-	Rooms         []wsRoomState  `json:"rooms,omitempty"`
-	Room          *wsRoomState   `json:"room,omitempty"`
-	RecentCalls   []wsCallRecord `json:"recent_calls,omitempty"`
-	Subscriptions []string       `json:"subscriptions,omitempty"`
-	Message       string         `json:"message,omitempty"`
+	Type            string         `json:"type"`
+	Rooms           []wsRoomState  `json:"rooms,omitempty"`
+	Room            *wsRoomState   `json:"room,omitempty"`
+	RecentCalls     []wsCallRecord `json:"recent_calls,omitempty"`
+	Subscriptions   []string       `json:"subscriptions,omitempty"`
+	Message         string         `json:"message,omitempty"`
+	TotalSubs       int            `json:"total_subs"`
+	ConnectedClients int           `json:"connected_clients"`
 }
 
 type roomStateEntry struct {
@@ -73,6 +75,7 @@ type wsCallHub struct {
 	roomStates map[string]*roomStateEntry
 	activeCalls map[string]activeCallEntry
 	recent     []wsCallRecord
+	statsNotify chan struct{}
 }
 
 type wsCallClient struct {
@@ -82,12 +85,14 @@ type wsCallClient struct {
 	sendMu        sync.Mutex
 	mu            sync.Mutex
 	closed        bool
+	lastSeen      time.Time
 	subscriptions map[string]bool
 	audioBuffers  map[string][]byte
 }
 
 const wsCallAudioFrameSize = 160
 const wsCallMaxBufferedBytes = 500 * 50
+const wsCallClientTimeout = 25 * time.Second
 
 var wsCallSilenceALaw = Linear2Alaw(0)
 
@@ -99,6 +104,59 @@ func newWSCallHub() *wsCallHub {
 		roomStates: make(map[string]*roomStateEntry),
 		activeCalls: make(map[string]activeCallEntry),
 		recent:     make([]wsCallRecord, 0, 20),
+		statsNotify: make(chan struct{}, 1),
+	}
+}
+
+func (h *wsCallHub) requestStatsBroadcast() {
+	select {
+	case h.statsNotify <- struct{}{}:
+	default:
+	}
+}
+
+func (h *wsCallHub) connectedClientCount() int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.clients)
+}
+
+func (h *wsCallHub) totalSubscriptions() int {
+	h.mu.RLock()
+	clients := make([]*wsCallClient, 0, len(h.clients))
+	for client := range h.clients {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
+
+	total := 0
+	for _, client := range clients {
+		client.mu.Lock()
+		total += len(client.subscriptions)
+		client.mu.Unlock()
+	}
+	return total
+}
+
+func (h *wsCallHub) broadcastStats() {
+	connectedClients := h.connectedClientCount()
+	totalSubs := h.totalSubscriptions()
+	h.mu.RLock()
+	clients := make([]*wsCallClient, 0, len(h.clients))
+	for client := range h.clients {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
+
+	msg := wsCallMessage{
+		Type:              "stats",
+		TotalSubs:         totalSubs,
+		ConnectedClients: connectedClients,
+	}
+	for _, client := range clients {
+		if err := client.sendJSON(msg); err != nil {
+			client.close()
+		}
 	}
 }
 
@@ -166,8 +224,40 @@ func (h *wsCallHub) run() {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		h.expireInactiveRooms()
+	for {
+		select {
+		case <-ticker.C:
+			h.expireInactiveRooms()
+			h.expireInactiveClients()
+		case <-h.statsNotify:
+			h.broadcastStats()
+		}
+	}
+}
+
+func (h *wsCallHub) expireInactiveClients() {
+	now := time.Now()
+
+	h.mu.RLock()
+	clients := make([]*wsCallClient, 0, len(h.clients))
+	for client := range h.clients {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
+
+	for _, client := range clients {
+		client.mu.Lock()
+		lastSeen := client.lastSeen
+		closed := client.closed
+		client.mu.Unlock()
+
+		if closed {
+			continue
+		}
+		if !lastSeen.IsZero() && now.Sub(lastSeen) > wsCallClientTimeout {
+			log.Printf("calls-ws: closing stale client last_seen=%s", lastSeen.Format(time.RFC3339))
+			client.close()
+		}
 	}
 }
 
@@ -464,12 +554,14 @@ func (h *wsCallHub) addClient(client *wsCallClient) {
 	h.mu.Lock()
 	h.clients[client] = struct{}{}
 	h.mu.Unlock()
+	h.requestStatsBroadcast()
 }
 
 func (h *wsCallHub) removeClient(client *wsCallClient) {
 	h.mu.Lock()
 	delete(h.clients, client)
 	h.mu.Unlock()
+	h.requestStatsBroadcast()
 }
 
 func (h *wsCallHub) broadcastRoomState(state wsRoomState) {
@@ -484,10 +576,12 @@ func (h *wsCallHub) broadcastRoomState(state wsRoomState) {
 		if !client.canAccessRoom(state.RoomKey) {
 			continue
 		}
-		client.sendJSON(wsCallMessage{
+		if err := client.sendJSON(wsCallMessage{
 			Type: "room_state",
 			Room: &state,
-		})
+		}); err != nil {
+			client.close()
+		}
 	}
 }
 
@@ -500,10 +594,12 @@ func (h *wsCallHub) broadcastRecentCalls() {
 	h.mu.RUnlock()
 
 	for _, client := range clients {
-		client.sendJSON(wsCallMessage{
+		if err := client.sendJSON(wsCallMessage{
 			Type:        "recent_calls",
 			RecentCalls: h.recentCallsForUser(client.user),
-		})
+		}); err != nil {
+			client.close()
+		}
 	}
 }
 
@@ -512,6 +608,7 @@ func newWSCallClient(h *wsCallHub, ws *websocket.Conn, user *userinfo) *wsCallCl
 		hub:           h,
 		ws:            ws,
 		user:          user,
+		lastSeen:      time.Now(),
 		subscriptions: make(map[string]bool),
 		audioBuffers:  make(map[string][]byte),
 	}
@@ -594,10 +691,12 @@ func (c *wsCallClient) close() {
 
 func (c *wsCallClient) sendSnapshot() error {
 	return c.sendJSON(wsCallMessage{
-		Type:          "snapshot",
-		Rooms:         c.hub.roomsForUser(c.user),
-		RecentCalls:   c.hub.recentCallsForUser(c.user),
-		Subscriptions: c.snapshotSubscriptions(),
+		Type:             "snapshot",
+		Rooms:            c.hub.roomsForUser(c.user),
+		RecentCalls:      c.hub.recentCallsForUser(c.user),
+		Subscriptions:    c.snapshotSubscriptions(),
+		TotalSubs:        c.hub.totalSubscriptions(),
+		ConnectedClients: c.hub.connectedClientCount(),
 	})
 }
 
@@ -605,8 +704,6 @@ func (c *wsCallClient) updateSubscriptions(action string, roomKeys []string) {
 	allowed := c.accessibleRoomKeys()
 
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	switch action {
 	case "set_subscriptions":
 		newSubs := make(map[string]bool)
@@ -633,6 +730,9 @@ func (c *wsCallClient) updateSubscriptions(action string, roomKeys []string) {
 			delete(c.audioBuffers, key)
 		}
 	}
+	c.mu.Unlock()
+
+	c.hub.requestStatsBroadcast()
 }
 
 func (c *wsCallClient) sendSubscriptions() error {
@@ -659,10 +759,16 @@ func (c *wsCallClient) readLoop() error {
 
 		switch cmd.Action {
 		case "ping":
+			c.mu.Lock()
+			c.lastSeen = time.Now()
+			c.mu.Unlock()
 			if err := c.sendJSON(wsCallMessage{Type: "pong"}); err != nil {
 				return err
 			}
 		case "subscribe", "unsubscribe", "set_subscriptions":
+			c.mu.Lock()
+			c.lastSeen = time.Now()
+			c.mu.Unlock()
 			c.updateSubscriptions(cmd.Action, cmd.RoomKeys)
 			if err := c.sendSubscriptions(); err != nil {
 				return err
