@@ -40,6 +40,7 @@ type wsCallRecord struct {
 	DurationMS     int64  `json:"duration_ms"`
 	DurationText   string `json:"duration_text"`
 	DurationSecond int64  `json:"duration_second"`
+	Active         bool   `json:"active"`
 }
 
 type wsCallCommand struct {
@@ -411,9 +412,17 @@ func (h *wsCallHub) recentCallsForUser(u *userinfo) []wsCallRecord {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
+	activeCallIDs := make(map[string]bool, len(h.activeCalls))
+	for _, activeCall := range h.activeCalls {
+		if activeCall.promoted {
+			activeCallIDs[activeCall.record.CallID] = true
+		}
+	}
+
 	items := make([]wsCallRecord, 0, len(h.recent))
 	for _, item := range h.recent {
 		if _, ok := rooms[item.RoomKey]; ok {
+			item.Active = activeCallIDs[item.CallID]
 			items = append(items, item)
 		}
 	}
@@ -443,6 +452,7 @@ func (h *wsCallHub) trackCallStart(gp *group, callsign string, ssid byte, ts tim
 		DurationMS:     0,
 		DurationText:   "00:00",
 		DurationSecond: 0,
+		Active:         false,
 	}
 
 	h.mu.Lock()
