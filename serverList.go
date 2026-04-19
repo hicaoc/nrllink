@@ -57,6 +57,8 @@ func startPlatformServerSync() {
 		return
 	}
 
+	waitForInitialOnlineStats(12 * time.Second)
+
 	if err := reportCurrentServerStatus(); err != nil {
 		log.Println("platform-servers: initial report failed:", err)
 	}
@@ -64,22 +66,28 @@ func startPlatformServerSync() {
 		log.Println("platform-servers: initial sync failed:", err)
 	}
 
-	reportTicker := time.NewTicker(3 * time.Minute)
-	listTicker := time.NewTicker(5 * time.Minute)
+	reportTicker := time.NewTicker(5 * time.Minute)
 	defer reportTicker.Stop()
-	defer listTicker.Stop()
 
 	for {
 		select {
 		case <-reportTicker.C:
 			if err := reportCurrentServerStatus(); err != nil {
 				log.Println("platform-servers: report failed:", err)
-			}
-		case <-listTicker.C:
-			if err := syncPlatformServerList(); err != nil {
-				log.Println("platform-servers: sync list failed:", err)
+			} else if err := syncPlatformServerList(); err != nil {
+				log.Println("platform-servers: sync list after report failed:", err)
 			}
 		}
+	}
+}
+
+func waitForInitialOnlineStats(timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if totalstats.OnlineDevNumber > 0 {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
@@ -88,7 +96,7 @@ func reportCurrentServerStatus() error {
 		Name:   strings.TrimSpace(conf.SystemInfo.PlatformName),
 		Host:   strings.TrimSpace(conf.APRS.SelfAddress),
 		Port:   strings.TrimSpace(conf.APRS.SelfPort),
-		Online: totalstats.OnlineDevNumber,
+		Online: currentOnlineDeviceCount(),
 		Total:  len(devCallsignSSIDMap),
 	}
 

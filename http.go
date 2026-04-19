@@ -63,6 +63,7 @@ type totalStats struct {
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
 
 	totalstats.DevNumber = len(devCallsignSSIDMap)
+	totalstats.OnlineDevNumber = currentOnlineDeviceCount()
 	totalstats.UserNumber = 1000
 	//totalstats.UserNumber = len(userlist)
 

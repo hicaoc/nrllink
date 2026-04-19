@@ -86,12 +86,12 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	var id int
 
-	totalstats.OnlineDevNumber = 0
+	onlineDeviceTotal := 0
 
 	for _, vv := range devCallsignSSIDMap {
 
 		if vv.ISOnline {
-			totalstats.OnlineDevNumber++
+			onlineDeviceTotal++
 		}
 
 		dev := vv
@@ -105,6 +105,8 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 		id++
 
 	}
+
+	totalstats.OnlineDevNumber = onlineDeviceTotal
 
 	rescode, _ := jsonextra.Marshal(devicelist)
 

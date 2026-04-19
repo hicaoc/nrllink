@@ -106,7 +106,7 @@ func checkdeviceOnline() {
 		//offlinelist := []*deviceInfo{}
 
 		t := time.Now()
-		totalstats.OnlineDevNumber = 0
+		onlineDeviceTotal := 0
 
 		for _, vv := range publicGroupMap {
 
@@ -149,7 +149,7 @@ func checkdeviceOnline() {
 
 			vv.TotalDevNumber = len(vv.DevMap)
 
-			totalstats.OnlineDevNumber = totalstats.OnlineDevNumber + vv.OnlineDevNumber
+			onlineDeviceTotal = onlineDeviceTotal + vv.OnlineDevNumber
 
 		}
 
@@ -185,14 +185,23 @@ func checkdeviceOnline() {
 				vv.connPool.mu.Unlock()
 
 				vv.TotalDevNumber = len(vv.DevMap)
-				totalstats.OnlineDevNumber = totalstats.OnlineDevNumber + vv.OnlineDevNumber
+				onlineDeviceTotal = onlineDeviceTotal + vv.OnlineDevNumber
 
 			}
 			return true
 
 		})
 
+		prevOnlineDeviceTotal := totalstats.OnlineDevNumber
 		onlinedevMap = onlineMap
+		totalstats.OnlineDevNumber = onlineDeviceTotal
+		if prevOnlineDeviceTotal == 0 && onlineDeviceTotal > 0 {
+			go func() {
+				if err := reportCurrentServerStatus(); err != nil {
+					log.Println("platform-servers: refresh report after online count recovered failed:", err)
+				}
+			}()
+		}
 		//offlineDevList = offlinelist
 
 	}

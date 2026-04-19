@@ -49,14 +49,15 @@ type wsCallCommand struct {
 }
 
 type wsCallMessage struct {
-	Type            string         `json:"type"`
-	Rooms           []wsRoomState  `json:"rooms,omitempty"`
-	Room            *wsRoomState   `json:"room,omitempty"`
-	RecentCalls     []wsCallRecord `json:"recent_calls,omitempty"`
-	Subscriptions   []string       `json:"subscriptions,omitempty"`
-	Message         string         `json:"message,omitempty"`
-	TotalSubs       int            `json:"total_subs"`
-	ConnectedClients int           `json:"connected_clients"`
+	Type             string         `json:"type"`
+	Rooms            []wsRoomState  `json:"rooms,omitempty"`
+	Room             *wsRoomState   `json:"room,omitempty"`
+	RecentCalls      []wsCallRecord `json:"recent_calls,omitempty"`
+	Subscriptions    []string       `json:"subscriptions,omitempty"`
+	Message          string         `json:"message,omitempty"`
+	TotalSubs        int            `json:"total_subs"`
+	ConnectedClients int            `json:"connected_clients"`
+	OnlineDevices    int            `json:"online_devices"`
 }
 
 type roomStateEntry struct {
@@ -71,12 +72,13 @@ type activeCallEntry struct {
 }
 
 type wsCallHub struct {
-	mu         sync.RWMutex
-	clients    map[*wsCallClient]struct{}
-	roomStates map[string]*roomStateEntry
-	activeCalls map[string]activeCallEntry
-	recent     []wsCallRecord
-	statsNotify chan struct{}
+	mu                 sync.RWMutex
+	clients            map[*wsCallClient]struct{}
+	roomStates         map[string]*roomStateEntry
+	activeCalls        map[string]activeCallEntry
+	recent             []wsCallRecord
+	statsNotify        chan struct{}
+	lastOnlineDevices  int
 }
 
 type wsCallClient struct {
@@ -101,11 +103,12 @@ var callWSHub = newWSCallHub()
 
 func newWSCallHub() *wsCallHub {
 	return &wsCallHub{
-		clients:    make(map[*wsCallClient]struct{}),
-		roomStates: make(map[string]*roomStateEntry),
-		activeCalls: make(map[string]activeCallEntry),
-		recent:     make([]wsCallRecord, 0, 20),
-		statsNotify: make(chan struct{}, 1),
+		clients:           make(map[*wsCallClient]struct{}),
+		roomStates:        make(map[string]*roomStateEntry),
+		activeCalls:       make(map[string]activeCallEntry),
+		recent:            make([]wsCallRecord, 0, 20),
+		statsNotify:       make(chan struct{}, 1),
+		lastOnlineDevices: -1,
 	}
 }
 
@@ -139,9 +142,17 @@ func (h *wsCallHub) totalSubscriptions() int {
 	return total
 }
 
+func currentOnlineDeviceCount() int {
+	if totalstats.OnlineDevNumber > 0 {
+		return totalstats.OnlineDevNumber
+	}
+	return len(onlinedevMap)
+}
+
 func (h *wsCallHub) broadcastStats() {
 	connectedClients := h.connectedClientCount()
 	totalSubs := h.totalSubscriptions()
+	onlineDevices := currentOnlineDeviceCount()
 	h.mu.RLock()
 	clients := make([]*wsCallClient, 0, len(h.clients))
 	for client := range h.clients {
@@ -150,9 +161,10 @@ func (h *wsCallHub) broadcastStats() {
 	h.mu.RUnlock()
 
 	msg := wsCallMessage{
-		Type:              "stats",
-		TotalSubs:         totalSubs,
+		Type:             "stats",
+		TotalSubs:        totalSubs,
 		ConnectedClients: connectedClients,
+		OnlineDevices:    onlineDevices,
 	}
 	for _, client := range clients {
 		if err := client.sendJSON(msg); err != nil {
@@ -230,6 +242,11 @@ func (h *wsCallHub) run() {
 		case <-ticker.C:
 			h.expireInactiveRooms()
 			h.expireInactiveClients()
+			currentOnlineDevices := currentOnlineDeviceCount()
+			if currentOnlineDevices != h.lastOnlineDevices {
+				h.lastOnlineDevices = currentOnlineDevices
+				h.broadcastStats()
+			}
 		case <-h.statsNotify:
 			h.broadcastStats()
 		}
@@ -707,6 +724,7 @@ func (c *wsCallClient) sendSnapshot() error {
 		Subscriptions:    c.snapshotSubscriptions(),
 		TotalSubs:        c.hub.totalSubscriptions(),
 		ConnectedClients: c.hub.connectedClientCount(),
+		OnlineDevices:    currentOnlineDeviceCount(),
 	})
 }
 
