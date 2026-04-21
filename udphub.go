@@ -31,9 +31,9 @@ import (
 
 var userlist sync.Map // callid ,userinfo
 
-var mdcidmap map[string]string //key mdcid, value callsign
+var mdcidmap sync.Map //key mdcid, value callsign
 
-var dmridmap map[string]string //key dmrid, value callsign
+var dmridmap sync.Map //key dmrid, value callsign
 
 var devCallsignSSIDMap = make(map[string]*deviceInfo, 1000) //key : callsign+ssid 在线设备列表
 

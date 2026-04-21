@@ -69,14 +69,11 @@ func startPlatformServerSync() {
 	reportTicker := time.NewTicker(5 * time.Minute)
 	defer reportTicker.Stop()
 
-	for {
-		select {
-		case <-reportTicker.C:
-			if err := reportCurrentServerStatus(); err != nil {
-				log.Println("platform-servers: report failed:", err)
-			} else if err := syncPlatformServerList(); err != nil {
-				log.Println("platform-servers: sync list after report failed:", err)
-			}
+	for range reportTicker.C {
+		if err := reportCurrentServerStatus(); err != nil {
+			log.Println("platform-servers: report failed:", err)
+		} else if err := syncPlatformServerList(); err != nil {
+			log.Println("platform-servers: sync list after report failed:", err)
 		}
 	}
 }

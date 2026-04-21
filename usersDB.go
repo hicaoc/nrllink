@@ -497,6 +497,8 @@ func updateUser(e *userinfo) error {
 
 	e.userinit()
 	userlist.Store(e.CallSign, e)
+	mdcidmap.Store(e.MDCID, e.CallSign)
+	dmridmap.Store(e.DMRID, e.CallSign)
 
 	return nil
 
