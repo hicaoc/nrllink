@@ -197,6 +197,9 @@ func (h *wsCallHub) updateRecentDurationLocked(callID string, d time.Duration) b
 		if h.recent[i].CallID != callID {
 			continue
 		}
+		if h.recent[i].DurationSecond == durationSecond {
+			return false
+		}
 		h.recent[i].DurationMS = durationMS
 		h.recent[i].DurationText = durationText
 		h.recent[i].DurationSecond = durationSecond
@@ -378,14 +381,67 @@ func sameSpeakers(a, b []wsSpeaker) bool {
 	return true
 }
 
+func allowedRoomCallsigns(gp *group) map[string]bool {
+	if gp == nil || len(gp.AllowCALLSSIDList) == 0 {
+		return nil
+	}
+
+	allowed := make(map[string]bool, len(gp.AllowCALLSSIDList))
+	for _, entry := range gp.AllowCALLSSIDList {
+		entry = strings.ToUpper(strings.TrimSpace(entry))
+		if entry == "" {
+			continue
+		}
+		if callsign, _, ok := strings.Cut(entry, "-"); ok {
+			entry = callsign
+		}
+		if entry != "" {
+			allowed[entry] = true
+		}
+	}
+	if len(allowed) == 0 {
+		return nil
+	}
+	return allowed
+}
+
+func canUserAccessGroup(u *userinfo, gp *group) bool {
+	if gp == nil {
+		return false
+	}
+	if gp.Type == 8 && u == nil {
+		return false
+	}
+
+	allowed := allowedRoomCallsigns(gp)
+	if len(allowed) == 0 {
+		return true
+	}
+	if u == nil {
+		return false
+	}
+
+	callsign := strings.ToUpper(strings.TrimSpace(u.CallSign))
+	if callsign == "" {
+		return false
+	}
+	return allowed[callsign]
+}
+
 func accessibleRooms(u *userinfo) map[string]*group {
 	rooms := make(map[string]*group, len(publicGroupMap)+3)
 
 	for _, gp := range publicGroupMap {
+		if !canUserAccessGroup(u, gp) {
+			continue
+		}
 		rooms[roomKeyFromGroup(gp)] = gp
 	}
 	if u != nil {
 		for _, gp := range u.Groups {
+			if !canUserAccessGroup(u, gp) {
+				continue
+			}
 			rooms[roomKeyFromGroup(gp)] = gp
 		}
 	}
