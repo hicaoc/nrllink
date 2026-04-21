@@ -184,6 +184,43 @@ func (j *jsonapi) httpUserDetail(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (j *jsonapi) httpGetMDCID(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	req.ParseForm()
+	mdcid := strings.TrimSpace(req.Form.Get("mdcid"))
+
+	if mdcid == "" {
+		w.Write([]byte(`{"code":20000,"data":{"message":"MDC ID不能为空"}}`))
+		return
+	}
+
+	if callsign, exists := mdcidmap[mdcid]; exists {
+		w.Write([]byte(fmt.Sprintf(`{"code":20000,"data":{"callsign":"%s"}}`, callsign)))
+	} else {
+		w.Write([]byte(`{"code":20000,"data":{"message":"未找到对应的呼号"}}`))
+	}
+}
+
+func (j *jsonapi) httpGetDMRID(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	req.ParseForm()
+	dmrid := strings.TrimSpace(req.Form.Get("dmrid"))
+
+	if dmrid == "" {
+		w.Write([]byte(`{"code":20000,"data":{"message":"DMR ID不能为空"}}`))
+		return
+	}
+
+	if callsign, exists := dmridmap[dmrid]; exists {
+		w.Write([]byte(fmt.Sprintf(`{"code":20000,"data":{"callsign":"%s"}}`, callsign)))
+	} else {
+		w.Write([]byte(`{"code":20000,"data":{"message":"未找到对应的呼号"}}`))
+	}
+
+}
+
 func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 

@@ -7,6 +7,9 @@ import (
 
 func initAllUserList() {
 
+	mdcidmap = make(map[string]string, 1000)
+	dmridmap = make(map[string]string, 1000)
+
 	rows, err := db.Query(`
 	SELECT 
 	id,name,callsign,
@@ -59,6 +62,8 @@ func initAllUserList() {
 		user.userinit()
 
 		userlist.Store(user.CallSign, user)
+		mdcidmap[user.MDCID] = user.CallSign
+		dmridmap[user.DMRID] = user.CallSign
 
 	}
 
