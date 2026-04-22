@@ -121,7 +121,7 @@ func (p *Server) Start() error {
 
 		if p, ok := publicGroupMap[0]; ok {
 
-			p.DevMap[dev.ID] = dev
+			p.devMap[dev.ID] = dev
 
 		}
 

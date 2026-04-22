@@ -47,7 +47,7 @@ type group struct {
 	UpdateTime string `json:"update_time" db:"update_time"`
 	Note       string `json:"note" db:"note"`
 	connPool   *currentConnPool
-	DevMap     map[int]*deviceInfo `json:"devmap" ` //key: 设备ID
+	devMap     map[int]*deviceInfo //key: 设备ID
 	//OutDevMap       map[string]*deviceInfo `json:"out_dev_map"` //callsign+ssid
 	OnlineDevNumber int `json:"online_dev_number"`
 	TotalDevNumber  int `json:"total_dev_number"`
@@ -235,7 +235,7 @@ func initPublicGroup() {
 		Name:         "公共大厅",
 		OwerCallsign: "default",
 		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
-		DevMap:       make(map[int]*deviceInfo, 10),
+		devMap:       make(map[int]*deviceInfo, 10),
 		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
@@ -247,7 +247,7 @@ func initPublicGroup() {
 		Name:         "全网互联",
 		OwerCallsign: "default",
 		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
-		DevMap:       make(map[int]*deviceInfo, 10),
+		devMap:       make(map[int]*deviceInfo, 10),
 		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
@@ -302,7 +302,7 @@ func initPublicGroup() {
 
 		pg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
 
-		pg.DevMap = make(map[int]*deviceInfo, 10)
+		pg.devMap = make(map[int]*deviceInfo, 10)
 
 		// 类型为3的公共组，只能一个设备转发，用于中继收听
 
@@ -471,7 +471,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
 			g.connPool.removeDevice(dev.udpAddr.String())
 
-			delete(g.DevMap, dev.ID)
+			delete(g.devMap, dev.ID)
 
 		} else {
 
@@ -482,7 +482,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 		//私人房间
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			delete(user.(*userinfo).Groups[dev.GroupID].DevMap, dev.ID)
+			delete(user.(*userinfo).Groups[dev.GroupID].devMap, dev.ID)
 			user.(*userinfo).Groups[dev.GroupID].connPool.removeDevice(dev.udpAddr.String())
 
 		}
@@ -495,7 +495,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 		if g, ok := publicGroupMap[groupid]; ok {
 			dev.GroupID = groupid
-			g.DevMap[dev.ID] = dev
+			g.devMap[dev.ID] = dev
 			if dev.udpAddr != nil {
 				g.connPool.ensureDevice(dev.udpAddr.String(), dev)
 			}
@@ -509,7 +509,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 	} else {
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			user.(*userinfo).Groups[groupid].DevMap[dev.ID] = dev
+			user.(*userinfo).Groups[groupid].devMap[dev.ID] = dev
 			if dev.udpAddr != nil {
 				user.(*userinfo).Groups[groupid].connPool.ensureDevice(dev.udpAddr.String(), dev)
 			}
@@ -554,7 +554,7 @@ func addPublicGroup(pg *group) error {
 	}
 	if _, ok := publicGroupMap[newpg.ID]; !ok {
 		newpg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
-		newpg.DevMap = make(map[int]*deviceInfo, 10)
+		newpg.devMap = make(map[int]*deviceInfo, 10)
 		if newpg.Type == 7 {
 			if newpg.ticker == nil {
 				newpg.ticker = time.NewTicker(20000 * time.Microsecond)

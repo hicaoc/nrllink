@@ -147,7 +147,7 @@ func checkdeviceOnline() {
 			}
 			vv.connPool.mu.Unlock()
 
-			vv.TotalDevNumber = len(vv.DevMap)
+			vv.TotalDevNumber = len(vv.devMap)
 
 			onlineDeviceTotal = onlineDeviceTotal + vv.OnlineDevNumber
 
@@ -184,7 +184,7 @@ func checkdeviceOnline() {
 				vv.connPool.rebuildListLocked()
 				vv.connPool.mu.Unlock()
 
-				vv.TotalDevNumber = len(vv.DevMap)
+				vv.TotalDevNumber = len(vv.devMap)
 				onlineDeviceTotal = onlineDeviceTotal + vv.OnlineDevNumber
 
 			}
@@ -259,7 +259,7 @@ func initAllDevList() {
 
 		if kk, ok := publicGroupMap[dev.GroupID]; ok {
 
-			kk.DevMap[dev.ID] = dev
+			kk.devMap[dev.ID] = dev
 			kk.DevList = append(kk.DevList, dev.ID)
 
 		} else {
@@ -269,7 +269,7 @@ func initAllDevList() {
 				dev.GroupID = 0
 
 				if kkk, ok := publicGroupMap[dev.GroupID]; ok {
-					kkk.DevMap[dev.ID] = dev
+					kkk.devMap[dev.ID] = dev
 					kkk.DevList = append(kkk.DevList, dev.ID)
 
 				}
@@ -277,7 +277,7 @@ func initAllDevList() {
 			} else {
 				if user, okok := userlist.Load(dev.CallSign); okok {
 					gp := user.(*userinfo).Groups[dev.GroupID]
-					gp.DevMap[dev.ID] = dev
+					gp.devMap[dev.ID] = dev
 					gp.DevList = append(gp.DevList, dev.ID)
 
 				} else {
@@ -285,7 +285,7 @@ func initAllDevList() {
 					dev.GroupID = 0
 
 					if kkk, ok := publicGroupMap[dev.GroupID]; ok {
-						kkk.DevMap[dev.ID] = dev
+						kkk.devMap[dev.ID] = dev
 						kkk.DevList = append(kkk.DevList, dev.ID)
 
 					}
@@ -839,7 +839,7 @@ func delDevice(dev *deviceInfo) error {
 
 	if d, ok := devCallsignSSIDMap[dev.CallSignSSID]; ok {
 		delete(devCallsignSSIDMap, dev.CallSignSSID)
-		delete(publicGroupMap[dev.GroupID].DevMap, dev.ID)
+		delete(publicGroupMap[dev.GroupID].devMap, dev.ID)
 		if d.udpAddr != nil {
 			publicGroupMap[dev.GroupID].connPool.removeDevice(d.udpAddr.String())
 		}

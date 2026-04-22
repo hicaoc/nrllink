@@ -35,6 +35,7 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 	groupmap := make(map[int]*group)
 
 	for k, v := range publicGroupMap {
+	
 		groupmap[k] = v
 	}
 

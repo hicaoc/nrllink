@@ -151,7 +151,7 @@ func (j *jsonapi) httpGroupDeviceList(w http.ResponseWriter, req *http.Request) 
 
 	if grolupid < 999 && grolupid > 0 {
 		if user, okok := userlist.Load(u.CallSign); okok {
-			for _, v := range user.(*userinfo).Groups[grolupid].DevMap {
+			for _, v := range user.(*userinfo).Groups[grolupid].devMap {
 				if v.ISOnline {
 					onlinedevlist = append(onlinedevlist, v)
 				} else {
@@ -166,7 +166,7 @@ func (j *jsonapi) httpGroupDeviceList(w http.ResponseWriter, req *http.Request) 
 
 		if g, ok := publicGroupMap[grolupid]; ok {
 
-			for _, v := range g.DevMap {
+			for _, v := range g.devMap {
 				if v.ISOnline {
 					onlinedevlist = append(onlinedevlist, v)
 				} else {

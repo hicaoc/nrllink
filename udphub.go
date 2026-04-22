@@ -293,13 +293,13 @@ func udpProcess(conn *net.UDPConn) {
 
 			if p, ok := publicGroupMap[d.GroupID]; ok {
 
-				p.DevMap[d.ID] = d
+				p.devMap[d.ID] = d
 
 				NRL21parser(nrl, data[:n], d, conn, p)
 
 			} else {
 
-				publicGroupMap[0].DevMap[d.ID] = d
+				publicGroupMap[0].devMap[d.ID] = d
 
 				NRL21parser(nrl, data[:n], d, conn, publicGroupMap[0])
 
