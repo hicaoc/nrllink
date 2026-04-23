@@ -964,7 +964,6 @@ func (j *jsonapi) wsCallStream(ws *websocket.Conn) {
 	if tokenString != "" {
 		token, err := ValidateToken(tokenString)
 		if err != nil {
-			log.Println("websocket auth failed:", err)
 			ws.Close()
 			return
 		}
