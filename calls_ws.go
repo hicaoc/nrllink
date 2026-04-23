@@ -72,13 +72,13 @@ type activeCallEntry struct {
 }
 
 type wsCallHub struct {
-	mu                 sync.RWMutex
-	clients            map[*wsCallClient]struct{}
-	roomStates         map[string]*roomStateEntry
-	activeCalls        map[string]activeCallEntry
-	recent             []wsCallRecord
-	statsNotify        chan struct{}
-	lastOnlineDevices  int
+	mu                sync.RWMutex
+	clients           map[*wsCallClient]struct{}
+	roomStates        map[string]*roomStateEntry
+	activeCalls       map[string]activeCallEntry
+	recent            []wsCallRecord
+	statsNotify       chan struct{}
+	lastOnlineDevices int
 }
 
 type wsCallClient struct {
@@ -530,7 +530,7 @@ func (h *wsCallHub) trackCallStart(gp *group, callsign string, ssid byte, ts tim
 
 	h.mu.Lock()
 	h.roomStates[state.RoomKey] = &roomStateEntry{
-		wsRoomState:   state,
+		wsRoomState:  state,
 		lastActivity: ts,
 	}
 	h.activeCalls[state.RoomKey] = activeCallEntry{
@@ -746,10 +746,6 @@ func (c *wsCallClient) enqueueAudio(roomKey string, g711 []byte) {
 
 	if c.closed || !c.subscriptions[roomKey] || len(g711) == 0 {
 		return
-	}
-
-	if len(g711) != 160 && len(g711) != 480 && len(g711) != 500 {
-		log.Printf("calls-ws: received uncommon audio frame room=%s len=%d", roomKey, len(g711))
 	}
 
 	buf := append(c.audioBuffers[roomKey], g711...)
