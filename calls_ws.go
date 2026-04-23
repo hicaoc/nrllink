@@ -405,27 +405,36 @@ func allowedRoomCallsigns(gp *group) map[string]bool {
 	return allowed
 }
 
+func userCallsign(u *userinfo) string {
+	if u == nil {
+		return ""
+	}
+	return strings.ToUpper(strings.TrimSpace(u.CallSign))
+}
+
+func isPrivateRoom(gp *group) bool {
+	if gp == nil {
+		return false
+	}
+	return gp.Type == 8 || (gp.ID > 0 && gp.ID <= 3 && gp.OwerCallsign != "" && gp.OwerCallsign != "default")
+}
+
 func canUserAccessGroup(u *userinfo, gp *group) bool {
 	if gp == nil {
 		return false
 	}
-	if gp.Type == 8 && u == nil {
-		return false
+
+	callsign := userCallsign(u)
+	if isPrivateRoom(gp) {
+		owner := strings.ToUpper(strings.TrimSpace(gp.OwerCallsign))
+		return callsign != "" && owner != "" && owner != "DEFAULT" && callsign == owner
 	}
 
 	allowed := allowedRoomCallsigns(gp)
-	if len(allowed) == 0 {
-		return true
+	if len(allowed) > 0 {
+		return callsign != "" && allowed[callsign]
 	}
-	if u == nil {
-		return false
-	}
-
-	callsign := strings.ToUpper(strings.TrimSpace(u.CallSign))
-	if callsign == "" {
-		return false
-	}
-	return allowed[callsign]
+	return true
 }
 
 func accessibleRooms(u *userinfo) map[string]*group {
