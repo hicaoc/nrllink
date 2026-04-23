@@ -5,11 +5,33 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
 // var CanSpeekerDev = &connPoll{}
 // var globelConnPoll = make(map[string]connPoll, 100)
+
+type groupDetail struct {
+	*group
+	DevMap []*deviceInfo `json:"devmap"`
+}
+
+func newGroupDetail(g *group) groupDetail {
+	devlist := make([]*deviceInfo, 0, len(g.devMap))
+	for _, dev := range g.devMap {
+		devlist = append(devlist, dev)
+	}
+
+	sort.Slice(devlist, func(i, j int) bool {
+		return devlist[i].ID < devlist[j].ID
+	})
+
+	return groupDetail{
+		group:  g,
+		DevMap: devlist,
+	}
+}
 
 func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
@@ -35,7 +57,7 @@ func (j *jsonapi) httpPublicGroupList(w http.ResponseWriter, req *http.Request) 
 	groupmap := make(map[int]*group)
 
 	for k, v := range publicGroupMap {
-	
+
 		groupmap[k] = v
 	}
 
@@ -107,12 +129,12 @@ func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 	if groupid <= 3 && groupid > 0 {
 		if user, okok := userlist.Load(u.CallSign); okok {
 			gp := user.(*userinfo).Groups[groupid]
-			writeJSONResponseItem(w, gp)
+			writeJSONResponseItem(w, newGroupDetail(gp))
 			return
 		}
 
 	} else if g, ok := publicGroupMap[groupid]; ok {
-		writeJSONResponseItem(w, g)
+		writeJSONResponseItem(w, newGroupDetail(g))
 		return
 
 	}

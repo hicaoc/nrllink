@@ -24,7 +24,7 @@ hostlist='182.92.158.141 m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd4vki.xyz bd4vk
 
 #hostlist='ba1gm.nrlptt.com'
 
-hostlist='js.nrlptt.com'
+#hostlist='js.nrlptt.com'
 
 #hostlist='ah.nrlptt.com'
 
