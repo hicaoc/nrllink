@@ -251,6 +251,31 @@ func getuser(username string) (*userinfo, error) {
 	return r, nil
 }
 
+func getuserByID(id int) (*userinfo, error) {
+	r := &userinfo{}
+	var roles string
+
+	query := `SELECT id,pid,name,phone,
+	callsign,gird,birthday,mdcid,dmrid,
+	sex,nickname,openid,avatar,address, status,
+	last_login_time, login_err_times, last_login_ip,
+	alarm_msg,roles,create_time,update_time FROM users where id=? `
+
+	row := db.QueryRow(query, id)
+	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
+		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
+		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
+		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
+		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime)
+	if err != nil {
+		log.Println("getuser by id err :", err, "\n", query)
+		return nil, err
+	}
+
+	r.Roles = strings.Split(roles, ",")
+	return r, nil
+}
+
 func getEmpListByRole(role string) ([]userinfo, int) {
 
 	emp := []userinfo{}
@@ -557,4 +582,52 @@ func updateUserPassword(id int, password string) error {
 	}
 	return nil
 
+}
+
+func updateUserProfile(id int, dmrid string, mdcid string, avatar string, password string) error {
+	_, err := db.Exec(`update users set dmrid=?, mdcid=?, avatar=?, update_time=CURRENT_TIMESTAMP where id=?`, dmrid, mdcid, avatar, id)
+	if err != nil {
+		log.Println("update user profile failed, ", err)
+		return err
+	}
+
+	if password != "" {
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Exec("update users set password=? where id=?", passwordHash, id)
+		if err != nil {
+			log.Println("update user profile password failed, ", err)
+			return errors.New("passord update err")
+		}
+	}
+
+	u, err := getuserByID(id)
+	if err != nil {
+		log.Println("reload user profile failed, ", err)
+		return err
+	}
+
+	if oldUser, ok := userlist.Load(u.CallSign); ok {
+		old := oldUser.(*userinfo)
+		if old.MDCID != "" && old.MDCID != u.MDCID {
+			mdcidmap.Delete(old.MDCID)
+		}
+		if old.DMRID != "" && old.DMRID != u.DMRID {
+			dmridmap.Delete(old.DMRID)
+		}
+	}
+
+	u.userinit()
+	userlist.Store(u.CallSign, u)
+	if u.MDCID != "" {
+		mdcidmap.Store(u.MDCID, u.CallSign)
+	}
+	if u.DMRID != "" {
+		dmridmap.Store(u.DMRID, u.CallSign)
+	}
+
+	return nil
 }

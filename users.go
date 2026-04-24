@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -225,18 +226,38 @@ func (j *jsonapi) httpGetDMRID(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func isValidMDCID(mdcid string) bool {
+	if len(mdcid) != 4 {
+		return false
+	}
+
+	for _, r := range mdcid {
+		if !((r >= '0' && r <= '9') || (r >= 'A' && r <= 'F')) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isValidDMRID(dmrid string) bool {
+	if dmrid == "" {
+		return true
+	}
+
+	if _, err := strconv.ParseUint(dmrid, 10, 32); err != nil {
+		return false
+	}
+
+	return true
+}
+
 func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
 	u, err := checktoken(w, req)
 	if err != nil {
 		return
-	}
-
-	if !checkrole(u, []string{"master", "admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
-		return
-
 	}
 
 	result, _ := io.ReadAll(req.Body)
@@ -252,6 +273,23 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if !checkrole(u, []string{"master", "admin"}) {
+		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
+		return
+	}
+
+	stb.MDCID = strings.ToUpper(strings.TrimSpace(stb.MDCID))
+	if stb.MDCID != "" && !isValidMDCID(stb.MDCID) {
+		w.Write([]byte(`{"code":20000,"data":{"message":"MDC ID 必须是 4 位十六进制字符串"}}`))
+		return
+	}
+
+	stb.DMRID = strings.TrimSpace(stb.DMRID)
+	if !isValidDMRID(stb.DMRID) {
+		w.Write([]byte(`{"code":20000,"data":{"message":"DMR ID 必须是 0 到 4294967295 之间的整数"}}`))
+		return
+	}
+
 	// if checkrole(stb, []string{"admin"}) {
 	// 	w.Write([]byte("{"code":20000,"data":{"message":"内置账号，无法修改"}}"))
 	// 	return
@@ -261,8 +299,54 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	updateUser(stb)
 
 	addOperatorLog(stb.String(), "修改用户信息成功", u)
-
 	w.Write([]byte(`{"code":20000,"data":{"message":"员工信息更新成功"}}`))
+
+}
+
+func (j *jsonapi) httpUpdateUserProfile(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	result, _ := io.ReadAll(req.Body)
+	req.Body.Close()
+
+	stb := &userinfo{}
+	err = jsonextra.Unmarshal(result, &stb)
+	if err != nil {
+		log.Println("update user profile err :", err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		return
+	}
+
+	if u.ID != stb.ID {
+		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
+		return
+	}
+
+	stb.MDCID = strings.ToUpper(strings.TrimSpace(stb.MDCID))
+	if stb.MDCID != "" && !isValidMDCID(stb.MDCID) {
+		w.Write([]byte(`{"code":20000,"data":{"message":"MDC ID 必须是 4 位十六进制字符串"}}`))
+		return
+	}
+
+	stb.DMRID = strings.TrimSpace(stb.DMRID)
+	if !isValidDMRID(stb.DMRID) {
+		w.Write([]byte(`{"code":20000,"data":{"message":"DMR ID 必须是 0 到 4294967295 之间的整数"}}`))
+		return
+	}
+
+	stb.Avatar = strings.TrimSpace(stb.Avatar)
+	if err := updateUserProfile(u.ID, stb.DMRID, stb.MDCID, stb.Avatar, stb.Password); err != nil {
+		w.Write([]byte(`{"code":20000,"data":{"message":"个人信息更新失败"}}`))
+		return
+	}
+
+	addOperatorLog(u.String(), "修改个人资料成功", u)
+	w.Write([]byte(`{"code":20000,"data":{"message":"个人信息更新成功"}}`))
 
 }
 

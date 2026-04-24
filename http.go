@@ -199,6 +199,7 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/user/detail", j.httpUserDetail)
 	http.HandleFunc("/user/create", j.httpAddUser)
 	http.HandleFunc("/user/update", j.httpUpdateUser)
+	http.HandleFunc("/user/profile/update", j.httpUpdateUserProfile)
 	http.HandleFunc("/user/update/avatar", j.httpUpdateUserAvatar)
 
 	http.HandleFunc("/user/mdcid", j.httpGetMDCID)
