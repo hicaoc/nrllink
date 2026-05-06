@@ -551,6 +551,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		//fmt.Println(at)
 		dev.LastATcommand = at
 
+	case 12: //COM 透传
+		forwardCOM(nrl, packet, gp)
+
 	default:
 		fmt.Println("unknow data:", nrl.Type, nrl)
 		//conn.WriteToUDP(packet, n.Addr)
@@ -587,6 +590,31 @@ func FullNetOutput(nrl *NRL21packet, dev *deviceInfo, packet []byte) {
 
 		if v.udpAddr != nil && v.Host != conf.APRS.SelfAddress {
 			globelconn.WriteToUDP(newpacket, v.udpAddr)
+		}
+
+	}
+
+}
+
+func forwardCOM(nrl *NRL21packet, packet []byte, gp *group) {
+
+	if gp.ID > 3 {
+		return
+	}
+
+	for _, vv := range gp.connPool.snapshotMap() {
+
+		//报文转发给其它设备，不包含自己
+		if vv.udpAddr != nil && nrl.UDPAddrStr != vv.udpAddr.String() {
+
+			if vv.DevModel == 200 {
+				continue
+			} else {
+				globelconn.WriteToUDP(packet, vv.udpAddr)
+			}
+		} else {
+			//更新自己的时间
+			vv.LastVoiceEndTime = nrl.timeStamp
 		}
 
 	}

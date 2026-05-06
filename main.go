@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/ipipdotnet/ipdb-go"

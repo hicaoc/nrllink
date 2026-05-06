@@ -54,6 +54,7 @@ type group struct {
 	Recorder        int `json:"recored"`
 	Timer           *time.Timer
 	ticker          *time.Ticker
+	mixStop         chan struct{}
 }
 
 func (p *group) String() string {
@@ -62,7 +63,33 @@ func (p *group) String() string {
 
 }
 
+func (p *group) startMixPCM() {
+	if p.ticker != nil {
+		return
+	}
+	p.ticker = time.NewTicker(20000 * time.Microsecond)
+	p.mixStop = make(chan struct{})
+	go p.mixPCM()
+}
+
+func (p *group) stopMixPCM() {
+	if p.ticker != nil {
+		p.ticker.Stop()
+		p.ticker = nil
+	}
+	if p.mixStop != nil {
+		close(p.mixStop)
+		p.mixStop = nil
+	}
+}
+
 func (p *group) mixPCM() {
+	ticker := p.ticker
+	stop := p.mixStop
+	if ticker == nil || stop == nil {
+		return
+	}
+
 	pcm := make([]int, 160)
 	globalG711 := make([]byte, 160)
 	newG711 := make([]byte, 160)
@@ -80,7 +107,13 @@ func (p *group) mixPCM() {
 	}
 	speakers := make([]activeSpeaker, 0, 10)
 
-	for range p.ticker.C {
+	for {
+		select {
+		case <-ticker.C:
+		case <-stop:
+			return
+		}
+
 		speakers = speakers[:0]
 		for i := range pcm {
 			pcm[i] = 0
@@ -311,11 +344,7 @@ func initPublicGroup() {
 		publicGroupMap[pg.ID] = pg
 
 		if pg.Type == 7 {
-			if pg.ticker == nil {
-				pg.ticker = time.NewTicker(20000 * time.Microsecond)
-				go pg.mixPCM()
-			}
-
+			pg.startMixPCM()
 		}
 
 		fmt.Println("pg:", pg)
@@ -556,11 +585,7 @@ func addPublicGroup(pg *group) error {
 		newpg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
 		newpg.devMap = make(map[int]*deviceInfo, 10)
 		if newpg.Type == 7 {
-			if newpg.ticker == nil {
-				newpg.ticker = time.NewTicker(20000 * time.Microsecond)
-				go newpg.mixPCM()
-			}
-
+			newpg.startMixPCM()
 		}
 		publicGroupMap[newpg.ID] = newpg
 	}
@@ -590,20 +615,11 @@ func updatePublicGroup(pg *group) error {
 
 		//类型从其他改成7，需要启动mixPCM
 		if pg.Type == 7 && p.Type != 7 {
-			if p.ticker == nil {
-				p.ticker = time.NewTicker(20000 * time.Microsecond)
-				go p.mixPCM()
-			}
-
+			p.startMixPCM()
 		}
 		//从7改为其他 需要停止mixPCM
 		if pg.Type != 7 && p.Type == 7 {
-			if p.ticker != nil {
-				p.ticker.Stop()
-				p.ticker = nil
-
-			}
-
+			p.stopMixPCM()
 		}
 
 		p.Type = pg.Type
@@ -631,11 +647,8 @@ func deletePublicGroup(pg *group) error {
 		return err
 	}
 
-	if _, ok := publicGroupMap[pg.ID]; ok {
-		if pg.ticker != nil {
-			pg.ticker.Stop()
-			pg.ticker = nil
-		}
+	if p, ok := publicGroupMap[pg.ID]; ok {
+		p.stopMixPCM()
 	}
 
 	delete(publicGroupMap, pg.ID)

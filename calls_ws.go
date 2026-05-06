@@ -85,6 +85,7 @@ type wsCallClient struct {
 	hub           *wsCallHub
 	ws            *websocket.Conn
 	user          *userinfo
+	done          chan struct{}
 	sendMu        sync.Mutex
 	mu            sync.Mutex
 	closed        bool
@@ -700,6 +701,7 @@ func newWSCallClient(h *wsCallHub, ws *websocket.Conn, user *userinfo) *wsCallCl
 		hub:           h,
 		ws:            ws,
 		user:          user,
+		done:          make(chan struct{}),
 		lastSeen:      time.Now(),
 		subscriptions: make(map[string]bool),
 		audioBuffers:  make(map[string][]byte),
@@ -771,6 +773,7 @@ func (c *wsCallClient) close() {
 		return
 	}
 	c.closed = true
+	close(c.done)
 	c.mu.Unlock()
 
 	c.hub.removeClient(c)
@@ -941,12 +944,18 @@ func (c *wsCallClient) audioLoop() {
 	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		frame := c.nextMixedFrame()
-		if len(frame) == 0 {
-			continue
-		}
-		if err := c.sendBinary(frame); err != nil {
+	for {
+		select {
+		case <-ticker.C:
+			frame := c.nextMixedFrame()
+			if len(frame) == 0 {
+				continue
+			}
+			if err := c.sendBinary(frame); err != nil {
+				c.close()
+				return
+			}
+		case <-c.done:
 			return
 		}
 	}
