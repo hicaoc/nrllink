@@ -86,6 +86,42 @@ CREATE TABLE "users" (
 	"nickname"	TEXT,
 	"pid"	TEXT,
 	"last_login_ip"	TEXT,
+	"expire_time"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+CREATE TABLE "billing_packages" (
+	"id"	INTEGER UNIQUE,
+	"name"	TEXT,
+	"months"	INTEGER,
+	"unit_price_cents"	INTEGER,
+	"price_cents"	INTEGER,
+	"status"	INTEGER,
+	"note"	TEXT,
+	"create_time"	TEXT,
+	"update_time"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+CREATE TABLE "billing_orders" (
+	"id"	INTEGER UNIQUE,
+	"out_trade_no"	TEXT UNIQUE,
+	"user_id"	INTEGER,
+	"callsign"	TEXT,
+	"package_id"	INTEGER,
+	"months"	INTEGER,
+	"amount_cents"	INTEGER,
+	"status"	TEXT,
+	"prepay_id"	TEXT,
+	"code_url"	TEXT,
+	"transaction_id"	TEXT,
+	"payer_openid"	TEXT,
+	"paid_at"	TEXT,
+	"expire_before"	TEXT,
+	"expire_after"	TEXT,
+	"raw_notify"	TEXT,
+	"create_time"	TEXT,
+	"update_time"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 

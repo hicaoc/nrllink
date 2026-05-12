@@ -77,12 +77,12 @@ func (p *Server) Start() error {
 	}
 
 	dev, err := getDevice(p.OwerCallsign, 200)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		log.Printf("Failed to get device for server %d %v-200: %v", p.ID, p.OwerCallsign, err)
 		return fmt.Errorf("get device error")
 	}
 
-	if dev.ID == 0 {
+	if dev == nil || dev.ID == 0 {
 
 		fmt.Println("start device", p.OwerCallsign, 200)
 

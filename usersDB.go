@@ -44,6 +44,7 @@ type userinfo struct {
 	Status        int           `json:"status" db:"status"`
 	LastLoginTime string        `json:"last_login_time" db:"last_login_time"`
 	LastLoginIP   string        `json:"last_login_ip" db:"last_login_ip"`
+	ExpireTime    string        `json:"expire_time" db:"expire_time"`
 	LoginErrTimes int           `json:"login_err_times" db:"login_err_times"`
 	AlarmMsg      bool          `json:"alarm_msg" db:"alarm_msg"`
 	NickName      string        `json:"nickname" db:"nickname"`
@@ -173,7 +174,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 	 callsign,gird,birthday,mdcid,dmrid,
 	 sex,nickname,openid,avatar,address, status,
 	 last_login_time, login_err_times, last_login_ip,
-	 alarm_msg,roles,create_time,update_time FROM users  %v  %v  %v  `, w, sort, p)
+	 alarm_msg,roles,create_time,update_time,expire_time FROM users  %v  %v  %v  `, w, sort, p)
 
 	//fmt.Println(query)
 
@@ -187,7 +188,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 			&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
 			&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
 			&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
-			&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime,
+			&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime, &r.ExpireTime,
 		)
 		if err != nil {
 			log.Println("getuser by username err :", err, "\n", query)
@@ -230,14 +231,14 @@ func getuser(username string) (*userinfo, error) {
 	callsign,gird,birthday,mdcid,dmrid,
 	sex,nickname,openid,avatar,address, status,
 	last_login_time, login_err_times, last_login_ip,
-	alarm_msg,roles,create_time,update_time FROM users where phone=? or callsign=? `
+	alarm_msg,roles,create_time,update_time,expire_time FROM users where phone=? or callsign=? `
 
 	row := db.QueryRow(query, username, username)
 	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
 		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
 		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
 		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
-		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime)
+		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime, &r.ExpireTime)
 	if err != nil {
 		log.Println("getuser by username err :", err, "\n", query)
 		return nil, err
@@ -259,14 +260,14 @@ func getuserByID(id int) (*userinfo, error) {
 	callsign,gird,birthday,mdcid,dmrid,
 	sex,nickname,openid,avatar,address, status,
 	last_login_time, login_err_times, last_login_ip,
-	alarm_msg,roles,create_time,update_time FROM users where id=? `
+	alarm_msg,roles,create_time,update_time,expire_time FROM users where id=? `
 
 	row := db.QueryRow(query, id)
 	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
 		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
 		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
 		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
-		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime)
+		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime, &r.ExpireTime)
 	if err != nil {
 		log.Println("getuser by id err :", err, "\n", query)
 		return nil, err
@@ -280,7 +281,9 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT * FROM users
+	query := fmt.Sprintf(`SELECT id,name,callsign,gird,phone,password,birthday,mdcid,dmrid,
+	sex,avatar,address,roles,introduction,alarm_msg,status,update_time,last_login_time,
+	login_err_times,create_time,openid,nickname,pid,last_login_ip,expire_time FROM users
 	 where  roles like '%%%v%%'  ORDER BY id ASC`, role)
 
 	rows, err := db.Query(query)
@@ -298,7 +301,7 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 		err := rows.Scan(&r.ID, &r.Name, &r.CallSign, &r.Gird, &r.Phone, &r.Password, &r.Birthday, &r.MDCID, &r.DMRID,
 			&r.Sex, &r.Avatar, &r.Address,
 			&roles, &r.Introduction, &r.AlarmMsg, &r.Status, &r.UpdateTime, &r.LastLoginTime, &r.LoginErrTimes,
-			&r.CreateTime, &r.OpenID, &r.NickName, &r.PID, &r.LastLoginIP)
+			&r.CreateTime, &r.OpenID, &r.NickName, &r.PID, &r.LastLoginIP, &r.ExpireTime)
 		if err != nil {
 			log.Println("getuser by username err :", err, "\n", query)
 			continue
@@ -432,8 +435,8 @@ func addUser(e *userinfo) error {
 	roles := strings.Join(e.Roles, ",")
 	query := `INSERT INTO users (pid,name,phone,sex,callsign,mdcid,dmrid,gird,address,birthday,introduction,nickname,openid,last_login_ip,last_login_time,
 		avatar,status,password,roles, alarm_msg,		
-		create_time,login_err_times,update_time) 
-	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
+		expire_time,create_time,login_err_times,update_time) 
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
 		CURRENT_TIMESTAMP,0,CURRENT_TIMESTAMP)`
 
 	stmt, err := db.Prepare(query)
@@ -447,7 +450,7 @@ func addUser(e *userinfo) error {
 	e.Avatar = conf.WeiXin.AvatarURL
 
 	res, err := stmt.Exec(e.PID, e.Name, e.Phone, e.Sex, e.CallSign, e.MDCID, e.DMRID, e.Gird, e.Address, e.Birthday, e.Introduction, e.NickName, e.OpenID, e.LastLoginIP, e.LastLoginTime,
-		e.Avatar, e.Status, password, roles, e.AlarmMsg)
+		e.Avatar, e.Status, password, roles, e.AlarmMsg, e.ExpireTime)
 	// Named queries can use structs, so if you have an existing struct (i.e. person := &Person{}) that you have populated, you can pass it in as &person
 	//	tx.NamedExec("INSERT INTO person (first_name, last_name, email) VALUES (:first_name, :last_name, :email)", &Person{"Jane", "Citizen", "jane.citzen@example.com"})
 	if err != nil {
@@ -488,8 +491,8 @@ func updateUser(e *userinfo) error {
 	roles := strings.Join(e.Roles, ",")
 
 	_, err := db.Exec(`update users set name=?,phone=?,sex=?,callsign=?,	mdcid=?,dmrid=?,gird=?,address=?,birthday=?,introduction=?,
-	avatar=?,status=?,alarm_msg=?,   update_time=CURRENT_TIMESTAMP,roles=?,pid=?  where id=?`,
-		e.Name, e.Phone, e.Sex, e.CallSign, e.MDCID, e.DMRID, e.Gird, e.Address, e.Birthday, e.Introduction, e.Avatar, e.Status, e.AlarmMsg, roles, e.PID, e.ID)
+		avatar=?,status=?,alarm_msg=?,expire_time=?,update_time=CURRENT_TIMESTAMP,roles=?,pid=?  where id=?`,
+		e.Name, e.Phone, e.Sex, e.CallSign, e.MDCID, e.DMRID, e.Gird, e.Address, e.Birthday, e.Introduction, e.Avatar, e.Status, e.AlarmMsg, e.ExpireTime, roles, e.PID, e.ID)
 	if err != nil {
 		log.Println("update user failed, ", err)
 		return err

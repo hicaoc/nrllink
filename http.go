@@ -135,7 +135,6 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/device/list", j.httpDeviceList)
 	http.HandleFunc("/device/db/list", j.httpDevicesList)
 
-	
 	http.HandleFunc("/device/get", j.httpDevice)
 	http.HandleFunc("/device/qthmap", j.httpDeviceQTHs)
 	http.HandleFunc("/device/qth", j.httpDeviceQTHs)
@@ -207,6 +206,15 @@ func (j *jsonapi) msghttp() {
 
 	http.HandleFunc("/user/password", j.httpUpdateUserPassword)
 	http.HandleFunc("/user/delete", j.httpDeleteUser)
+
+	http.HandleFunc("/billing/info", j.httpBillingInfo)
+	http.HandleFunc("/billing/packages/list", j.httpBillingPackages)
+	http.HandleFunc("/billing/packages/create", j.httpBillingPackageCreate)
+	http.HandleFunc("/billing/packages/update", j.httpBillingPackageUpdate)
+	http.HandleFunc("/billing/packages/delete", j.httpBillingPackageDelete)
+	http.HandleFunc("/billing/order/create", j.httpBillingOrderCreate)
+	http.HandleFunc("/billing/order/query", j.httpBillingOrderQuery)
+	http.HandleFunc("/billing/wechat/notify", j.httpBillingWechatNotify)
 
 	//http.HandleFunc("/routes", j.httpRoutes)
 	http.HandleFunc("/roles/list", j.httpGetRoles)

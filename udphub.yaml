@@ -36,6 +36,19 @@ WeiXin:
     WeixinAPIURL: ""
     WxMsgURL: ""
     AlarmModeID: ""
+Billing:
+    Enabled: false
+    AccountExpireRecheckSecs: 300
+    PackageUnitPriceCents: 0
+    NotifyURL: ""
+    WechatPay:
+        AppID: ""
+        MchID: ""
+        APIv3Key: ""
+        SerialNo: ""
+        PrivateKeyPath: ""
+        NotifyURL: ""
+        Description: "NRL账号续费"
 PlatformList :
   - Name: nrlptt主站
     Host: nrlptt.com

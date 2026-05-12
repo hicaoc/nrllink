@@ -261,7 +261,7 @@ func (j *jsonapi) httpDeviceQTH(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if qth, ok := QTHmapNew[getCallsignSSID(stb.Callsign, stb.SSID)]; ok {
+	if qth, ok := getQTHEntry(getCallsignSSID(stb.Callsign, stb.SSID)); ok {
 
 		writeJSONResponseItem(w, qth)
 	} else {
@@ -278,7 +278,7 @@ func (j *jsonapi) httpDeviceQTHs(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	writeJSONResponseItem(w, QTHmap)
+	writeJSONResponseItem(w, snapshotQTHMap())
 
 }
 
@@ -290,7 +290,7 @@ func (j *jsonapi) httpDeviceQTHs2(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	writeJSONResponseItem(w, QTHmapNew)
+	writeJSONResponseItem(w, snapshotQTHMapNew())
 
 }
 

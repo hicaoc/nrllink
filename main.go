@@ -30,8 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	QTHmap["MEETLY-201"] = "会议模式"
-	QTHmapNew["MEETLY-201"] = qth{"会议模式", "MEETLY-201", time.Now(), "多人同时讲话"}
+	setQTH("MEETLY-201", "会议模式", qth{"会议模式", "MEETLY-201", time.Now(), "多人同时讲话"})
 
 	db = getDB()
 

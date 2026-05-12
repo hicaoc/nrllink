@@ -53,8 +53,49 @@ type qth struct {
 	Name         string    `json:"name"`
 }
 
-var QTHmapNew = make(map[string]qth) // callsign+ssid
-var QTHmap = make(map[string]string)
+var (
+	QTHmapNew = make(map[string]qth) // callsign+ssid
+	QTHmap    = make(map[string]string)
+	qthMu     sync.RWMutex
+)
+
+func setQTH(callsignSSID, oldQTH string, newQTH qth) {
+	qthMu.Lock()
+	defer qthMu.Unlock()
+
+	QTHmap[callsignSSID] = oldQTH
+	QTHmapNew[callsignSSID] = newQTH
+}
+
+func getQTHEntry(callsignSSID string) (qth, bool) {
+	qthMu.RLock()
+	defer qthMu.RUnlock()
+
+	q, ok := QTHmapNew[callsignSSID]
+	return q, ok
+}
+
+func snapshotQTHMap() map[string]string {
+	qthMu.RLock()
+	defer qthMu.RUnlock()
+
+	res := make(map[string]string, len(QTHmap))
+	for k, v := range QTHmap {
+		res[k] = v
+	}
+	return res
+}
+
+func snapshotQTHMapNew() map[string]qth {
+	qthMu.RLock()
+	defer qthMu.RUnlock()
+
+	res := make(map[string]qth, len(QTHmapNew))
+	for k, v := range QTHmapNew {
+		res[k] = v
+	}
+	return res
+}
 
 type currentConnPool struct {
 	mu            sync.RWMutex
@@ -219,6 +260,11 @@ func udpProcess(conn *net.UDPConn) {
 		callsignSSID := getCallsignSSID(nrl.CallSign, nrl.SSID)
 
 		if dev, ok := devCallsignSSIDMap[callsignSSID]; ok {
+			if nrl.Type == 2 && refreshDeviceAccountExpired(dev, nrl.timeStamp) {
+				removeExpiredDeviceFromPool(dev, groupForDevice(dev))
+				log.Printf("billing: expired account heartbeat ignored: %v-%v expire check at %v", dev.CallSign, dev.SSID, dev.LastExpireCheck.Format("2006-01-02 15:04:05"))
+				continue
+			}
 
 			//dev.udpAddr = nrl.UDPAddr
 			dev.LastPacketTime = nrl.timeStamp
@@ -290,6 +336,10 @@ func udpProcess(conn *net.UDPConn) {
 			d.pcmBuffer = make([]int, 1000)
 
 			devCallsignSSIDMap[callsignSSID] = d
+			if nrl.Type == 2 && refreshDeviceAccountExpired(d, nrl.timeStamp) {
+				log.Printf("billing: expired account new device heartbeat ignored: %v-%v", d.CallSign, d.SSID)
+				continue
+			}
 
 			if p, ok := publicGroupMap[d.GroupID]; ok {
 
@@ -310,6 +360,18 @@ func udpProcess(conn *net.UDPConn) {
 	}
 
 	<-limitChan
+}
+
+func groupForDevice(dev *deviceInfo) *group {
+	if dev == nil {
+		return nil
+	}
+	if dev.GroupID > 0 && dev.GroupID <= 3 {
+		if u, ok := userlist.Load(dev.CallSign); ok {
+			return u.(*userinfo).Groups[dev.GroupID]
+		}
+	}
+	return publicGroupMap[dev.GroupID]
 }
 
 func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
@@ -421,8 +483,7 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 			//查询设备qth信息
 
 			dev.QTH = getQTH(dev.udpAddr.IP.String())
-			QTHmap[dev.CallSignSSID] = dev.QTH
-			QTHmapNew[dev.CallSignSSID] = qth{dev.QTH, dev.CallSignSSID, time.Now(), dev.Name}
+			setQTH(dev.CallSignSSID, dev.QTH, qth{dev.QTH, dev.CallSignSSID, time.Now(), dev.Name})
 
 			log.Printf("dev online:%v %v-%v %v  group %v \n", dev.udpAddr.String(), dev.CallSign, dev.SSID, dev.QTH, gp.ID)
 
@@ -567,14 +628,12 @@ func update200QTH(Originalcallsignssid string, nrl *NRL21packet, dev *deviceInfo
 	callsignssid := getCallsignSSID(nrl.CallSign, nrl.SSID)
 	originalqth := getQTH(nrl.OriginalIP.String())
 
-	QTHmap[Originalcallsignssid] = callsignssid + "-" + originalqth
-
-	QTHmapNew[Originalcallsignssid] = qth{
+	setQTH(Originalcallsignssid, callsignssid+"-"+originalqth, qth{
 		originalqth,
 		Originalcallsignssid,
 		time.Now(),
 		callsignssid + "-" + dev.Name,
-	}
+	})
 
 }
 
@@ -752,7 +811,7 @@ func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *
 
 	Originalcallsignssid := getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
 
-	if q, ok := QTHmapNew[Originalcallsignssid]; !ok {
+	if q, ok := getQTHEntry(Originalcallsignssid); !ok {
 		update200QTH(Originalcallsignssid, nrl, dev)
 
 	} else if time.Since(q.JoinTime) > 10*time.Minute {

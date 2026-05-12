@@ -104,6 +104,22 @@ type config struct {
 
 	} `yaml:"WeiXin" json:"weixin"`
 
+	Billing struct {
+		Enabled                  bool   `yaml:"Enabled" json:"enabled"`
+		AccountExpireRecheckSecs int    `yaml:"AccountExpireRecheckSecs" json:"account_expire_recheck_secs"`
+		PackageUnitPriceCents    int    `yaml:"PackageUnitPriceCents" json:"package_unit_price_cents"`
+		NotifyURL                string `yaml:"NotifyURL" json:"notify_url"`
+		WechatPay                struct {
+			AppID          string `yaml:"AppID" json:"appid"`
+			MchID          string `yaml:"MchID" json:"mch_id"`
+			APIv3Key       string `yaml:"APIv3Key" json:"api_v3_key"`
+			SerialNo       string `yaml:"SerialNo" json:"serial_no"`
+			PrivateKeyPath string `yaml:"PrivateKeyPath" json:"private_key_path"`
+			NotifyURL      string `yaml:"NotifyURL" json:"notify_url"`
+			Description    string `yaml:"Description" json:"description"`
+		} `yaml:"WechatPay" json:"wechat_pay"`
+	} `yaml:"Billing" json:"billing"`
+
 	//points  int
 }
 
@@ -196,10 +212,45 @@ func updatedb() {
 
 		"ALTER TABLE devices ADD COLUMN dmrid INTEGER DEFAULT 0;",
 		"ALTER TABLE users ADD COLUMN dmrid INTEGER DEFAULT 0;",
+		"ALTER TABLE users ADD COLUMN expire_time TEXT DEFAULT '';",
 		//"update devices set dmrid='';",
 		//"ALTER TABLE public_groups ADD COLUMN allow_callsign_ssid TEXT DEFAULT '';",
 		//"CREATE UNIQUE INDEX idx_ssid_callsign ON devices (ssid, callsign);",
 		//"CREATE UNIQUE INDEX idx_name_unique ON public_groups(name);",
+
+		`CREATE TABLE IF NOT EXISTS billing_packages (
+			id INTEGER UNIQUE,
+			name TEXT,
+			months INTEGER,
+			unit_price_cents INTEGER,
+			price_cents INTEGER,
+			status INTEGER,
+			note TEXT,
+			create_time TEXT,
+			update_time TEXT,
+			PRIMARY KEY("id" AUTOINCREMENT)
+		);`,
+		`CREATE TABLE IF NOT EXISTS billing_orders (
+			id INTEGER UNIQUE,
+			out_trade_no TEXT UNIQUE,
+			user_id INTEGER,
+			callsign TEXT,
+			package_id INTEGER,
+			months INTEGER,
+			amount_cents INTEGER,
+			status TEXT,
+			prepay_id TEXT,
+			code_url TEXT,
+			transaction_id TEXT,
+			payer_openid TEXT,
+			paid_at TEXT,
+			expire_before TEXT,
+			expire_after TEXT,
+			raw_notify TEXT,
+			create_time TEXT,
+			update_time TEXT,
+			PRIMARY KEY("id" AUTOINCREMENT)
+		);`,
 
 		"DELETE FROM users WHERE id NOT IN ( SELECT MIN(id) FROM users GROUP BY phone );",
 		"DROP INDEX idx_phone_unique ;",

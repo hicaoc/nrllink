@@ -729,7 +729,10 @@ func (j *jsonapi) httpUserInfo(w http.ResponseWriter, req *http.Request) {
 
 	u.Routes = getRoleByKey(u.Roles[0]).Routes
 
-	rescode, _ := jsonextra.Marshal(u)
+	rescode, _ := jsonextra.Marshal(struct {
+		*userinfo
+		BillingEnabled bool `json:"billing_enabled"`
+	}{u, billingEnabled()})
 
 	respone := fmt.Sprintf(`{"code":20000,"data":%s}`, rescode)
 

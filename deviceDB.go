@@ -47,7 +47,9 @@ type deviceInfo struct {
 	ISOnline   bool           `json:"is_online" `                   //当前是否在线
 	ChanName   pq.StringArray `json:"chan_name" db:"chan_name"`     //射频信道名称
 
-	LastPacketTime time.Time `json:"last_packet_time" ` //最后一次报文时间
+	LastPacketTime  time.Time `json:"last_packet_time" ` //最后一次报文时间
+	AccountExpired  bool      `json:"account_expired"`   //所属账号是否到期
+	LastExpireCheck time.Time `json:"last_expire_check"` //最后一次账号到期检查时间
 
 	VoiceTime          int       `json:"voice_time"`            //通话时长
 	LastVoiceBeginTime time.Time `json:"last_voice_begin_time"` //上次语音开始时间
