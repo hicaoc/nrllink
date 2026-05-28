@@ -206,7 +206,7 @@ func updatedb() {
 	sqlStatements := []string{
 		//"ALTER TABLE devices ADD COLUMN callsign TEXT DEFAULT '';",
 		"ALTER TABLE devices ADD COLUMN priority INTEGER DEFAULT 100;",
-		"ALTER TABLE devices RENAME COLUMN cpuid TO dmrid;",
+		//"ALTER TABLE devices RENAME COLUMN cpuid TO dmrid;",
 
 		"ALTER TABLE users ADD COLUMN mdcid string DEFAULT '';",
 
