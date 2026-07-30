@@ -71,6 +71,7 @@ type deviceInfo struct {
 	speaking      bool
 	opusMu        sync.Mutex
 	opusDecoders  map[string]*nrlOpusDecoder
+	voiceEcho     voiceEchoRecorder
 	Ducked        bool `json:"ducted"`
 	//ticker        *time.Ticker
 }

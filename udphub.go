@@ -149,6 +149,19 @@ func (p *currentConnPool) snapshotList() []*deviceInfo {
 	return res
 }
 
+func (p *currentConnPool) isOnlyDevice(dev *deviceInfo) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if len(p.devConnMap) != 1 {
+		return false
+	}
+	for _, current := range p.devConnMap {
+		return current == dev
+	}
+	return false
+}
+
 func (p *currentConnPool) getDevice(addr string) (*deviceInfo, bool) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -708,8 +721,8 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 
 	numbs := gp.connPool.count()
 
-	//房间类型为中继互联的时候，使用不允许出现双工
-	if gp.Type == 1 || gp.ID == 999 {
+	// 中继互联和全网通房间不启用单设备录音回放，并继续走原有单工转发逻辑。
+	if !singleDeviceVoiceEchoEnabled(gp) {
 		numbs = 3
 	}
 
@@ -720,12 +733,11 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	case 0:
 		//log.Println("err connpoll is null")
 		return
-	case 1: //只有一个设备，缺省为环路测试；老型号按需转为 G.711
+	case 1: //只有一个设备，录完整段语音后按原编码时序回放；老型号按需转为 G.711
 
-		//fmt.Println("case 1 :", clientAddrStr)
 		outPacket, err := packetForRecipient(dev)
 		if err == nil {
-			globelconn.WriteToUDP(outPacket, nrl.UDPAddr)
+			queueSingleDeviceVoiceEcho(gp, dev, nrl, outPacket)
 		}
 		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
 		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
