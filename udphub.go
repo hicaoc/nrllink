@@ -394,12 +394,18 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		fmt.Println("recived control commond ", nrl)
 	case 1, 8:
 		//1 语音消息，需要转发给群组内其它设备,
-		//fmt.Println("recived G.711 voice ")
-
 		//设备状态为禁发
 
 		if (dev.Status & 1) == 1 {
 			return
+		}
+
+		// Type 8 Opus is normalized once for browser/conference mixing while
+		// the original packet remains available for native NRL forwarding.
+		var err error
+		nrl.webPCM, err = nrlVoiceToPCM(dev, nrl)
+		if err != nil {
+			log.Printf("decode opus voice failed: %s-%d count=%d: %v", nrl.CallSign, nrl.SSID, nrl.Count, err)
 		}
 
 		td := nrl.timeStamp.Sub(dev.LastVoiceEndTime).Milliseconds()
@@ -420,8 +426,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.LastVoiceDuration = int(nrl.timeStamp.Sub(dev.LastVoiceBeginTime).Milliseconds())
 		dev.LastVoiceEndTime = nrl.timeStamp
 
-		dev.VoiceTime = dev.VoiceTime + 63
-		totalstats.VoiceTime = totalstats.VoiceTime + 63
+		voiceDurationMS := 63 // legacy G.711 packets may contain about 62.5 ms
+		if nrl.Type == 8 {
+			voiceDurationMS = 20
+		}
+		dev.VoiceTime += voiceDurationMS
+		totalstats.VoiceTime += voiceDurationMS
 
 		// if gp.connPool.allowCALLSSID != "" && gp.connPool.allowCALLSSID != dev.CallSignSSID {
 		// 	return
@@ -581,6 +591,8 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		}
 		//服务器互联
 	case 9:
+		// Legacy server-interconnect voice carries G.711 audio.
+		nrl.webPCM = g711ToPCM(nrl.DATA)
 
 		if (dev.Status & 1) == 1 {
 
@@ -712,10 +724,10 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 		//fmt.Println("case 1 :", clientAddrStr)
 		globelconn.WriteToUDP(packet, nrl.UDPAddr)
 		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
-		callWSHub.publishVoiceFrame(gp, dev.CallSign, dev.SSID, nrl.DATA, nrl.timeStamp)
+		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
-		callWSHub.publishVoiceFrame(gp, dev.CallSign, dev.SSID, nrl.DATA, nrl.timeStamp)
+		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
 		for _, vv := range gp.connPool.snapshotMap() {
 
@@ -741,11 +753,12 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	default: //3个或3个以上设备，只允许一个设备发送语音，其它接收
 
 		//房间类型为会议室的时候，需要将语音进行混音，语音先放入缓存，等待其他设备的语音包
-		if gp.Type == 7 && nrl.Type == 1 {
+		if gp.Type == 7 && (nrl.Type == 1 || nrl.Type == 8) {
 
-			// 直接追加到设备缓存，混音端按需取160字节
+			// Both codecs enter the mixer as 20 ms / 8 kHz PCM frames.
+			// A failed Opus packet contributes no audio to this conference tick.
 			dev.pcmMu.Lock()
-			dev.pcmBuf = append(dev.pcmBuf, nrl.DATA...)
+			dev.pcmBuf = append(dev.pcmBuf, nrl.webPCM...)
 			dev.pcmMu.Unlock()
 			return
 		}
@@ -774,7 +787,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 
 		// 自己抢到/继续发言权，刷新占用状态
 		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
-		callWSHub.publishVoiceFrame(gp, dev.CallSign, dev.SSID, nrl.DATA, nrl.timeStamp)
+		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
 		for _, vv := range gp.connPool.snapshotList() {
 			// if nrl.timeStamp.Sub(vv.lastTime) > 10*time.Second {
@@ -854,7 +867,7 @@ func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *
 	} else if nrl.DevModel == 255 && nrl.SSID == 255 {
 		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	}
-	callWSHub.publishVoiceFrame(gp, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.DATA, nrl.timeStamp)
+	callWSHub.publishPCMFrame(gp, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.webPCM, nrl.timeStamp)
 
 	for _, vv := range gp.connPool.snapshotList() {
 

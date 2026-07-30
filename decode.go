@@ -31,6 +31,10 @@ type NRL21packet struct {
 	OriginalIP       net.IP //原始IP
 
 	DATA []byte //上层数据内容
+
+	// webPCM is 8 kHz mono PCM for browser monitoring and mixing.
+	// The original DATA remains untouched for NRL forwarding.
+	webPCM []int16
 }
 
 func newNRL21packet(remoteaddr *net.UDPAddr, d []byte) (packet *NRL21packet, err error) {

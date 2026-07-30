@@ -91,14 +91,12 @@ type wsCallClient struct {
 	closed        bool
 	lastSeen      time.Time
 	subscriptions map[string]bool
-	audioBuffers  map[string][]byte
+	audioBuffers  map[string][]int16
 }
 
 const wsCallAudioFrameSize = 160
-const wsCallMaxBufferedBytes = 500 * 50
+const wsCallMaxBufferedSamples = 500 * 50
 const wsCallClientTimeout = 25 * time.Second
-
-var wsCallSilenceALaw = Linear2Alaw(0)
 
 var callWSHub = newWSCallHub()
 
@@ -627,6 +625,13 @@ func (h *wsCallHub) publishVoiceFrame(gp *group, callsign string, ssid byte, g71
 	if gp == nil || len(g711) == 0 {
 		return
 	}
+	h.publishPCMFrame(gp, callsign, ssid, g711ToPCM(g711), ts, speakers...)
+}
+
+func (h *wsCallHub) publishPCMFrame(gp *group, callsign string, ssid byte, pcm []int16, ts time.Time, speakers ...wsSpeaker) {
+	if gp == nil || len(pcm) == 0 {
+		return
+	}
 
 	h.touchRoomActivity(gp, callsign, ssid, ts, speakers)
 
@@ -639,7 +644,7 @@ func (h *wsCallHub) publishVoiceFrame(gp *group, callsign string, ssid byte, g71
 
 	roomKey := roomKeyFromGroup(gp)
 	for _, client := range clients {
-		client.enqueueAudio(roomKey, g711)
+		client.enqueueAudio(roomKey, pcm)
 	}
 }
 
@@ -704,7 +709,7 @@ func newWSCallClient(h *wsCallHub, ws *websocket.Conn, user *userinfo) *wsCallCl
 		done:          make(chan struct{}),
 		lastSeen:      time.Now(),
 		subscriptions: make(map[string]bool),
-		audioBuffers:  make(map[string][]byte),
+		audioBuffers:  make(map[string][]int16),
 	}
 }
 
@@ -751,17 +756,17 @@ func (c *wsCallClient) sendBinary(data []byte) error {
 	return websocket.Message.Send(c.ws, data)
 }
 
-func (c *wsCallClient) enqueueAudio(roomKey string, g711 []byte) {
+func (c *wsCallClient) enqueueAudio(roomKey string, pcm []int16) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.closed || !c.subscriptions[roomKey] || len(g711) == 0 {
+	if c.closed || !c.subscriptions[roomKey] || len(pcm) == 0 {
 		return
 	}
 
-	buf := append(c.audioBuffers[roomKey], g711...)
-	if len(buf) > wsCallMaxBufferedBytes {
-		buf = buf[len(buf)-wsCallMaxBufferedBytes:]
+	buf := append(c.audioBuffers[roomKey], pcm...)
+	if len(buf) > wsCallMaxBufferedSamples {
+		buf = buf[len(buf)-wsCallMaxBufferedSamples:]
 	}
 	c.audioBuffers[roomKey] = buf
 }
@@ -881,17 +886,14 @@ func (c *wsCallClient) nextMixedFrame() []byte {
 		return nil
 	}
 
-	frames := make([][]byte, 0, len(c.subscriptions))
+	frames := make([][]int16, 0, len(c.subscriptions))
 	for key := range c.subscriptions {
 		buf := c.audioBuffers[key]
 		if len(buf) == 0 {
 			continue
 		}
 
-		frame := make([]byte, wsCallAudioFrameSize)
-		for i := range frame {
-			frame[i] = wsCallSilenceALaw
-		}
+		frame := make([]int16, wsCallAudioFrameSize)
 
 		n := wsCallAudioFrameSize
 		if len(buf) < n {
@@ -911,14 +913,13 @@ func (c *wsCallClient) nextMixedFrame() []byte {
 	case 0:
 		return nil
 	case 1:
-		return append([]byte(nil), frames[0]...)
+		return pcmToG711(frames[0])
 	}
 
 	mixedPCM := make([]int, wsCallAudioFrameSize)
 	for _, frame := range frames {
 		for i := 0; i < wsCallAudioFrameSize; i++ {
-			sample := frame[i]
-			mixedPCM[i] += int(alaw2linear(sample))
+			mixedPCM[i] += int(frame[i])
 		}
 	}
 

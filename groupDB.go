@@ -91,6 +91,7 @@ func (p *group) mixPCM() {
 	}
 
 	pcm := make([]int, 160)
+	globalPCM := make([]int16, 160)
 	globalG711 := make([]byte, 160)
 	newG711 := make([]byte, 160)
 	data := make([]byte, 160)
@@ -102,8 +103,8 @@ func (p *group) mixPCM() {
 	log.Println("mixPCM:", "p:", p)
 
 	type activeSpeaker struct {
-		dev     *deviceInfo
-		rawG711 []byte
+		dev    *deviceInfo
+		rawPCM []int16
 	}
 	speakers := make([]activeSpeaker, 0, 10)
 
@@ -124,13 +125,13 @@ func (p *group) mixPCM() {
 			continue
 		}
 
-		// 1. 收集发言者数据：从设备缓存取160字节，不足则跳过
+		// 1. 收集发言者数据：从设备缓存取 160 个 PCM 样本，不足则跳过
 		for _, vv := range devConnList {
 			vv.speaking = false
 
 			vv.pcmMu.Lock()
 			if len(vv.pcmBuf) >= 160 {
-				frame := vv.pcmBuf[:160]
+				frame := append([]int16(nil), vv.pcmBuf[:160]...)
 				n := copy(vv.pcmBuf, vv.pcmBuf[160:])
 				vv.pcmBuf = vv.pcmBuf[:n]
 				vv.pcmMu.Unlock()
@@ -148,10 +149,9 @@ func (p *group) mixPCM() {
 
 		// 2. 策略优化
 		if numbs == 1 {
-			// --- 单人发言直通 (Bypass) ---
-			// 直接透传原始字节，音质无损
-			copy(globalPacket[48:], speakers[0].rawG711)
-			callWSHub.publishVoiceFrame(p, "", 0, speakers[0].rawG711, time.Now(), wsSpeaker{
+			// --- 单人发言 ---
+			copy(globalPacket[48:], pcmToG711(speakers[0].rawPCM))
+			callWSHub.publishPCMFrame(p, "", 0, speakers[0].rawPCM, time.Now(), wsSpeaker{
 				Callsign: speakers[0].dev.CallSign,
 				SSID:     speakers[0].dev.SSID,
 			})
@@ -165,8 +165,8 @@ func (p *group) mixPCM() {
 		} else {
 			// --- 多人混音处理 ---
 			for _, s := range speakers {
-				for i, v := range s.rawG711 {
-					ori := int(alaw2linear(v))
+				for i, v := range s.rawPCM {
+					ori := int(v)
 					pcm[i] += ori
 					s.dev.pcmBuffer[i] = ori
 				}
@@ -179,7 +179,8 @@ func (p *group) mixPCM() {
 				} else if v < -32768 {
 					v = -32768
 				}
-				globalG711[i] = Linear2Alaw(int16(v))
+				globalPCM[i] = int16(v)
+				globalG711[i] = Linear2Alaw(globalPCM[i])
 			}
 			copy(globalPacket[48:], globalG711)
 			wsSpeakers := make([]wsSpeaker, 0, len(speakers))
@@ -189,12 +190,12 @@ func (p *group) mixPCM() {
 					SSID:     speaker.dev.SSID,
 				})
 			}
-			callWSHub.publishVoiceFrame(p, "", 0, globalG711, time.Now(), wsSpeakers...)
+			callWSHub.publishPCMFrame(p, "", 0, globalPCM, time.Now(), wsSpeakers...)
 
 			if numbs == 2 {
 				// --- 双人对讲互传优化 ---
-				copy(speakerPacket[48:], speakers[1].rawG711)   // A 听 B
-				copy(speakerB_Packet[48:], speakers[0].rawG711) // B 听 A
+				copy(speakerPacket[48:], pcmToG711(speakers[1].rawPCM))   // A 听 B
+				copy(speakerB_Packet[48:], pcmToG711(speakers[0].rawPCM)) // B 听 A
 
 				for _, vv := range devConnList {
 					if vv.udpAddr == nil {

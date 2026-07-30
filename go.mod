@@ -9,6 +9,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.33
+	github.com/pion/opus v0.1.0
 	github.com/sashabaranov/go-openai v1.41.2
 	golang.org/x/crypto v0.47.0
 	golang.org/x/net v0.49.0

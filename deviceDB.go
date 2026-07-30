@@ -65,10 +65,12 @@ type deviceInfo struct {
 	Note          string     `json:"note" db:"note"` //设备上线时间
 	DeviceParm    *control   `json:"device_parm"`
 	LastATcommand *ATcommand `json:"last_atcommand"`
-	pcmBuf        []byte     //g711语音缓存，发送端追加，混音端每次取160字节
+	pcmBuf        []int16    // 8 kHz mono PCM; the conference mixer consumes 160 samples per tick
 	pcmMu         sync.Mutex
 	pcmBuffer     []int
 	speaking      bool
+	opusMu        sync.Mutex
+	opusDecoders  map[string]*nrlOpusDecoder
 	Ducked        bool `json:"ducted"`
 	//ticker        *time.Ticker
 }
