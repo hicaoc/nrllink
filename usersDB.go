@@ -88,6 +88,7 @@ func getRoles(query string) []*role {
 		return nil
 
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		r := &role{}
@@ -101,6 +102,10 @@ func getRoles(query string) []*role {
 
 		rl = append(rl, r)
 
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("遍历角色列表错误: ", err, query)
+		return nil
 	}
 	//fmt.Println(emp)
 	return rl
@@ -179,6 +184,11 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 	//fmt.Println(query)
 
 	rows, err := db.Query(query)
+	if err != nil {
+		log.Println("查询用户列表错误: ", err, "\n", query)
+		return nil, 0
+	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -198,7 +208,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 		emp = append(emp, r)
 	}
 
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		log.Println("查询用户列表错误: ", err, "\n", query)
 		return nil, 0
 
@@ -293,6 +303,7 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 		return nil, 0
 
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -308,6 +319,10 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 		}
 		r.Roles = strings.Split(roles, ",")
 		emp = append(emp, r)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("遍历角色用户列表错误: ", err, "\n", query)
+		return nil, 0
 	}
 
 	var t int

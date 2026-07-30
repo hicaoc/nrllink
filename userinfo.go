@@ -36,7 +36,9 @@ func initAllUserList() {
 
 	if err != nil {
 		log.Println("query all user list  err:", err)
+		return
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		user := &userinfo{}
@@ -63,6 +65,9 @@ func initAllUserList() {
 		mdcidmap.Store(user.MDCID, user.CallSign)
 		dmridmap.Store(user.DMRID, user.CallSign)
 
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("iterate all user rows err:", err)
 	}
 
 }

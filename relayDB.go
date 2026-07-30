@@ -41,6 +41,7 @@ func selectrelay(w string, p string, sort string) ([]*relay, int) {
 		return nil, 0
 
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		r := &relay{}
@@ -50,6 +51,10 @@ func selectrelay(w string, p string, sort string) ([]*relay, int) {
 			continue
 		}
 		emp = append(emp, r)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("遍历频点列表错误: ", err, "\n", query)
+		return nil, 0
 	}
 
 	var t int

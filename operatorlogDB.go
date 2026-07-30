@@ -34,6 +34,7 @@ func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
 		return nil, 0
 
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -46,6 +47,10 @@ func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
 		}
 		loglist = append(loglist, l)
 
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("遍历操作日志错误: ", err, query)
+		return nil, 0
 	}
 
 	var t int

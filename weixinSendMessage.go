@@ -237,7 +237,7 @@ func DelWXTemplate(AccessToken, templateID string) error {
 	url := strings.Join([]string{`https://api.weixin.qq.com/cgi-bin/template/del_private_template`, "?access_token=", AccessToken}, "")
 	// content, err := jsonextra.Marshal(data)
 	// fmt.Println("token:"+weiXinAccessToken+"\n", string(content))
-	postReq, err := http.NewRequest("POST", url, bytes.NewReader([]byte(fmt.Sprintf(` { "template_id" : "%s" } `, templateID))))
+	postReq, err := http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(` { "template_id" : "%s" } `, templateID)))
 	if err != nil {
 
 		return err

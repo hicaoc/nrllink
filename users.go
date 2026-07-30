@@ -199,7 +199,7 @@ func (j *jsonapi) httpGetMDCID(w http.ResponseWriter, req *http.Request) {
 	value, exists := mdcidmap.Load(mdcid)
 	if exists {
 		callsign := value.(string)
-		w.Write([]byte(fmt.Sprintf(`{"code":20000,"data":{"callsign":"%s"}}`, callsign)))
+		fmt.Fprintf(w, `{"code":20000,"data":{"callsign":"%s"}}`, callsign)
 	} else {
 		w.Write([]byte(`{"code":20000,"data":{"message":"未找到对应的呼号"}}`))
 	}
@@ -219,7 +219,7 @@ func (j *jsonapi) httpGetDMRID(w http.ResponseWriter, req *http.Request) {
 	value, exists := dmridmap.Load(dmrid)
 	if exists {
 		callsign := value.(string)
-		w.Write([]byte(fmt.Sprintf(`{"code":20000,"data":{"callsign":"%s"}}`, callsign)))
+		fmt.Fprintf(w, `{"code":20000,"data":{"callsign":"%s"}}`, callsign)
 	} else {
 		w.Write([]byte(`{"code":20000,"data":{"message":"未找到对应的呼号"}}`))
 	}

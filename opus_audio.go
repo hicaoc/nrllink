@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -130,4 +131,73 @@ func pcmToG711(pcm []int16) []byte {
 		g711[i] = Linear2Alaw(sample)
 	}
 	return g711
+}
+
+// These legacy hardware models only understand NRL type 1 (G.711 A-law).
+func requiresG711Voice(devModel byte) bool {
+	switch devModel {
+	case 1, 2, 3, 8, 9, 17, 26, 35:
+		return true
+	default:
+		return false
+	}
+}
+
+// voicePacketForRecipient keeps native Opus forwarding for capable devices and
+// rewrites only the payload/type/length for a legacy destination. All routing,
+// speaker identity, counter and server-interconnect extension fields remain intact.
+func voicePacketForRecipient(nrl *NRL21packet, packet []byte, recipient *deviceInfo) ([]byte, error) {
+	if nrl == nil || recipient == nil {
+		return nil, errors.New("missing voice packet or recipient")
+	}
+	if nrl.Type != 8 || !requiresG711Voice(recipient.DevModel) {
+		return packet, nil
+	}
+	if len(nrl.legacyG711) == 0 {
+		if len(nrl.webPCM) == 0 {
+			return nil, errors.New("Opus packet has no decoded PCM for legacy recipient")
+		}
+		nrl.legacyG711 = pcmToG711(nrl.webPCM)
+	}
+	return replaceNRLVoicePayload(packet, 1, nrl.legacyG711)
+}
+
+// voicePacketSelector caches the converted packet for one forwarding pass, so
+// a room with several legacy listeners pays for only one packet allocation.
+func voicePacketSelector(nrl *NRL21packet, packet []byte) func(*deviceInfo) ([]byte, error) {
+	var legacyPacket []byte
+	var legacyErr error
+	return func(recipient *deviceInfo) ([]byte, error) {
+		if nrl == nil || recipient == nil {
+			return nil, errors.New("missing voice packet or recipient")
+		}
+		if nrl.Type != 8 || !requiresG711Voice(recipient.DevModel) {
+			return packet, nil
+		}
+		if legacyPacket == nil && legacyErr == nil {
+			legacyPacket, legacyErr = voicePacketForRecipient(nrl, packet, recipient)
+		}
+		return legacyPacket, legacyErr
+	}
+}
+
+func replaceNRLVoicePayload(packet []byte, packetType byte, payload []byte) ([]byte, error) {
+	const nrlHeaderSize = 48
+	if len(packet) < nrlHeaderSize {
+		return nil, fmt.Errorf("NRL packet too short: %d", len(packet))
+	}
+	if len(payload) == 0 {
+		return nil, errors.New("empty replacement voice payload")
+	}
+	totalSize := nrlHeaderSize + len(payload)
+	if totalSize > int(^uint16(0)) {
+		return nil, fmt.Errorf("NRL packet too large: %d", totalSize)
+	}
+
+	out := make([]byte, totalSize)
+	copy(out[:nrlHeaderSize], packet[:nrlHeaderSize])
+	binary.BigEndian.PutUint16(out[4:6], uint16(totalSize))
+	out[20] = packetType
+	copy(out[nrlHeaderSize:], payload)
+	return out, nil
 }

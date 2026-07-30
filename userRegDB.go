@@ -98,6 +98,7 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 		return nil, 0
 
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -117,7 +118,7 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 		emp = append(emp, r)
 	}
 
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		log.Println("查询注册用户列表错误: ", err, "\n", query)
 		return nil, 0
 

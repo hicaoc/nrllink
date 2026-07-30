@@ -163,6 +163,9 @@ func queryBillingPackages(includeDisabled bool) ([]*billingPackage, error) {
 		}
 		items = append(items, p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return items, nil
 }
 

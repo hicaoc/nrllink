@@ -303,7 +303,9 @@ func initPublicGroup() {
 
 	if err != nil {
 		log.Println("query all public group list  err:", err)
+		return
 	}
+	defer rows.Close()
 
 	var devlist string
 
@@ -350,6 +352,9 @@ func initPublicGroup() {
 
 		fmt.Println("pg:", pg)
 
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("iterate all public group rows err:", err)
 	}
 
 	//fmt.Println("publicGroupMap:", publicGroupMap)

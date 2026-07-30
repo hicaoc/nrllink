@@ -704,6 +704,7 @@ func forwardCOM(nrl *NRL21packet, packet []byte, gp *group) {
 }
 
 func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
+	packetForRecipient := voicePacketSelector(nrl, packet)
 
 	numbs := gp.connPool.count()
 
@@ -719,10 +720,13 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	case 0:
 		//log.Println("err connpoll is null")
 		return
-	case 1: //只有一个设备，缺省为环路测试，报文原样返回
+	case 1: //只有一个设备，缺省为环路测试；老型号按需转为 G.711
 
 		//fmt.Println("case 1 :", clientAddrStr)
-		globelconn.WriteToUDP(packet, nrl.UDPAddr)
+		outPacket, err := packetForRecipient(dev)
+		if err == nil {
+			globelconn.WriteToUDP(outPacket, nrl.UDPAddr)
+		}
 		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
 		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
@@ -741,7 +745,10 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 					globelconn.WriteToUDP(newpacket, vv.udpAddr)
 
 				} else {
-					globelconn.WriteToUDP(packet, vv.udpAddr)
+					outPacket, err := packetForRecipient(vv)
+					if err == nil {
+						globelconn.WriteToUDP(outPacket, vv.udpAddr)
+					}
 				}
 			} else {
 				//更新自己的时间
@@ -807,8 +814,11 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 					continue
 
 				} else {
-					//普通设备发给普通设备，直接转发
-					globelconn.WriteToUDP(packet, vv.udpAddr)
+					//普通设备发给普通设备，老型号按需转为 G.711
+					outPacket, err := packetForRecipient(vv)
+					if err == nil {
+						globelconn.WriteToUDP(outPacket, vv.udpAddr)
+					}
 				}
 
 			} else {
@@ -867,6 +877,7 @@ func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *
 	} else if nrl.DevModel == 255 && nrl.SSID == 255 {
 		newpacket = NRL21replace200and255dev(nrl.OriginalCallsign, nrl.OriginalSSID, nrl.Type, 200, nrl.CallSign, nrl.SSID, nrl.OriginalIP, nrl.DMRID, packet)
 	}
+	packetForRecipient := voicePacketSelector(nrl, newpacket)
 	callWSHub.publishPCMFrame(gp, nrl.OriginalCallsign, nrl.OriginalSSID, nrl.webPCM, nrl.timeStamp)
 
 	for _, vv := range gp.connPool.snapshotList() {
@@ -879,10 +890,16 @@ func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *
 				conn.WriteToUDP(new200packet, vv.udpAddr)
 
 			} else if nrl.DevModel == 255 && nrl.SSID == 255 && vv.DevModel != 255 && vv.SSID != 255 {
-				conn.WriteToUDP(newpacket, vv.udpAddr)
+				outPacket, err := packetForRecipient(vv)
+				if err == nil {
+					conn.WriteToUDP(outPacket, vv.udpAddr)
+				}
 			} else {
 				//转发给普通设备，需要将原始信息替换协议头信息
-				conn.WriteToUDP(newpacket, vv.udpAddr)
+				outPacket, err := packetForRecipient(vv)
+				if err == nil {
+					conn.WriteToUDP(outPacket, vv.udpAddr)
+				}
 			}
 
 		} else {

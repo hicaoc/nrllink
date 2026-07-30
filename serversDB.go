@@ -188,7 +188,9 @@ func queryServers() (serverlist []*Server) {
 
 	if err != nil {
 		log.Println("query all server list  err:", err)
+		return serverlist
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -226,6 +228,9 @@ func queryServers() (serverlist []*Server) {
 
 		serverlist = append(serverlist, pg)
 
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("iterate server rows err:", err)
 	}
 
 	return serverlist

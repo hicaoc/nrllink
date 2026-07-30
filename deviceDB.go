@@ -238,7 +238,9 @@ func initAllDevList() {
 
 	if err != nil {
 		log.Println("query all device list  err:", err)
+		return
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -301,6 +303,9 @@ func initAllDevList() {
 		}
 
 	}
+	if err := rows.Err(); err != nil {
+		log.Println("iterate all device rows err:", err)
+	}
 
 }
 
@@ -344,6 +349,7 @@ func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 		return nil, 0
 
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 
@@ -366,6 +372,10 @@ func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 		}
 
 		devlist = append(devlist, dev)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("遍历设备列表错误: ", err, "\n", query)
+		return nil, 0
 	}
 
 	var t int
