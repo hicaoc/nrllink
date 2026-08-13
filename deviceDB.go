@@ -271,7 +271,7 @@ func initAllDevList() {
 
 		} else {
 
-			if dev.GroupID > 999 {
+			if isPublicGroupID(dev.GroupID) {
 
 				dev.GroupID = 0
 
@@ -281,11 +281,16 @@ func initAllDevList() {
 
 				}
 
-			} else {
+			} else if isPrivateGroupID(dev.GroupID) {
 				if user, okok := userlist.Load(dev.CallSign); okok {
-					gp := user.(*userinfo).Groups[dev.GroupID]
-					gp.devMap[dev.ID] = dev
-					gp.DevList = append(gp.DevList, dev.ID)
+					if gp, exists := user.(*userinfo).Groups[dev.GroupID]; exists {
+						gp.devMap[dev.ID] = dev
+						gp.DevList = append(gp.DevList, dev.ID)
+					} else {
+						dev.GroupID = 0
+						publicGroupMap[0].devMap[dev.ID] = dev
+						publicGroupMap[0].DevList = append(publicGroupMap[0].DevList, dev.ID)
+					}
 
 				} else {
 
@@ -299,6 +304,10 @@ func initAllDevList() {
 
 				}
 
+			} else {
+				dev.GroupID = 0
+				publicGroupMap[0].devMap[dev.ID] = dev
+				publicGroupMap[0].DevList = append(publicGroupMap[0].DevList, dev.ID)
 			}
 
 		}

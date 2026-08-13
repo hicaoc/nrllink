@@ -320,7 +320,7 @@ func roomKeyFromGroup(gp *group) string {
 	if gp == nil {
 		return ""
 	}
-	if gp.ID > 0 && gp.ID <= 3 && gp.OwerCallsign != "" && gp.OwerCallsign != "default" {
+	if isPrivateGroupID(gp.ID) && gp.OwerCallsign != "" && gp.OwerCallsign != "default" {
 		return fmt.Sprintf("private:%s:%d", strings.ToUpper(gp.OwerCallsign), gp.ID)
 	}
 	return fmt.Sprintf("public:%d", gp.ID)
@@ -415,7 +415,7 @@ func isPrivateRoom(gp *group) bool {
 	if gp == nil {
 		return false
 	}
-	return gp.Type == 8 || (gp.ID > 0 && gp.ID <= 3 && gp.OwerCallsign != "" && gp.OwerCallsign != "default")
+	return gp.Type == 8 || (isPrivateGroupID(gp.ID) && gp.OwerCallsign != "" && gp.OwerCallsign != "default")
 }
 
 func canUserAccessGroup(u *userinfo, gp *group) bool {

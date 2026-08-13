@@ -149,9 +149,14 @@ func (j *jsonapi) httpGroupDeviceList(w http.ResponseWriter, req *http.Request) 
 	onlinedevlist := make([]*deviceInfo, 0)
 	offlinedevlist := make([]*deviceInfo, 0)
 
-	if grolupid < 999 && grolupid > 0 {
+	if isPrivateGroupID(grolupid) {
 		if user, okok := userlist.Load(u.CallSign); okok {
-			for _, v := range user.(*userinfo).Groups[grolupid].devMap {
+			privateGroup, exists := user.(*userinfo).Groups[grolupid]
+			if !exists {
+				w.Write([]byte(`{"code":20000,"data":{"message":"私人房间不存在"}}`))
+				return
+			}
+			for _, v := range privateGroup.devMap {
 				if v.ISOnline {
 					onlinedevlist = append(onlinedevlist, v)
 				} else {

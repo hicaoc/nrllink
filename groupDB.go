@@ -12,6 +12,26 @@ import (
 
 var publicGroupMap = make(map[int]*group, 1000) //key 房间号
 
+const (
+	privateGroupMinID  = 1
+	privateGroupMaxID  = 3
+	reservedGroupMinID = 4
+	reservedGroupMaxID = 996
+	voiceEchoRoomID    = 998
+)
+
+func isPrivateGroupID(groupID int) bool {
+	return groupID >= privateGroupMinID && groupID <= privateGroupMaxID
+}
+
+func isPublicGroupID(groupID int) bool {
+	return groupID == 0 || groupID >= voiceEchoRoomID
+}
+
+func isReservedGroupID(groupID int) bool {
+	return groupID >= reservedGroupMinID && groupID <= reservedGroupMaxID
+}
+
 /*
 export const groupTypeOptions = [
   { id: 0, name: '公共房间' },
@@ -22,7 +42,7 @@ export const groupTypeOptions = [
   { id: 5, name: '俱乐部' },
   { id: 6, name: '车友会' },
   { id: 7, name: '会议组' },
-  { id: 8, name: '私人房间' },
+  { id: 8, name: '私密房间' },
   { id: 100, name: '其他' }
 ]
 
@@ -276,6 +296,18 @@ func initPublicGroup() {
 
 	publicGroupMap[0] = pg0
 
+	pg998 := &group{
+		ID:           voiceEchoRoomID,
+		Name:         "鹦鹉房间",
+		OwerCallsign: "default",
+		connPool:     &currentConnPool{devConnMap: make(map[string]*deviceInfo)},
+		devMap:       make(map[int]*deviceInfo, 10),
+		CreateTime:   time.Now().Format("2006-01-02 15:04:05"),
+		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	publicGroupMap[voiceEchoRoomID] = pg998
+
 	pg999 := &group{
 		ID:           999,
 		Name:         "全网互联",
@@ -325,6 +357,11 @@ func initPublicGroup() {
 			&pg.Note)
 		if err != nil {
 			log.Println("query  all public group rows err:", err)
+		}
+		// IDs below 998 do not belong to public_groups; built-in rooms cannot
+		// be replaced by database rows.
+		if !isPublicGroupID(pg.ID) || pg.ID == 0 || pg.ID == voiceEchoRoomID || pg.ID == 999 {
+			continue
 		}
 
 		pg.DevList = convertStr2IntArray(devlist)
@@ -486,25 +523,35 @@ func getGroup(name string) (pg *group) {
 
 func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
-	//检查目标组是否允许此设备加入
-
-	if g, ok := publicGroupMap[groupid]; ok {
-
-		if len(g.AllowCALLSSIDList) > 0 {
-			if !slices.Contains(g.AllowCALLSSIDList, dev.CallSignSSID) {
-				return "", fmt.Errorf("group not allow this callsign")
-			}
-
+	// 在移出原房间前验证目标，避免目标属于保留号段或不存在时改变设备状态。
+	if isPublicGroupID(groupid) {
+		g, ok := publicGroupMap[groupid]
+		if !ok {
+			return "", fmt.Errorf("group not found")
 		}
-
+		if len(g.AllowCALLSSIDList) > 0 && !slices.Contains(g.AllowCALLSSIDList, dev.CallSignSSID) {
+			return "", fmt.Errorf("group not allow this callsign")
+		}
+	} else if isPrivateGroupID(groupid) {
+		user, ok := userlist.Load(dev.CallSign)
+		if !ok {
+			return "", fmt.Errorf("user not found")
+		}
+		if _, exists := user.(*userinfo).Groups[groupid]; !exists {
+			return "", fmt.Errorf("private group not found")
+		}
+	} else {
+		return "", fmt.Errorf("reserved or invalid group")
 	}
 
 	//从之前的组删除
 
-	if dev.GroupID >= 999 || dev.GroupID == 0 {
+	if isPublicGroupID(dev.GroupID) {
 
 		if g, ok := publicGroupMap[dev.GroupID]; ok {
-			g.connPool.removeDevice(dev.udpAddr.String())
+			if dev.udpAddr != nil {
+				g.connPool.removeDevice(dev.udpAddr.String())
+			}
 
 			delete(g.devMap, dev.ID)
 
@@ -512,13 +559,17 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 			return "", fmt.Errorf("dev not in group ")
 		}
-	} else {
+	} else if isPrivateGroupID(dev.GroupID) {
 
 		//私人房间
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			delete(user.(*userinfo).Groups[dev.GroupID].devMap, dev.ID)
-			user.(*userinfo).Groups[dev.GroupID].connPool.removeDevice(dev.udpAddr.String())
+			if oldGroup, exists := user.(*userinfo).Groups[dev.GroupID]; exists {
+				delete(oldGroup.devMap, dev.ID)
+				if dev.udpAddr != nil {
+					oldGroup.connPool.removeDevice(dev.udpAddr.String())
+				}
+			}
 
 		}
 
@@ -526,7 +577,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 	//加入新的组
 
-	if groupid >= 999 || groupid == 0 {
+	if isPublicGroupID(groupid) {
 
 		if g, ok := publicGroupMap[groupid]; ok {
 			dev.GroupID = groupid
@@ -541,20 +592,29 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 			return "", fmt.Errorf("group not found")
 
 		}
-	} else {
+	} else if isPrivateGroupID(groupid) {
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			user.(*userinfo).Groups[groupid].devMap[dev.ID] = dev
-			if dev.udpAddr != nil {
-				user.(*userinfo).Groups[groupid].connPool.ensureDevice(dev.udpAddr.String(), dev)
+			privateGroup, exists := user.(*userinfo).Groups[groupid]
+			if !exists {
+				return "", fmt.Errorf("private group not found")
 			}
-			group = strconv.Itoa(user.(*userinfo).Groups[groupid].ID) + user.(*userinfo).Groups[groupid].Name
+			privateGroup.devMap[dev.ID] = dev
+			if dev.udpAddr != nil {
+				privateGroup.connPool.ensureDevice(dev.udpAddr.String(), dev)
+			}
+			group = strconv.Itoa(privateGroup.ID) + privateGroup.Name
 
+		} else {
+			return "", fmt.Errorf("user not found")
 		}
 
 		//私有房间
 
 		dev.GroupID = groupid
+
+	} else {
+		return "", fmt.Errorf("reserved or invalid group")
 
 	}
 

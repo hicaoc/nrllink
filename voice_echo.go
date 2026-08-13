@@ -154,18 +154,9 @@ func voiceEchoPacketDuration(nrl *NRL21packet) time.Duration {
 	return 20 * time.Millisecond
 }
 
-// singleDeviceVoiceEchoEnabled centralizes room exceptions for recorded echo.
-// Relay-interconnect and full-network rooms must never loop voice to the sender.
-func singleDeviceVoiceEchoEnabled(gp *group) bool {
-	if gp == nil || gp.ID == 999 {
-		return false
-	}
-	switch gp.Type {
-	case 1: // 中继互联
-		return false
-	default:
-		return true
-	}
+// voiceEchoRoomEnabled restricts recorded echo to the built-in parrot room 998.
+func voiceEchoRoomEnabled(gp *group) bool {
+	return gp != nil && gp.ID == voiceEchoRoomID
 }
 
 func cloneUDPAddr(addr *net.UDPAddr) *net.UDPAddr {
@@ -179,13 +170,21 @@ func cloneUDPAddr(addr *net.UDPAddr) *net.UDPAddr {
 	}
 }
 
-func queueSingleDeviceVoiceEcho(gp *group, dev *deviceInfo, nrl *NRL21packet, packet []byte) {
-	if !singleDeviceVoiceEchoEnabled(gp) || dev == nil || nrl == nil {
+func voiceEchoPlaybackAllowed(gp *group, dev *deviceInfo, addr *net.UDPAddr) bool {
+	if !voiceEchoRoomEnabled(gp) || dev == nil || addr == nil || gp.connPool == nil {
+		return false
+	}
+	current, ok := gp.connPool.getDevice(addr.String())
+	return ok && current == dev
+}
+
+func queueDeviceVoiceEcho(gp *group, dev *deviceInfo, nrl *NRL21packet, packet []byte) {
+	if !voiceEchoRoomEnabled(gp) || dev == nil || nrl == nil {
 		return
 	}
 	addr := cloneUDPAddr(nrl.UDPAddr)
 	dev.voiceEcho.enqueue(packet, voiceEchoPacketDuration(nrl), func(recordedPacket []byte) bool {
-		if !gp.connPool.isOnlyDevice(dev) || addr == nil || globelconn == nil {
+		if !voiceEchoPlaybackAllowed(gp, dev, addr) || globelconn == nil {
 			return false
 		}
 		if _, err := globelconn.WriteToUDP(recordedPacket, addr); err != nil {

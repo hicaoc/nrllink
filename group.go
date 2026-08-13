@@ -126,11 +126,12 @@ func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if groupid <= 3 && groupid > 0 {
+	if isPrivateGroupID(groupid) {
 		if user, okok := userlist.Load(u.CallSign); okok {
-			gp := user.(*userinfo).Groups[groupid]
-			writeJSONResponseItem(w, newGroupDetail(gp))
-			return
+			if gp, exists := user.(*userinfo).Groups[groupid]; exists {
+				writeJSONResponseItem(w, newGroupDetail(gp))
+				return
+			}
 		}
 
 	} else if g, ok := publicGroupMap[groupid]; ok {

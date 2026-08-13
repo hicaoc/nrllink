@@ -149,19 +149,6 @@ func (p *currentConnPool) snapshotList() []*deviceInfo {
 	return res
 }
 
-func (p *currentConnPool) isOnlyDevice(dev *deviceInfo) bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-
-	if len(p.devConnMap) != 1 {
-		return false
-	}
-	for _, current := range p.devConnMap {
-		return current == dev
-	}
-	return false
-}
-
 func (p *currentConnPool) getDevice(addr string) (*deviceInfo, bool) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -300,18 +287,19 @@ func udpProcess(conn *net.UDPConn) {
 			}
 
 			//  没有加入公共组的设备，使用用户内置连接池
-			if dev.GroupID > 0 && dev.GroupID <= 3 {
+			if isPrivateGroupID(dev.GroupID) {
 
 				if u, okok := userlist.Load(dev.CallSign); okok {
-
-					NRL21parser(nrl, data[:n], dev, conn, u.(*userinfo).Groups[dev.GroupID])
+					if privateGroup, exists := u.(*userinfo).Groups[dev.GroupID]; exists {
+						NRL21parser(nrl, data[:n], dev, conn, privateGroup)
+					}
 				} else {
 
 					fmt.Println("dev:", dev, nrl)
 
 				}
 
-			} else if dev.GroupID >= 999 || dev.GroupID == 0 {
+			} else if isPublicGroupID(dev.GroupID) {
 
 				//否则使用公共群组连接池
 				if p, ok := publicGroupMap[dev.GroupID]; ok {
@@ -390,7 +378,7 @@ func groupForDevice(dev *deviceInfo) *group {
 	if dev == nil {
 		return nil
 	}
-	if dev.GroupID > 0 && dev.GroupID <= 3 {
+	if isPrivateGroupID(dev.GroupID) {
 		if u, ok := userlist.Load(dev.CallSign); ok {
 			return u.(*userinfo).Groups[dev.GroupID]
 		}
@@ -719,10 +707,21 @@ func forwardCOM(nrl *NRL21packet, packet []byte, gp *group) {
 func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	packetForRecipient := voicePacketSelector(nrl, packet)
 
-	numbs := gp.connPool.count()
+	// 鹦鹉房间内每台设备只录制并回放自己的语音。录音器保存在设备上，
+	// 因此多台设备同时在线时，各自的录音和回放互不影响，也不会转发给其他设备。
+	if voiceEchoRoomEnabled(gp) {
+		outPacket, err := packetForRecipient(dev)
+		if err == nil {
+			queueDeviceVoiceEcho(gp, dev, nrl, outPacket)
+		}
+		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
+		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
+		return
+	}
 
-	// 中继互联和全网通房间不启用单设备录音回放，并继续走原有单工转发逻辑。
-	if !singleDeviceVoiceEchoEnabled(gp) {
+	numbs := gp.connPool.count()
+	// 中继互联和全网通房间始终沿用原有单工转发逻辑。
+	if gp.Type == 1 || gp.ID == 999 {
 		numbs = 3
 	}
 
@@ -733,12 +732,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 	case 0:
 		//log.Println("err connpoll is null")
 		return
-	case 1: //只有一个设备，录完整段语音后按原编码时序回放；老型号按需转为 G.711
-
-		outPacket, err := packetForRecipient(dev)
-		if err == nil {
-			queueSingleDeviceVoiceEcho(gp, dev, nrl, outPacket)
-		}
+	case 1: //只有一个设备时不转发；录音回放仅由鹦鹉房间提供
 		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
 		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
