@@ -281,12 +281,11 @@ func updateRegUserCertPath(opCertPath, licensePath, callsign string) error {
 
 func updateRegUser(e *reguser) error {
 
-	_, err := db.Exec(`update registers set 
-	name=?,phone=?,sex=?,callsign=?,	
+	_, err := db.Exec(`update registers set
+	name=?,phone=?,sex=?,callsign=?,
 	address=?,birthday=?,mail=?,
 	status=?,note=?,
-	create_time=CURRENT_TIMESTAMP,
-	update_time=CURRENT_TIMESTAMP,
+	update_time=CURRENT_TIMESTAMP
 	 where id=?`,
 		e.Name, e.Phone, e.Sex, e.CallSign, e.Address, e.Birthday, e.Mail, e.Status, e.Note, e.ID)
 	if err != nil {

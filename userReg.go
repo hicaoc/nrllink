@@ -25,8 +25,13 @@ var (
 func (j *jsonapi) httpRegisterList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
+	u, err := checktoken(w, req)
 	if err != nil {
+		return
+	}
+
+	if !checkrole(u, []string{"admin", "master"}) {
+		w.Write(ResRightErr)
 		return
 	}
 
@@ -61,7 +66,7 @@ func (j *jsonapi) httpRegisterImage(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin"}) {
+	if !checkrole(u, []string{"admin", "master"}) {
 
 		w.Write(ResRightErr)
 		return
@@ -307,7 +312,7 @@ func (j *jsonapi) httpAddReg(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin"}) {
+	if !checkrole(u, []string{"admin", "master"}) {
 		w.Write(ResRightErr)
 		return
 
@@ -352,7 +357,7 @@ func (j *jsonapi) httpUpdateReg(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin"}) {
+	if !checkrole(u, []string{"admin", "master"}) {
 
 		w.Write(ResRightErr)
 		return
@@ -394,7 +399,7 @@ func (j *jsonapi) httpDeleteRegUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin"}) {
+	if !checkrole(u, []string{"admin", "master"}) {
 		w.Write(ResRightErr)
 		return
 
