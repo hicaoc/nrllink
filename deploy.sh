@@ -20,6 +20,8 @@ hostlist='182.92.158.141 39.106.62.160 m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd
 
 #hostlist='usa.nrlptt.com'
 
+#hostlist='yz.hamuv.com'
+
 #hostlist='nrl.bd4two.site js.nrlptt.com ham.73ham.com'
 
 #hostlist='ba1gm.nrlptt.com'

@@ -1,15 +1,25 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
+)
+
+var (
+	registerCallsignPattern = regexp.MustCompile(`^[A-Z0-9]{5,6}$`)
+	registerPhonePattern    = regexp.MustCompile(`^\d{11,}$`)
+	registerMailPattern     = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 )
 
 func (j *jsonapi) httpRegisterList(w http.ResponseWriter, req *http.Request) {
@@ -124,32 +134,90 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 
 	// 解析表单数据（解析时会检查大小限制）
 	if err := r.ParseMultipartForm(10 << 20); err != nil { // 这里的 10 << 20 同样是 10 MB 限制
-		w.Write(ResParmErr)
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			writeJSONResponse(w, &Response{20001, "上传内容超过 10MB", nil})
+		} else {
+			log.Println("parse register multipart form failed:", err)
+			writeJSONResponse(w, &Response{20001, "注册表单解析失败，请重新选择证件图片后再试", nil})
+		}
 		return
 	}
 
 	// 获取用户注册信息
-	callsign := r.FormValue("callsign")
-	name := r.FormValue("name")
-	phone := r.FormValue("phone")
-	address := r.FormValue("address")
-	mail := r.FormValue("mail")
+	callsign := strings.ToUpper(strings.TrimSpace(r.FormValue("callsign")))
+	name := strings.TrimSpace(r.FormValue("name"))
+	phone := strings.TrimSpace(r.FormValue("phone"))
+	address := strings.TrimSpace(r.FormValue("address"))
+	mail := strings.TrimSpace(r.FormValue("mail"))
 	password := r.FormValue("password")
 
 	// 检查必填字段
-	if callsign == "" || name == "" || phone == "" || password == "" {
-		w.Write(ResParmErr)
+	requiredFields := []struct {
+		name  string
+		value string
+	}{
+		{"呼号", callsign},
+		{"姓名", name},
+		{"手机号", phone},
+		{"密码", password},
+		{"地址", address},
+		{"邮箱", mail},
+	}
+	for _, field := range requiredFields {
+		if field.value == "" {
+			writeJSONResponse(w, &Response{20001, "缺少参数：" + field.name, nil})
+			return
+		}
+	}
+
+	if !registerCallsignPattern.MatchString(callsign) {
+		writeJSONResponse(w, &Response{20001, "呼号格式错误：需为 5-6 位大写字母或数字", nil})
+		return
+	}
+	if !registerPhonePattern.MatchString(phone) {
+		writeJSONResponse(w, &Response{20001, "手机号格式错误：需为 11 位以上数字", nil})
+		return
+	}
+	if !registerMailPattern.MatchString(mail) {
+		writeJSONResponse(w, &Response{20001, "邮箱格式错误", nil})
 		return
 	}
 
-	user, _ := getuser(phone)
+	var existingCallsign, existingPhone string
+	err := db.QueryRow(
+		`SELECT callsign, phone FROM users WHERE UPPER(callsign) = ? OR phone = ? LIMIT 1`,
+		callsign, phone,
+	).Scan(&existingCallsign, &existingPhone)
+	if err == nil {
+		if strings.EqualFold(existingCallsign, callsign) {
+			writeJSONResponse(w, &Response{20001, "该呼号已注册", nil})
+		} else {
+			writeJSONResponse(w, &Response{20001, "该手机号已注册", nil})
+		}
+		return
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		log.Println("check registered user failed:", err)
+		writeJSONResponse(w, &Response{20001, "注册信息校验失败，请稍后重试", nil})
+		return
+	}
 
-	// if err != nil {
-	// 	w.Write(ResOpErr)
-	// }
-
-	if user != nil {
-		w.Write(ResUserAleadyExits)
+	err = db.QueryRow(
+		`SELECT callsign, phone FROM registers WHERE UPPER(callsign) = ? OR phone = ? LIMIT 1`,
+		callsign, phone,
+	).Scan(&existingCallsign, &existingPhone)
+	if err == nil {
+		if strings.EqualFold(existingCallsign, callsign) {
+			writeJSONResponse(w, &Response{20001, "该呼号已提交注册申请，请勿重复提交", nil})
+		} else {
+			writeJSONResponse(w, &Response{20001, "该手机号已提交注册申请，请勿重复提交", nil})
+		}
+		return
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		log.Println("check pending register user failed:", err)
+		writeJSONResponse(w, &Response{20001, "注册信息校验失败，请稍后重试", nil})
 		return
 	}
 
@@ -177,15 +245,21 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 
 	// 处理上传的电台执照文件
 	licenseFile, licenseHeader, err := r.FormFile("license")
-	if err == nil {
-		log.Println("注册信息licenseFile：", err)
-		defer licenseFile.Close()
-		licensePath = filepath.Join(uploadDir, callsign+"_license"+filepath.Ext(licenseHeader.Filename))
-		if err := saveFile(licenseFile, licensePath); err != nil {
-			log.Println("注册信息licensePath：", err)
-			w.Write(ResOpErr)
-			return
-		}
+	if errors.Is(err, http.ErrMissingFile) {
+		writeJSONResponse(w, &Response{20001, "缺少参数：证件图片", nil})
+		return
+	}
+	if err != nil {
+		log.Println("read register license file failed:", err)
+		writeJSONResponse(w, &Response{20001, "证件图片读取失败，请重新选择后再试", nil})
+		return
+	}
+	defer licenseFile.Close()
+	licensePath = filepath.Join(uploadDir, callsign+"_license"+filepath.Ext(licenseHeader.Filename))
+	if err := saveFile(licenseFile, licensePath); err != nil {
+		log.Println("save register license file failed:", err)
+		writeJSONResponse(w, &Response{20001, "证件图片保存失败，请稍后重试", nil})
+		return
 	}
 
 	//fmt.Println("opCertPath:", opCertPath)
@@ -211,7 +285,11 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println("add reg user failed  , ", err)
-		w.Write(ResParmErr)
+		if strings.Contains(err.Error(), "UNIQUE constraint failed: registers.callsign") {
+			writeJSONResponse(w, &Response{20001, "该呼号已提交注册申请，请勿重复提交", nil})
+		} else {
+			writeJSONResponse(w, &Response{20001, "注册信息保存失败，请稍后重试", nil})
+		}
 		return
 
 	}

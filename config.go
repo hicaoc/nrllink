@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 	yaml "gopkg.in/yaml.v3"
@@ -80,25 +81,25 @@ type config struct {
 		MpAppSecret       string `yaml:"MpAppSecret" json:"mp_appsecret"`
 		PhoneCodeURL      string `yaml:"PhoneCodeURL" json:"phone_code_url"`
 		AvatarURL         string `yaml:"AvatarURL" json:"avatar_url"`
-		AccessToken       string
+		AccessToken       string `yaml:"-"`
 		AppID             string `yaml:"AppID" json:"appid"`
 		AppSecret         string `yaml:"AppSecret" json:"appsecret"`
 		EncodingAESKey    string `yaml:"EncodingAESKey" json:"encodingaeskey"`
-		AesKey            []byte
+		AesKey            []byte `yaml:"-"`
 		ClickEventMap     map[string]string `yaml:"ClickEventMap" json:"click_event_map"`
 		KeywordsMap       map[string]string `yaml:"KeywordsMap" json:"keywords_map"`
 		WeixinWelcome     string            `yaml:"WeixinWelcome" json:"weixin_welcome"`
 		DefaultKeywords   string            `yaml:"DefaultKeywords" json:"default_keywords"`
-		WeiXinAccessToken *WXBody
+		WeiXinAccessToken *WXBody `yaml:"-"`
 		WeiXinMenu        string `yaml:"WeixinMenu" json:"weixin_menu"`
 		ServerURL         string `yaml:"ServerURL" json:"server_url"` //本机api url地址
 
 		WeixinAPIURL       string `yaml:"WeixinAPIURL" json:"weixin_api_url"` //微信URL接口地址
 		Wxmsgurl           string `yaml:"WxMsgURL" json:"wx_msg_url"`         //微信模板消息url
-		TypePhoneCodeID    string
-		TypeLoginSuccessID string
+		TypePhoneCodeID    string   `yaml:"-"`
+		TypeLoginSuccessID string   `yaml:"-"`
 
-		TypeLoginFailID string
+		TypeLoginFailID string `yaml:"-"`
 
 		AlarmModeID string `yaml:"AlarmModeID" json:"alarm_mode_id"` //告警通知模板ID
 
@@ -125,6 +126,12 @@ type config struct {
 
 var conf = &config{}
 
+// confPath 为配置文件路径，在 init() 中确定，save() 持久化时使用
+var confPath string
+
+// confLock 保护 conf 的并发读写（Web 配置接口与运行时 goroutine）
+var confLock sync.RWMutex
+
 func (c *config) init() {
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -133,18 +140,18 @@ func (c *config) init() {
 		os.Exit(1)
 	}
 
-	confpath := dir + "/udphub.yaml"
+	confPath = dir + "/udphub.yaml"
 
-	cc := flag.String("c", confpath, "config file path and name")
+	cc := flag.String("c", confPath, "config file path and name")
 	oo := flag.String("o", "", "print config content to stdout and exit , yaml or json format")
 
 	flag.Parse()
 
 	if *cc != "" {
-		confpath = *cc
+		confPath = *cc
 	}
 
-	yamlFile, err := os.ReadFile(confpath)
+	yamlFile, err := os.ReadFile(confPath)
 
 	if err != nil {
 		log.Printf("udphub.yaml open err #%v ", err)
@@ -154,7 +161,15 @@ func (c *config) init() {
 	err = yaml.Unmarshal(yamlFile, conf)
 
 	if err != nil {
-		log.Fatalf("Unmarshal: %v \n %s", err, yamlFile)
+		// 主文件损坏时回退到 save() 留下的 .bak 备份
+		bak, berr := os.ReadFile(confPath + ".bak")
+		if berr != nil {
+			log.Fatalf("Unmarshal: %v \n %s", err, yamlFile)
+		}
+		if berr = yaml.Unmarshal(bak, conf); berr != nil {
+			log.Fatalf("Unmarshal: %v \n %s", err, yamlFile)
+		}
+		log.Printf("config file corrupted, loaded backup %s.bak instead (err #%v)", confPath, err)
 	}
 
 	// c.Parm.iDCfilterIPMap = make(map[uint32]bool, 0)
@@ -177,6 +192,34 @@ func (c *config) init() {
 
 	PlatformList = conf.PlatformList
 
+}
+
+// save 将当前配置持久化回 yaml 配置文件。
+// 先写临时文件再 rename，避免写一半把原文件写坏。
+func (c *config) save() error {
+
+	confLock.RLock()
+	b, err := yaml.Marshal(c)
+	confLock.RUnlock()
+
+	if err != nil {
+		return err
+	}
+
+	tmp := confPath + ".tmp"
+	if err := os.WriteFile(tmp, b, 0644); err != nil {
+		return err
+	}
+
+	// 覆盖前把现有配置备份到 .bak，写坏或误改时可手动恢复
+	if old, err := os.ReadFile(confPath); err == nil {
+		if err := os.WriteFile(confPath+".bak", old, 0644); err != nil {
+			os.Remove(tmp)
+			return fmt.Errorf("backup config: %w", err)
+		}
+	}
+
+	return os.Rename(tmp, confPath)
 }
 
 // Exist 判断文件存在

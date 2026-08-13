@@ -225,6 +225,9 @@ func (j *jsonapi) msghttp() {
 	//http.HandleFunc("/area/wxuserlist", j.httpGetWeiXinUserList)
 	http.HandleFunc("/operatorlog/list", j.httpOperatorLogList)
 
+	http.HandleFunc("/config/get", j.httpGetConfig)
+	http.HandleFunc("/config/update", j.httpUpdateConfig)
+
 	//http.HandleFunc("/login", j.httplogin)
 	//http.HandleFunc("/reg", j.httpreg)
 
