@@ -280,6 +280,9 @@ func (j *jsonapi) httpDeleteGroup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if stb.ID < 1000 {
+	}
+
 	deletePublicGroup(stb)
 	addOperatorLog(stb.String(), "公共群组删除成功", u)
 
