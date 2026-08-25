@@ -58,6 +58,9 @@ nfpms:
         type: config|noreplace
       - src: nrllink.service
         dst: /usr/lib/systemd/system/nrllink.service
+      # nrllink-web 前端构建产物,由 workflow 提前构建到 web/dist
+      - src: web/dist/
+        dst: /nrllink/www
     scripts:
       postinstall: scripts/postinstall.sh
 

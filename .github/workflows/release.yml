@@ -22,6 +22,22 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Checkout nrllink-web
+        uses: actions/checkout@v4
+        with:
+          repository: hicaoc/nrllink-web
+          path: web
+
+      - name: Install Vite+ (vp)
+        run: curl -fsSL https://vite.plus | bash
+
+      - name: Build web console
+        working-directory: web
+        run: |
+          export PATH="$HOME/.vite-plus/bin:$PATH"
+          vp install
+          vp build
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:

@@ -8,3 +8,5 @@ nrllink_test
 go.sum
 .vscode/settings.json
 udphub.tgz
+web/
+dist/

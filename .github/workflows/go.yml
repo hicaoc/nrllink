@@ -27,6 +27,22 @@ jobs:
       - name: Test
         run: go test -v ./...
 
+      - name: Checkout nrllink-web
+        uses: actions/checkout@v4
+        with:
+          repository: hicaoc/nrllink-web
+          path: web
+
+      - name: Install Vite+ (vp)
+        run: curl -fsSL https://vite.plus | bash
+
+      - name: Build web console
+        working-directory: web
+        run: |
+          export PATH="$HOME/.vite-plus/bin:$PATH"
+          vp install
+          vp build
+
       - name: Build snapshot (binaries + deb/rpm/apk)
         uses: goreleaser/goreleaser-action@v6
         with:
