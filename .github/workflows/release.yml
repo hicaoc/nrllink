@@ -29,12 +29,14 @@ jobs:
           path: web
 
       - name: Install Vite+ (vp)
-        run: curl -fsSL https://vite.plus | bash
+        run: |
+          curl -fsSL https://vite.plus | bash
+          # 安装器把 vp 放在 ~/.local/share/vite-plus/<版本>/bin,加入 PATH 供后续步骤使用
+          find "$HOME/.local/share/vite-plus" -maxdepth 2 -type d -name bin >> "$GITHUB_PATH"
 
       - name: Build web console
         working-directory: web
         run: |
-          export PATH="$HOME/.vite-plus/bin:$PATH"
           vp install
           vp build
 
