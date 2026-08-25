@@ -35,12 +35,12 @@ jobs:
 
       - name: Build Windows and Linux binaries
         run: |
-          for t in linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
-            os=${t%/*}; arch=${t#*/}
-            out=dist/nrllink_${os}_${arch}
-            if [ "$os" = windows ]; then out=$out.exe; fi
-            CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o "$out" .
-          done
+          CGO_ENABLED=0 GOOS=linux   GOARCH=amd64   go build -o dist/nrllink_linux_amd64 .
+          CGO_ENABLED=0 GOOS=linux   GOARCH=arm64   go build -o dist/nrllink_linux_arm64 .
+          CGO_ENABLED=0 GOOS=linux   GOARCH=arm     GOARM=7 go build -o dist/nrllink_linux_armv7 .
+          CGO_ENABLED=0 GOOS=linux   GOARCH=riscv64 go build -o dist/nrllink_linux_riscv64 .
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64   go build -o dist/nrllink_windows_amd64.exe .
+          CGO_ENABLED=0 GOOS=windows GOARCH=arm64   go build -o dist/nrllink_windows_arm64.exe .
           ls -lh dist/
 
       - name: Upload binaries

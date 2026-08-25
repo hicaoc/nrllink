@@ -3,7 +3,9 @@ version: 2
 project_name: nrllink
 
 builds:
-  - env: [CGO_ENABLED=0]
+  - id: nrllink
+    binary: nrllink
+    env: [CGO_ENABLED=0]
     goos:
       - linux
       - windows
@@ -11,6 +13,18 @@ builds:
     goarch:
       - amd64
       - arm64
+  # OpenWrt 常见架构:armv7 和 riscv64(32 位 MIPS 不被纯 Go sqlite 驱动支持)
+  - id: nrllink-linux-armv7
+    binary: nrllink
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [arm]
+    goarm: [7]
+  - id: nrllink-linux-riscv64
+    binary: nrllink
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [riscv64]
 
 dockers:
   - image_templates:
