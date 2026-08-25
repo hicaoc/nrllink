@@ -24,7 +24,7 @@ import (
 func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
+	u, err := checktoken(w, req)
 	if err != nil {
 		return
 	}
@@ -43,6 +43,11 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 		log.Println("operater log  query err :", err)
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"操作日记查询参数错误"}}`))
 		return
+	}
+
+	// 非管理员只能查询自己的操作记录，防止泄露其他用户的信息（手机号、呼号等）
+	if !checkrole(u, []string{"admin"}) {
+		stb.OperatorID = fmt.Sprintf("%d", u.ID)
 	}
 
 	ww, p, _ := queryToWhere("", *stb)
