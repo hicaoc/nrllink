@@ -32,3 +32,20 @@ jobs:
         with:
           version: latest
           args: check
+
+      - name: Build Windows and Linux binaries
+        run: |
+          for t in linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
+            os=${t%/*}; arch=${t#*/}
+            out=dist/nrllink_${os}_${arch}
+            if [ "$os" = windows ]; then out=$out.exe; fi
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o "$out" .
+          done
+          ls -lh dist/
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: nrllink-binaries
+          path: dist/nrllink_*
+          retention-days: 30
