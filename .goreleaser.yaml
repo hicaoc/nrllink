@@ -3,7 +3,7 @@ version: 2
 project_name: nrllink
 
 builds:
-  - env: [CGO_ENABLED=1]
+  - env: [CGO_ENABLED=0]
     goos:
       - linux
       - windows
@@ -17,6 +17,8 @@ dockers:
       - "ghcr.io/hicaoc/nrllink:{{ .Version }}"
       - "ghcr.io/hicaoc/nrllink:latest"
     dockerfile: Dockerfile
+    extra_files:
+      - start.sh
     build_flag_templates:
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.description=Radio over network.
@@ -37,10 +39,3 @@ nfpms:
       - rpm
       - apk
 
-snapcrafts:
-  - name: nrllink
-    summary: Radio over network.
-    description: |
-      NRLLINK enables radio communication over a network.
-    confinement: strict
-    grade: stable

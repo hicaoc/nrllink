@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -235,7 +235,7 @@ func getDB() *sql.DB {
 
 	var err error
 
-	db, err = sql.Open("sqlite3", conf.System.DBfile)
+	db, err = sql.Open("sqlite", conf.System.DBfile)
 
 	if err != nil {
 		log.Fatal(err)
