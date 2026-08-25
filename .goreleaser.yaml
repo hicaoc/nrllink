@@ -52,4 +52,12 @@ nfpms:
       - deb
       - rpm
       - apk
+    contents:
+      - src: udphub.yaml
+        dst: /nrllink/udphub.yaml
+        type: config|noreplace
+      - src: nrllink.service
+        dst: /usr/lib/systemd/system/nrllink.service
+    scripts:
+      postinstall: scripts/postinstall.sh
 

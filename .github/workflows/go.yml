@@ -27,25 +27,19 @@ jobs:
       - name: Test
         run: go test -v ./...
 
-      - name: Validate GoReleaser config
+      - name: Build snapshot (binaries + deb/rpm/apk)
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: check
+          args: release --snapshot --clean --skip=docker
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Windows and Linux binaries
-        run: |
-          CGO_ENABLED=0 GOOS=linux   GOARCH=amd64   go build -o dist/nrllink_linux_amd64 .
-          CGO_ENABLED=0 GOOS=linux   GOARCH=arm64   go build -o dist/nrllink_linux_arm64 .
-          CGO_ENABLED=0 GOOS=linux   GOARCH=arm     GOARM=7 go build -o dist/nrllink_linux_armv7 .
-          CGO_ENABLED=0 GOOS=linux   GOARCH=riscv64 go build -o dist/nrllink_linux_riscv64 .
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64   go build -o dist/nrllink_windows_amd64.exe .
-          CGO_ENABLED=0 GOOS=windows GOARCH=arm64   go build -o dist/nrllink_windows_arm64.exe .
-          ls -lh dist/
-
-      - name: Upload binaries
+      - name: Upload binaries and packages
         uses: actions/upload-artifact@v4
         with:
           name: nrllink-binaries
-          path: dist/nrllink_*
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
           retention-days: 30

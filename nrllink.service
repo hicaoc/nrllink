@@ -1,0 +1,14 @@
+[Unit]
+Description=nrllink
+Documentation=https://github.com/hicaoc/nrllink
+After=network.target
+
+[Service]
+WorkingDirectory=/nrllink
+ExecStart=/usr/bin/nrllink -c /nrllink/udphub.yaml
+Restart=always
+RestartSec=1s
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
