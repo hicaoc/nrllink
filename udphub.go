@@ -443,13 +443,13 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		dev.LastCtlEndTime = nrl.timeStamp
 
 		//来自其他服务器255的包
-		if nrl.DevModel == 255 && nrl.SSID == 255 {
+		if nrl.DevModel == 255 || nrl.SSID == 255 {
 			dev.ISOnline = true
 			forwardServerVoice(nrl, dev, packet, conn, gp)
 			return
 		}
 
-		if nrl.DevModel == 200 && nrl.SSID == 200 {
+		if nrl.DevModel == 200 || nrl.SSID == 200 {
 			forwardServerVoice(nrl, dev, packet, conn, gp)
 			return
 		}
@@ -681,7 +681,7 @@ func FullNetOutput(nrl *NRL21packet, dev *deviceInfo, packet []byte) {
 
 func forwardCOM(nrl *NRL21packet, packet []byte, gp *group) {
 
-	if gp.ID > 3 {
+	if gp.ID > 3 || gp.ID == 0 {
 		return
 	}
 
@@ -721,7 +721,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 
 	numbs := gp.connPool.count()
 	// 中继互联和全网通房间始终沿用原有单工转发逻辑。
-	if gp.Type == 1 || gp.ID == 999 {
+	if gp.Type == 1 || gp.Type == 4 || gp.ID == 999 {
 		numbs = 3
 	}
 
