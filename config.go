@@ -121,6 +121,17 @@ type config struct {
 		} `yaml:"WechatPay" json:"wechat_pay"`
 	} `yaml:"Billing" json:"billing"`
 
+	// OIDC 集中认证登录配置（外部 OIDC Provider，如 https://www.hamptt.com）
+	OIDC struct {
+		Enabled       bool   `yaml:"enabled" json:"enabled"`               //是否启用 OIDC 登录
+		Issuer        string `yaml:"issuer" json:"issuer"`                 //OIDC Provider issuer 地址
+		ClientID      string `yaml:"client_id" json:"client_id"`           //OIDC 客户端ID
+		ClientSecret  string `yaml:"client_secret" json:"client_secret"`   //OIDC 客户端密钥
+		RedirectURL   string `yaml:"redirect_url" json:"redirect_url"`     //OIDC 回调地址，需在 Provider 端登记
+		AutoProvision bool   `yaml:"auto_provision" json:"auto_provision"` //找不到本地账号时是否自动建号
+		ButtonName    string `yaml:"button_name" json:"button_name"`       //前端登录按钮文案
+	} `yaml:"OIDC" json:"oidc"`
+
 	//points  int
 }
 
@@ -300,6 +311,10 @@ func updatedb() {
 		"DROP INDEX idx_callsign_unique",
 		"CREATE UNIQUE INDEX idx_users_phone_unique ON users(phone);",
 		"CREATE UNIQUE INDEX idx_users_callsign_unique ON users(callsign);",
+
+		//OIDC 集中认证：users 表记录 OIDC sub 用于账号绑定
+		"ALTER TABLE users ADD COLUMN oidc_sub TEXT;",
+		"CREATE INDEX IF NOT EXISTS idx_users_oidc_sub ON users(oidc_sub);",
 	}
 
 	// 逐条执行 SQL 语句并输出日志

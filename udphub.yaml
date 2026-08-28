@@ -49,6 +49,15 @@ Billing:
         PrivateKeyPath: ""
         NotifyURL: ""
         Description: "NRL账号续费"
+#OIDC集中认证登录（外部OIDC Provider，角色本地管理，OIDC仅做认证）
+#OIDC:
+#    enabled: false
+#    issuer: "https://www.hamptt.com"
+#    client_id: ""
+#    client_secret: ""
+#    redirect_url: "https://你的域名/user/oidc/callback"
+#    auto_provision: true
+#    button_name: "hamptt.com 统一认证"
 PlatformList :
   - Name: nrlptt主站
     Host: nrlptt.com

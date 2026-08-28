@@ -262,6 +262,64 @@ func getuser(username string) (*userinfo, error) {
 	return r, nil
 }
 
+// getuserByOIDCSub 按 OIDC sub 查询用户（OIDC 登录账号绑定）
+func getuserByOIDCSub(sub string) (*userinfo, error) {
+
+	r := &userinfo{}
+
+	var roles string
+
+	query := `SELECT id,pid,name,phone,
+	callsign,gird,birthday,mdcid,dmrid,
+	sex,nickname,openid,avatar,address, status,
+	last_login_time, login_err_times, last_login_ip,
+	alarm_msg,roles,create_time,update_time,expire_time FROM users where oidc_sub=? `
+
+	row := db.QueryRow(query, sub)
+	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
+		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
+		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
+		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
+		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime, &r.ExpireTime)
+	if err != nil {
+		return nil, err
+	}
+
+	r.Roles = strings.Split(roles, ",")
+
+	return r, nil
+}
+
+// getuserByCallsign 仅按呼号查询用户（OIDC 登录匹配本地账号用，避免呼号串误匹配手机号）
+func getuserByCallsign(callsign string) (*userinfo, error) {
+
+	r := &userinfo{}
+
+	var roles string
+
+	callsign = strings.ToUpper(callsign)
+
+	query := `SELECT id,pid,name,phone,
+	callsign,gird,birthday,mdcid,dmrid,
+	sex,nickname,openid,avatar,address, status,
+	last_login_time, login_err_times, last_login_ip,
+	alarm_msg,roles,create_time,update_time,expire_time FROM users where callsign=? `
+
+	row := db.QueryRow(query, callsign)
+	err := row.Scan(&r.ID, &r.PID, &r.Name, &r.Phone,
+		&r.CallSign, &r.Gird, &r.Birthday, &r.MDCID, &r.DMRID,
+		&r.Sex, &r.NickName, &r.OpenID, &r.Avatar, &r.Address, &r.Status,
+		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
+		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime, &r.ExpireTime)
+	if err != nil {
+		return nil, err
+	}
+
+	r.Roles = strings.Split(roles, ",")
+
+	return r, nil
+}
+
 func getuserByID(id int) (*userinfo, error) {
 	r := &userinfo{}
 	var roles string

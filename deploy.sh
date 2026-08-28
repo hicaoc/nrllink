@@ -30,7 +30,7 @@ hostlist='www.bi3spp.cn'
 
 #hostlist='js.nrlptt.com'
 
-#hostlist='ah.nrlptt.com'
+hostlist='ah.nrlptt.com'
 
 #hostlist='www.bg1vif.com'
 

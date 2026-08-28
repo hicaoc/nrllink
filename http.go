@@ -189,6 +189,9 @@ func (j *jsonapi) msghttp() {
 	http.HandleFunc("/user/reg/delete", j.httpDeleteRegUser)
 
 	http.HandleFunc("/user/login", j.httpUserLogin)
+	http.HandleFunc("/user/oidc/config", j.httpOIDCConfig)     //OIDC登录配置查询（公开）
+	http.HandleFunc("/user/oidc/login", j.httpOIDCLogin)       //发起OIDC登录
+	http.HandleFunc("/user/oidc/callback", j.httpOIDCCallback) //OIDC登录回调
 	http.HandleFunc("/user/info", j.httpUserInfo)
 	http.HandleFunc("/user/logout", j.httpoplogout)
 
