@@ -133,8 +133,14 @@ func isMiniProgramRequest(req *http.Request) bool {
 func oidcMiniProgramJump(w http.ResponseWriter, mpURL, tip string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>%s</title></head>
-<body><p style="text-align:center;margin-top:40px;">%s</p>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>%s</title>
+<style>
+body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif}
+.spinner{width:36px;height:36px;border:4px solid #e8e8e8;border-top-color:#07c160;border-radius:50%%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tip{margin-top:16px;color:#666;font-size:15px}
+</style></head>
+<body><div class="spinner"></div><p class="tip">%s</p>
 <script src="https://res.wx.qq.com/open/js/jweixin-1.3.2.js"></script>
 <script>wx.miniProgram.reLaunch({url:%q});</script>
 </body></html>`, tip, tip, mpURL)
@@ -282,6 +288,8 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
+	oidcStart := time.Now() // 耗时统计起点：定位授权后回跳慢在哪一段
+
 	//校验 state 防 CSRF，cookie 用后清除
 	cookie, err := req.Cookie(oidcStateCookieName)
 	if err != nil {
@@ -316,6 +324,7 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 		oidcLoginErr(w, req, "换取访问令牌失败")
 		return
 	}
+	exchangeDur := time.Since(oidcStart)
 
 	//验 id_token 签名并校验 nonce
 	rawIDToken, ok := token.Extra("id_token").(string)
@@ -354,6 +363,7 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 		oidcLoginErr(w, req, "用户信息解析失败")
 		return
 	}
+	userinfoDur := time.Since(oidcStart) - exchangeDur
 
 	//匹配或创建本地用户
 	user, err := matchOrCreateOIDCUser(info)
@@ -372,6 +382,7 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 	}
 
 	updateOIDCLoginSuccess(user.ID, req.RemoteAddr)
+	log.Printf("oidc callback 耗时: 总计 %v（code换token %v，验签+拉userinfo %v）", time.Since(oidcStart), exchangeDur, userinfoDur)
 
 	//与账密登录一致，用 callsign 作为 token identity（checktoken->getuser 按 phone 或 callsign 查）
 	s, err := GenerateToken(user.CallSign, user.Roles)
