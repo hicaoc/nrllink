@@ -12,16 +12,18 @@ import (
 )
 
 type wsRoomState struct {
-	RoomKey    string      `json:"room_key"`
-	RoomID     int         `json:"room_id"`
-	RoomName   string      `json:"room_name"`
-	RoomType   int         `json:"room_type"`
-	Callsign   string      `json:"callsign"`
-	SSID       byte        `json:"ssid"`
-	Speakers   []wsSpeaker `json:"speakers,omitempty"`
-	Active     bool        `json:"active"`
-	UpdatedAt  string      `json:"updated_at"`
-	LastActive int64       `json:"last_active"`
+	RoomKey         string      `json:"room_key"`
+	RoomID          int         `json:"room_id"`
+	RoomName        string      `json:"room_name"`
+	RoomType        int         `json:"room_type"`
+	OnlineDevNumber int         `json:"online_dev_number"`
+	TotalDevNumber  int         `json:"total_dev_number"`
+	Callsign        string      `json:"callsign"`
+	SSID            byte        `json:"ssid"`
+	Speakers        []wsSpeaker `json:"speakers,omitempty"`
+	Active          bool        `json:"active"`
+	UpdatedAt       string      `json:"updated_at"`
+	LastActive      int64       `json:"last_active"`
 }
 
 type wsSpeaker struct {
@@ -79,6 +81,7 @@ type wsCallHub struct {
 	recent            []wsCallRecord
 	statsNotify       chan struct{}
 	lastOnlineDevices int
+	lastRoomsChecksum int
 }
 
 type wsCallClient struct {
@@ -108,6 +111,7 @@ func newWSCallHub() *wsCallHub {
 		recent:            make([]wsCallRecord, 0, 20),
 		statsNotify:       make(chan struct{}, 1),
 		lastOnlineDevices: -1,
+		lastRoomsChecksum: -1,
 	}
 }
 
@@ -249,8 +253,41 @@ func (h *wsCallHub) run() {
 				h.lastOnlineDevices = currentOnlineDevices
 				h.broadcastStats()
 			}
+			// 各房间在线人数变化时给客户端推一次全量房间列表
+			//（room_state 只在有语音活动时更新，在线人数需要主动刷新）
+			if checksum := roomsOnlineChecksum(); checksum != h.lastRoomsChecksum {
+				h.lastRoomsChecksum = checksum
+				h.broadcastRooms()
+			}
 		case <-h.statsNotify:
 			h.broadcastStats()
+		}
+	}
+}
+
+func roomsOnlineChecksum() int {
+	sum := 0
+	for _, gp := range publicGroupMap {
+		sum += gp.ID + gp.OnlineDevNumber*31 + gp.TotalDevNumber*7
+	}
+	return sum
+}
+
+func (h *wsCallHub) broadcastRooms() {
+	h.mu.RLock()
+	clients := make([]*wsCallClient, 0, len(h.clients))
+	for client := range h.clients {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
+
+	for _, client := range clients {
+		msg := wsCallMessage{
+			Type:  "rooms",
+			Rooms: h.roomsForUser(client.user),
+		}
+		if err := client.sendJSON(msg); err != nil {
+			client.close()
 		}
 	}
 }
@@ -331,10 +368,12 @@ func roomStateFromGroup(gp *group) wsRoomState {
 		return wsRoomState{}
 	}
 	return wsRoomState{
-		RoomKey:  roomKeyFromGroup(gp),
-		RoomID:   gp.ID,
-		RoomName: gp.Name,
-		RoomType: gp.Type,
+		RoomKey:         roomKeyFromGroup(gp),
+		RoomID:          gp.ID,
+		RoomName:        gp.Name,
+		RoomType:        gp.Type,
+		OnlineDevNumber: gp.OnlineDevNumber,
+		TotalDevNumber:  gp.TotalDevNumber,
 	}
 }
 
@@ -571,6 +610,8 @@ func (h *wsCallHub) touchRoomActivity(gp *group, callsign string, ssid byte, ts 
 	entry.RoomName = gp.Name
 	entry.RoomID = gp.ID
 	entry.RoomType = gp.Type
+	entry.OnlineDevNumber = gp.OnlineDevNumber
+	entry.TotalDevNumber = gp.TotalDevNumber
 	entry.Active = true
 	entry.lastActivity = ts
 	entry.UpdatedAt = ts.Format("2006-01-02 15:04:05")
