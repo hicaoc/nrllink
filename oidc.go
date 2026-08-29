@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -121,8 +122,30 @@ func oidcClearStateCookie(w http.ResponseWriter) {
 	})
 }
 
+// isMiniProgramRequest 判断请求是否来自微信小程序的 web-view（UA 含 miniProgram）
+func isMiniProgramRequest(req *http.Request) bool {
+	return strings.Contains(strings.ToLower(req.UserAgent()), "miniprogram")
+}
+
+// oidcMiniProgramJump 小程序 web-view 环境：返回一个极简 HTML，通过 jweixin 的
+// wx.miniProgram.reLaunch 把 OIDC 结果直接带回小程序页面，不再经过 Web 前端
+// （避免 web-view 缓存旧版前端导致无法回跳）
+func oidcMiniProgramJump(w http.ResponseWriter, mpURL, tip string) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>%s</title></head>
+<body><p style="text-align:center;margin-top:40px;">%s</p>
+<script src="https://res.wx.qq.com/open/js/jweixin-1.3.2.js"></script>
+<script>wx.miniProgram.reLaunch({url:%q});</script>
+</body></html>`, tip, tip, mpURL)
+}
+
 // oidcLoginErr 登录失败时跳回前端登录页（hash 路由）并带上错误信息
 func oidcLoginErr(w http.ResponseWriter, req *http.Request, msg string) {
+	if isMiniProgramRequest(req) {
+		oidcMiniProgramJump(w, "/pages/login/login?oidc_error="+url.QueryEscape(msg), msg)
+		return
+	}
 	http.Redirect(w, req, "/#/login?oidc_error="+url.QueryEscape(msg), http.StatusFound)
 }
 
@@ -361,6 +384,10 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 	addOperatorLog(user.CallSign+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "OIDC登录成功", user)
 	log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " OIDC User login ok :callsign:" + user.CallSign)
 
-	//前端是 hash 路由，token 通过 URL query 带回
+	//小程序 web-view 环境直接把 token 带回小程序页面；浏览器则 302 到 Web 前端（hash 路由）
+	if isMiniProgramRequest(req) {
+		oidcMiniProgramJump(w, "/pages/login/login?oidc_token="+url.QueryEscape(s), "登录成功，正在返回小程序...")
+		return
+	}
 	http.Redirect(w, req, "/#/oidc-callback?token="+url.QueryEscape(s), http.StatusFound)
 }
