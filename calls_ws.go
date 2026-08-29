@@ -1025,6 +1025,15 @@ func (j *jsonapi) wsCallStream(ws *websocket.Conn) {
 			ws.Close()
 			return
 		}
+
+		// getuser 返回的是未初始化的用户副本（usersDB.go 里 userinit 被注释），
+		// 私有房间（个人房间1~3）挂在内存 userlist 的初始化用户上，优先换成它；
+		// 极端情况下（内存里没有）现场初始化，保证登录用户总能看到自己的私有房间
+		if cached, ok := userlist.Load(user.CallSign); ok {
+			user = cached.(*userinfo)
+		} else if user.Groups == nil {
+			user.userinit()
+		}
 	}
 
 	client := newWSCallClient(callWSHub, ws, user)
