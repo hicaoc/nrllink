@@ -218,17 +218,13 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDevice(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
-	if err != nil {
-		return
-	}
-
+	// 公开接口：呼号+SSID 即可查询设备信息（含所在群组），不要求登录
 	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
 	stb := &query{}
-	err = jsonextra.Unmarshal(result, &stb)
+	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil {
 		log.Println("device err :", err)

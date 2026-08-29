@@ -36,17 +36,24 @@ var (
 )
 
 // oidcEnabled 判断 OIDC 登录是否配置并启用
+// oidcConfValue 读取 OIDC 配置字符串字段，去除首尾空白（配置界面粘贴时容易带入空格，
+// 例如 redirect_url 前多一个空格会导致 redirect_uri 与注册值不匹配）
+func oidcConfValue(s string) string {
+	return strings.TrimSpace(s)
+}
+
 func oidcEnabled() bool {
-	return conf.OIDC.Enabled && conf.OIDC.Issuer != "" && conf.OIDC.ClientID != "" && conf.OIDC.RedirectURL != ""
+	return conf.OIDC.Enabled && oidcConfValue(conf.OIDC.Issuer) != "" &&
+		oidcConfValue(conf.OIDC.ClientID) != "" && oidcConfValue(conf.OIDC.RedirectURL) != ""
 }
 
 // oidcOAuth2Config 手工构造 oauth2 配置（Provider 的 discovery 端点被前置代理拦截，不能用标准 discovery）
 func oidcOAuth2Config() *oauth2.Config {
-	issuer := strings.TrimSuffix(conf.OIDC.Issuer, "/")
+	issuer := strings.TrimSuffix(oidcConfValue(conf.OIDC.Issuer), "/")
 	return &oauth2.Config{
-		ClientID:     conf.OIDC.ClientID,
-		ClientSecret: conf.OIDC.ClientSecret,
-		RedirectURL:  conf.OIDC.RedirectURL,
+		ClientID:     oidcConfValue(conf.OIDC.ClientID),
+		ClientSecret: oidcConfValue(conf.OIDC.ClientSecret),
+		RedirectURL:  oidcConfValue(conf.OIDC.RedirectURL),
 		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  issuer + "/oauth/authorize",
@@ -59,19 +66,19 @@ func oidcOAuth2Config() *oauth2.Config {
 
 // getOIDCVerifier id_token 验签器，id_token 签名算法为 EdDSA（默认只收 RS256，必须显式指定）
 func getOIDCVerifier(ctx context.Context) *oidc.IDTokenVerifier {
-	issuer := strings.TrimSuffix(conf.OIDC.Issuer, "/")
+	issuer := strings.TrimSuffix(oidcConfValue(conf.OIDC.Issuer), "/")
 
 	oidcVerifierLock.Lock()
 	defer oidcVerifierLock.Unlock()
 
-	key := issuer + "|" + conf.OIDC.ClientID
+	key := issuer + "|" + oidcConfValue(conf.OIDC.ClientID)
 	if oidcVerifier != nil && oidcVerifierKey == key {
 		return oidcVerifier
 	}
 
 	keySet := oidc.NewRemoteKeySet(ctx, issuer+"/oauth/jwks")
 	oidcVerifier = oidc.NewVerifier(issuer, keySet, &oidc.Config{
-		ClientID:             conf.OIDC.ClientID,
+		ClientID:             oidcConfValue(conf.OIDC.ClientID),
 		SupportedSigningAlgs: []string{"EdDSA"},
 	})
 	oidcVerifierKey = key
@@ -208,9 +215,9 @@ func (j *jsonapi) httpOIDCConfig(w http.ResponseWriter, req *http.Request) {
 
 	sethttphead(w)
 
-	buttonName := conf.OIDC.ButtonName
+	buttonName := oidcConfValue(conf.OIDC.ButtonName)
 	if buttonName == "" {
-		buttonName = "hamptt.com 统一认证"
+		buttonName = "HAM统一认证平台登录"
 	}
 
 	writeJSONResponse(w, &Response{20000, "ok", &struct {
@@ -307,7 +314,7 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 
 	//拉 userinfo（id_token 只有 iss/sub/aud/exp/iat/nonce，无 profile）
 	info := &oidcUserInfo{}
-	resp, err := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)).Get(strings.TrimSuffix(conf.OIDC.Issuer, "/") + "/oauth/userinfo")
+	resp, err := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)).Get(strings.TrimSuffix(oidcConfValue(conf.OIDC.Issuer), "/") + "/oauth/userinfo")
 	if err != nil {
 		log.Println("oidc get userinfo err:", err)
 		oidcLoginErr(w, req, "获取用户信息失败")

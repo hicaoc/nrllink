@@ -809,3 +809,19 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, error) {
 	// 所有检查通过，返回员工信息指针和nil错误
 	return emp, nil
 }
+
+// checktokenSilent 与 checktoken 逻辑相同，但鉴权失败时不向客户端写错误响应，仅返回 nil。
+// 用于 token 可选的公开接口（如 /group/get），调用方需自行处理 u 为 nil 的情况。
+func checktokenSilent(req *http.Request) *userinfo {
+	token, err := ValidateToken(req.Header.Get("x-token"))
+	if err != nil {
+		return nil
+	}
+
+	emp, err := getuser(token.Username)
+	if err != nil || emp.Status != 1 {
+		return nil
+	}
+
+	return emp
+}

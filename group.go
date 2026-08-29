@@ -101,17 +101,15 @@ func (j *jsonapi) httpAllGroupListNRL(w http.ResponseWriter, req *http.Request) 
 func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	u, err := checktoken(w, req)
-	if err != nil {
-		return
-	}
+	// 公开接口：不强制登录。未登录仅可查询公共群组；登录用户可额外查询自己的私有群组
+	u := checktokenSilent(req)
 
 	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
 
 	stb := &query{}
-	err = jsonextra.Unmarshal(result, &stb)
+	err := jsonextra.Unmarshal(result, &stb)
 
 	if err != nil || stb.GroupID == "" {
 		log.Println("device list err :", err)
@@ -127,10 +125,12 @@ func (j *jsonapi) httpGetGroup(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if isPrivateGroupID(groupid) {
-		if user, okok := userlist.Load(u.CallSign); okok {
-			if gp, exists := user.(*userinfo).Groups[groupid]; exists {
-				writeJSONResponseItem(w, newGroupDetail(gp))
-				return
+		if u != nil {
+			if user, okok := userlist.Load(u.CallSign); okok {
+				if gp, exists := user.(*userinfo).Groups[groupid]; exists {
+					writeJSONResponseItem(w, newGroupDetail(gp))
+					return
+				}
 			}
 		}
 

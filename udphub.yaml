@@ -57,7 +57,7 @@ Billing:
 #    client_secret: ""
 #    redirect_url: "https://你的域名/user/oidc/callback"
 #    auto_provision: true
-#    button_name: "hamptt.com 统一认证"
+#    button_name: "HAM统一认证平台登录"
 PlatformList :
   - Name: nrlptt主站
     Host: nrlptt.com
