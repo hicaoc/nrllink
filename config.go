@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	_ "modernc.org/sqlite"
 	yaml "gopkg.in/yaml.v3"
+	_ "modernc.org/sqlite"
 )
 
 var PlatformList []Platformitem
@@ -77,27 +77,27 @@ type config struct {
 	WeiXin struct {
 		// signmsgurl     string
 		// rechargemsgurl string
-		MpAppid           string `yaml:"MpAppid" json:"mp_appid"`
-		MpAppSecret       string `yaml:"MpAppSecret" json:"mp_appsecret"`
-		PhoneCodeURL      string `yaml:"PhoneCodeURL" json:"phone_code_url"`
-		AvatarURL         string `yaml:"AvatarURL" json:"avatar_url"`
-		AccessToken       string `yaml:"-"`
-		AppID             string `yaml:"AppID" json:"appid"`
-		AppSecret         string `yaml:"AppSecret" json:"appsecret"`
-		EncodingAESKey    string `yaml:"EncodingAESKey" json:"encodingaeskey"`
-		AesKey            []byte `yaml:"-"`
+		MpAppid           string            `yaml:"MpAppid" json:"mp_appid"`
+		MpAppSecret       string            `yaml:"MpAppSecret" json:"mp_appsecret"`
+		PhoneCodeURL      string            `yaml:"PhoneCodeURL" json:"phone_code_url"`
+		AvatarURL         string            `yaml:"AvatarURL" json:"avatar_url"`
+		AccessToken       string            `yaml:"-"`
+		AppID             string            `yaml:"AppID" json:"appid"`
+		AppSecret         string            `yaml:"AppSecret" json:"appsecret"`
+		EncodingAESKey    string            `yaml:"EncodingAESKey" json:"encodingaeskey"`
+		AesKey            []byte            `yaml:"-"`
 		ClickEventMap     map[string]string `yaml:"ClickEventMap" json:"click_event_map"`
 		KeywordsMap       map[string]string `yaml:"KeywordsMap" json:"keywords_map"`
 		WeixinWelcome     string            `yaml:"WeixinWelcome" json:"weixin_welcome"`
 		DefaultKeywords   string            `yaml:"DefaultKeywords" json:"default_keywords"`
-		WeiXinAccessToken *WXBody `yaml:"-"`
-		WeiXinMenu        string `yaml:"WeixinMenu" json:"weixin_menu"`
-		ServerURL         string `yaml:"ServerURL" json:"server_url"` //本机api url地址
+		WeiXinAccessToken *WXBody           `yaml:"-"`
+		WeiXinMenu        string            `yaml:"WeixinMenu" json:"weixin_menu"`
+		ServerURL         string            `yaml:"ServerURL" json:"server_url"` //本机api url地址
 
 		WeixinAPIURL       string `yaml:"WeixinAPIURL" json:"weixin_api_url"` //微信URL接口地址
 		Wxmsgurl           string `yaml:"WxMsgURL" json:"wx_msg_url"`         //微信模板消息url
-		TypePhoneCodeID    string   `yaml:"-"`
-		TypeLoginSuccessID string   `yaml:"-"`
+		TypePhoneCodeID    string `yaml:"-"`
+		TypeLoginSuccessID string `yaml:"-"`
 
 		TypeLoginFailID string `yaml:"-"`
 
@@ -129,6 +129,7 @@ type config struct {
 		ClientSecret  string `yaml:"client_secret" json:"client_secret"`   //OIDC 客户端密钥
 		RedirectURL   string `yaml:"redirect_url" json:"redirect_url"`     //OIDC 回调地址，需在 Provider 端登记
 		AutoProvision bool   `yaml:"auto_provision" json:"auto_provision"` //找不到本地账号时是否自动建号
+		VirtualLogin  bool   `yaml:"virtual_login" json:"virtual_login"`   //找不到本地账号时是否生成无库临时会话
 		ButtonName    string `yaml:"button_name" json:"button_name"`       //前端登录按钮文案
 	} `yaml:"OIDC" json:"oidc"`
 

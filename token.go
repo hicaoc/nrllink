@@ -15,9 +15,30 @@ var TokenKey = RandString(32)
 
 // 定义 payload 的结构
 type Claims struct {
-	Username string   `json:"username"`
-	Roles    []string `json:"roles"`
+	Username    string   `json:"username"`
+	Roles       []string `json:"roles"`
+	Name        string   `json:"name,omitempty"`
+	OIDCVirtual bool     `json:"oidc_virtual,omitempty"`
 	jwt.RegisteredClaims
+}
+
+// GenerateOIDCToken 为无本地账号的 OIDC 临时会话签发 token。
+// OIDCVirtual 标记用于 checktoken 识别：本地查无账号时允许构造内存用户，不写 users 表。
+func GenerateOIDCToken(username, name string, roles []string) (string, error) {
+	expirationTime := time.Now().Add(24 * 30 * time.Hour)
+	claims := &Claims{
+		Username:    username,
+		Roles:       roles,
+		Name:        name,
+		OIDCVirtual: true,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "nrllink",
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(TokenKey)
 }
 
 // 生成 JWT token

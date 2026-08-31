@@ -591,6 +591,10 @@ func (j *jsonapi) httpBillingOrderCreate(w http.ResponseWriter, req *http.Reques
 		writeJSONResponse(w, &Response{20001, "收费功能未开启", nil})
 		return
 	}
+	if u.OIDCVirtual {
+		writeJSONResponse(w, &Response{20001, "OIDC 临时会话没有本地账号，请先创建本地账号后再续费", nil})
+		return
+	}
 	body, _ := io.ReadAll(req.Body)
 	req.Body.Close()
 	reqData := &billingOrderReq{}

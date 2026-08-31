@@ -13,15 +13,16 @@ import (
 
 type userinfo struct {
 	//uUID     string `db:"uuid"`
-	PID      string `db:"pid" json:"pid"`
-	ID       int    `db:"id" json:"id"`
-	Name     string `db:"name" json:"name"`
-	CallSign string `db:"callsign" json:"callsign"`
-	MDCID    string `db:"mdcid" json:"mdcid"`
-	DMRID    string `db:"dmrid" json:"dmrid"`
-	Gird     string `db:"gird" json:"gird"`
-	Phone    string `db:"phone" json:"phone"`
-	Password string `db:"password" json:"password"`
+	PID         string `db:"pid" json:"pid"`
+	ID          int    `db:"id" json:"id"`
+	OIDCVirtual bool   `json:"oidc_virtual,omitempty"` //true 表示无本地账号的 OIDC 临时会话
+	Name        string `db:"name" json:"name"`
+	CallSign    string `db:"callsign" json:"callsign"`
+	MDCID       string `db:"mdcid" json:"mdcid"`
+	DMRID       string `db:"dmrid" json:"dmrid"`
+	Gird        string `db:"gird" json:"gird"`
+	Phone       string `db:"phone" json:"phone"`
+	Password    string `db:"password" json:"password"`
 	//	JobTime  string `db:"job_time" json:"job_time"`
 	Birthday string `db:"birthday" json:"birthday"`
 	Sex      int    `db:"sex" json:"sex"`
@@ -39,6 +40,7 @@ type userinfo struct {
 	Roles        []string `db:"roles" json:"roles"`
 	UpdateTime   string   `db:"update_time" json:"update_time"`
 	CreateTime   string   `db:"create_time" json:"create_time"`
+	OIDCSub      string   `json:"oidc_sub,omitempty"`
 
 	Routes        string        `json:"routes" db:"routes"`
 	Status        int           `json:"status" db:"status"`
@@ -286,6 +288,7 @@ func getuserByOIDCSub(sub string) (*userinfo, error) {
 	}
 
 	r.Roles = strings.Split(roles, ",")
+	r.OIDCSub = sub
 
 	return r, nil
 }

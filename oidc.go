@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +28,65 @@ type oidcUserInfo struct {
 	PreferredUsername string `json:"preferred_username"`
 	Callsign          string `json:"callsign"`
 	Email             string `json:"email"`
+}
+
+// oidcCallsign 优先使用 Provider 明确返回的呼号/用户名，HAM ID 的 sub 本身就是呼号。
+func oidcCallsign(info *oidcUserInfo) string {
+	callsign := strings.ToUpper(strings.TrimSpace(info.Callsign))
+	if callsign == "" {
+		callsign = strings.ToUpper(strings.TrimSpace(info.PreferredUsername))
+	}
+	if callsign == "" {
+		callsign = strings.ToUpper(strings.TrimSpace(info.Sub))
+	}
+	return callsign
+}
+
+// newVirtualOIDCUserFromInfo 构造无本地账号的 OIDC 临时用户。
+// 不写 users 表，仅在当前进程内存中初始化公共能力所需的 Groups/DevList。
+func newVirtualOIDCUserFromInfo(info *oidcUserInfo) *userinfo {
+	callsign := oidcCallsign(info)
+	name := strings.TrimSpace(info.Name)
+	if name == "" {
+		name = strings.TrimSpace(info.PreferredUsername)
+	}
+	if name == "" {
+		name = callsign
+	}
+
+	u := &userinfo{
+		ID:          0,
+		Name:        name,
+		CallSign:    callsign,
+		Phone:       "oidc:" + info.Sub,
+		Status:      1,
+		Roles:       []string{"ham"},
+		OIDCVirtual: true,
+		OIDCSub:     info.Sub,
+	}
+	u.userinit()
+
+	// 临时用户也放入内存列表，私有房间和语音 WS 才能正常工作。
+	// 若之后同呼号本地用户登录/创建，会被本地用户覆盖。
+	if cached, ok := userlist.LoadOrStore(callsign, u); ok {
+		if old, ok := cached.(*userinfo); ok && !old.OIDCVirtual {
+			return old
+		}
+	}
+	return u
+}
+
+// virtualOIDCUserFromClaims 根据 OIDC virtual token 还原临时用户。
+func virtualOIDCUserFromClaims(claims *Claims) *userinfo {
+	info := &oidcUserInfo{
+		Sub:  claims.Username,
+		Name: claims.Name,
+	}
+	u := newVirtualOIDCUserFromInfo(info)
+	if len(claims.Roles) > 0 {
+		u.Roles = append([]string{}, claims.Roles...)
+	}
+	return u
 }
 
 // oidcVerifier 缓存，issuer/client_id 变化时重建（RemoteKeySet 内部会缓存 JWKS）
@@ -172,7 +232,7 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 		return user, nil
 	}
 
-	callsign := strings.ToUpper(info.Sub)
+	callsign := oidcCallsign(info)
 
 	//再按呼号查，查到则绑定 oidc_sub
 	user, err = getuserByCallsign(callsign)
@@ -190,14 +250,18 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 		return nil, err
 	}
 
-	//自动建号，默认角色 ham
-	//phone 有唯一索引且 getuser 按 string 扫描（不能为 NULL），填 sub 保证唯一
+	//自动建号，默认角色 ham。这里必须补齐所有查询列的默认值，避免 SQLite 插入 NULL 导致后续 Scan 失败。
 	pass, _ := bcrypt.GenerateFromPassword([]byte(oidcRandString(32)), bcrypt.DefaultCost)
 
-	name := info.Name
+	name := strings.TrimSpace(info.Name)
+	if name == "" {
+		name = strings.TrimSpace(info.PreferredUsername)
+	}
 	if name == "" {
 		name = callsign
 	}
+	// phone 有唯一索引；用 oidc: 前缀避免和真实手机号/呼号语义混淆。
+	phone := "oidc:" + info.Sub
 
 	query := `INSERT INTO users
 	 (pid,
@@ -205,18 +269,32 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 	 phone,
 	 callsign,
 	 oidc_sub,
+	 gird,
+	 birthday,
+	 mdcid,
+	 dmrid,
+	 sex,
+	 nickname,
+	 openid,
 	 avatar,
+	 address,
 	 status,
 	 password,
 	 roles,
+	 introduction,
 	 alarm_msg,
-	 create_time,
+	 last_login_time,
 	 login_err_times,
+	 last_login_ip,
+	 expire_time,
+	 create_time,
 	 update_time)
-	VALUES ('',?,?,?,?,?,1,?,'ham',0,
-		CURRENT_TIMESTAMP,0,CURRENT_TIMESTAMP)`
+	VALUES ('',?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,'ham','',0,
+		CURRENT_TIMESTAMP,0,'','',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
-	res, err := db.Exec(query, name, info.Sub, callsign, info.Sub, conf.WeiXin.AvatarURL, string(pass))
+	res, err := db.Exec(query, name, phone, callsign, info.Sub,
+		"", "", "", 0, 0, name, "", conf.WeiXin.AvatarURL, "",
+		string(pass))
 	if err != nil {
 		log.Println("oidc auto provision add user failed, ", err, '\n', query)
 		return nil, err
@@ -365,15 +443,18 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 	}
 	userinfoDur := time.Since(oidcStart) - exchangeDur
 
-	//匹配或创建本地用户
+	//匹配本地账号；未启用自动建号且开启临时登录时，允许无本地账号进入。
 	user, err := matchOrCreateOIDCUser(info)
 	if err != nil {
-		if !conf.OIDC.AutoProvision {
+		if !conf.OIDC.AutoProvision && conf.OIDC.VirtualLogin {
+			user = newVirtualOIDCUserFromInfo(info)
+		} else if !conf.OIDC.AutoProvision {
 			oidcLoginErr(w, req, "账号不存在，请联系管理员")
 			return
+		} else {
+			oidcLoginErr(w, req, "本地账号创建失败，请联系管理员")
+			return
 		}
-		oidcLoginErr(w, req, "本地账号创建失败，请联系管理员")
-		return
 	}
 
 	if user.Status != 1 {
@@ -381,19 +462,31 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	updateOIDCLoginSuccess(user.ID, req.RemoteAddr)
+	//本地账号才更新登录信息；无库临时会话不写 users/operator_log。
+	if !user.OIDCVirtual {
+		updateOIDCLoginSuccess(user.ID, req.RemoteAddr)
+	}
+
 	log.Printf("oidc callback 耗时: 总计 %v（code换token %v，验签+拉userinfo %v）", time.Since(oidcStart), exchangeDur, userinfoDur)
 
-	//与账密登录一致，用 callsign 作为 token identity（checktoken->getuser 按 phone 或 callsign 查）
-	s, err := GenerateToken(user.CallSign, user.Roles)
+	//与账密登录一致，用 callsign 作为 token identity（checktoken->getuser 按 phone 或 callsign 查）。
+	//虚拟会话 token 带 oidc_virtual 标记，后续请求查不到本地账号时可还原临时用户。
+	var s string
+	if user.OIDCVirtual {
+		s, err = GenerateOIDCToken(user.CallSign, user.Name, user.Roles)
+	} else {
+		s, err = GenerateToken(user.CallSign, user.Roles)
+	}
 	if err != nil {
 		log.Println("oidc token generate err:", err)
 		oidcLoginErr(w, req, "生成访问令牌失败")
 		return
 	}
 
-	addOperatorLog(user.CallSign+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "OIDC登录成功", user)
-	log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " OIDC User login ok :callsign:" + user.CallSign)
+	if !user.OIDCVirtual {
+		addOperatorLog(user.CallSign+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "OIDC登录成功", user)
+	}
+	log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " OIDC User login ok :callsign:" + user.CallSign + ",virtual:" + strconv.FormatBool(user.OIDCVirtual))
 
 	//小程序 web-view 环境直接把 token 带回小程序页面；浏览器则 302 到 Web 前端（hash 路由）
 	if isMiniProgramRequest(req) {

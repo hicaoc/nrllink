@@ -1019,7 +1019,7 @@ func (j *jsonapi) wsCallStream(ws *websocket.Conn) {
 			return
 		}
 
-		user, err = getuser(token.Username)
+		user, err = userFromTokenClaims(token)
 		if err != nil || user.Status != 1 {
 			log.Println("websocket user lookup failed:", err)
 			ws.Close()

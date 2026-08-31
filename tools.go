@@ -58,7 +58,7 @@ func checkHttpRequestTokenAndRight(w http.ResponseWriter, req *http.Request, rol
 		return nil, ResTokenErr
 	}
 
-	u, err := getuser(token.Username)
+	u, err := userFromTokenClaims(token)
 
 	if err != nil {
 		//writeJSONResponse(w, 50018, "账号错误", nil)

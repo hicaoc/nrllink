@@ -327,6 +327,11 @@ func (j *jsonapi) httpUpdateUserProfile(w http.ResponseWriter, req *http.Request
 		return
 	}
 
+	if u.OIDCVirtual {
+		writeVirtualAccountErr(w)
+		return
+	}
+
 	stb.MDCID = strings.ToUpper(strings.TrimSpace(stb.MDCID))
 	if stb.MDCID != "" && !isValidMDCID(stb.MDCID) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"MDC ID 必须是 4 位十六进制字符串"}}`))
@@ -373,6 +378,11 @@ func (j *jsonapi) httpUpdateUserAvatar(w http.ResponseWriter, req *http.Request)
 
 	stb.CallSign = u.CallSign
 
+	if u.OIDCVirtual {
+		writeVirtualAccountErr(w)
+		return
+	}
+
 	// if checkrole(stb, []string{"admin"}) {
 	// 	w.Write([]byte("{"code":20000,"data":{"message":"内置账号，无法修改"}}"))
 	// 	return
@@ -413,6 +423,11 @@ func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Reques
 		w.Write([]byte(`{"code":20000,"data":{"message":"无权限更新密码"}}`))
 		return
 
+	}
+
+	if u.OIDCVirtual {
+		writeVirtualAccountErr(w)
+		return
 	}
 
 	// if checkrole(stb, []string{"admin"}) {
@@ -785,6 +800,13 @@ func (j *jsonapi) httpoplogout(w http.ResponseWriter, req *http.Request) {
 
 }
 
+// writeVirtualAccountErr OIDC 临时用户没有 users.id，不能执行绑定本地账号的写操作。
+// 返回 true 表示已写入错误响应。
+func writeVirtualAccountErr(w http.ResponseWriter) bool {
+	w.Write([]byte(`{"code":20001,"data":{"message":"OIDC 临时会话没有本地账号，此操作需要先创建本地账号"}}`))
+	return true
+}
+
 func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, error) {
 	// 验证令牌，如果验证失败，向客户端写入错误响应并返回错误信息
 	token, err := ValidateToken(req.Header.Get("x-token"))
@@ -793,8 +815,8 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, error) {
 		return nil, fmt.Errorf("令牌错误，登录超时，请重新登录")
 	}
 
-	// 根据令牌中的用户名获取用户信息，如果获取失败，向客户端写入错误响应并返回错误信息
-	emp, err := getuser(token.Username)
+	// 根据令牌中的用户名获取用户信息；OIDC virtual token 在本地无账号时还原临时用户。
+	emp, err := userFromTokenClaims(token)
 	if err != nil {
 		w.Write(ResAccountErr)
 		return nil, err
@@ -818,10 +840,23 @@ func checktokenSilent(req *http.Request) *userinfo {
 		return nil
 	}
 
-	emp, err := getuser(token.Username)
+	emp, err := userFromTokenClaims(token)
 	if err != nil || emp.Status != 1 {
 		return nil
 	}
 
 	return emp
+}
+
+// userFromTokenClaims 先查本地账号；查不到且是 OIDC 临时会话时返回内存用户。
+// 本地账号存在时永远优先，后续创建/绑定同名本地账号不需要刷新前端逻辑。
+func userFromTokenClaims(token *Claims) (*userinfo, error) {
+	emp, err := getuser(token.Username)
+	if err == nil {
+		return emp, nil
+	}
+	if token.OIDCVirtual && oidcEnabled() && conf.OIDC.VirtualLogin {
+		return virtualOIDCUserFromClaims(token), nil
+	}
+	return nil, err
 }
