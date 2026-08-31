@@ -61,6 +61,14 @@ https://item.taobao.com/item.htm?spm=a1z10.5-c-s.w4002-5392156393.12.c83a5e18os2
 
 
 
+## HAM ID 统一认证 / 长期 Token
+
+NRL 支持 HAM ID OIDC 登录，也支持 HAM ID 签发的长期 API Token。
+
+设备、App、小程序仍只访问 NRL；NRL 会向 HAM ID `/oauth/introspect` 验证 `hamid_pat_` token。配置、接口示例、吊销机制和故障排查见：
+
+- [doc/HAMID长期Token接入NRL.md](doc/HAMID长期Token接入NRL.md)
+
 ## docker 安装
 
 
