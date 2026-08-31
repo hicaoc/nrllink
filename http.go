@@ -40,6 +40,9 @@ type platforminfo struct {
 	Language string `json:"language"`
 }
 
+// 与 Docker 镜像 tag 保持一致（发布时同步更新）
+const version = "v2.13.15"
+
 var totalstats = totalStats{}
 
 type totalStats struct {
@@ -80,7 +83,7 @@ func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 		Name:     conf.SystemInfo.PlatformName,
 		LogoURL:  conf.SystemInfo.LogoURL,
 		Language: conf.SystemInfo.Language,
-		Version:  "v2.0.0",
+		Version:  version,
 		ICP:      conf.Web.ICP,
 		Mail:     "caoc@live.com",
 		Callsign: "BH4RPN",
