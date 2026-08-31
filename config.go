@@ -130,6 +130,7 @@ type config struct {
 		RedirectURL   string `yaml:"redirect_url" json:"redirect_url"`     //OIDC 回调地址，需在 Provider 端登记
 		AutoProvision bool   `yaml:"auto_provision" json:"auto_provision"` //找不到本地账号时是否自动建号
 		VirtualLogin  bool   `yaml:"virtual_login" json:"virtual_login"`   //找不到本地账号时是否生成无库临时会话
+		TokenLogin    bool   `yaml:"token_login" json:"token_login"`       //接受 HAM ID 长期 API Token 登录
 		ButtonName    string `yaml:"button_name" json:"button_name"`       //前端登录按钮文案
 	} `yaml:"OIDC" json:"oidc"`
 

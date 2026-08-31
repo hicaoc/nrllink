@@ -50,7 +50,7 @@ func writeJSONResponseItem(w http.ResponseWriter, item interface{}) error {
 
 func checkHttpRequestTokenAndRight(w http.ResponseWriter, req *http.Request, rolelist []string) (*userinfo, []byte) {
 	sethttphead(w)
-	token, err := ValidateToken(req.Header.Get("x-token"))
+	token, err := userFromRawToken(req.Context(), tokenFromRequest(req))
 
 	if err != nil {
 		//writeJSONResponse(w, 50018, "Token错误", nil)

@@ -1013,8 +1013,9 @@ func (j *jsonapi) wsCallStream(ws *websocket.Conn) {
 	tokenString := req.URL.Query().Get("token")
 	var user *userinfo
 	if tokenString != "" {
-		token, err := ValidateToken(tokenString)
+		token, err := userFromRawToken(req.Context(), tokenString)
 		if err != nil {
+			log.Println("websocket token verify failed:", err)
 			ws.Close()
 			return
 		}

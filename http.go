@@ -106,6 +106,7 @@ func sethttphead(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型
 	w.Header().Add("Access-Control-Allow-Headers", "x-token")
+	w.Header().Add("Access-Control-Allow-Headers", "Authorization")
 	w.Header().Set("content-type", "application/json") //返回数据格式是json
 
 }

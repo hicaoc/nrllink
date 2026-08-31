@@ -808,8 +808,8 @@ func writeVirtualAccountErr(w http.ResponseWriter) bool {
 }
 
 func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, error) {
-	// 验证令牌，如果验证失败，向客户端写入错误响应并返回错误信息
-	token, err := ValidateToken(req.Header.Get("x-token"))
+	// 统一支持本地 JWT 和 HAM ID 长期 API Token；验证失败时写入错误响应。
+	token, err := userFromRawToken(req.Context(), tokenFromRequest(req))
 	if err != nil {
 		w.Write(ResTokenErr)
 		return nil, fmt.Errorf("令牌错误，登录超时，请重新登录")
@@ -835,7 +835,7 @@ func checktoken(w http.ResponseWriter, req *http.Request) (*userinfo, error) {
 // checktokenSilent 与 checktoken 逻辑相同，但鉴权失败时不向客户端写错误响应，仅返回 nil。
 // 用于 token 可选的公开接口（如 /group/get），调用方需自行处理 u 为 nil 的情况。
 func checktokenSilent(req *http.Request) *userinfo {
-	token, err := ValidateToken(req.Header.Get("x-token"))
+	token, err := userFromRawToken(req.Context(), tokenFromRequest(req))
 	if err != nil {
 		return nil
 	}
@@ -855,7 +855,7 @@ func userFromTokenClaims(token *Claims) (*userinfo, error) {
 	if err == nil {
 		return emp, nil
 	}
-	if token.OIDCVirtual && oidcEnabled() && conf.OIDC.VirtualLogin {
+	if token.OIDCVirtual && ((oidcEnabled() || longTokenEnabled()) && conf.OIDC.VirtualLogin) {
 		return virtualOIDCUserFromClaims(token), nil
 	}
 	return nil, err
