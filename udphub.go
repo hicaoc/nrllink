@@ -579,6 +579,9 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 				log.Println("change group err:", err)
 				conn.WriteToUDP(append(packet, (strconv.Itoa(groupid)+",error")...), nrl.UDPAddr)
 			} else {
+				if err := updateDeviceGroupID(dev); err != nil {
+					log.Println("save device group err:", err)
+				}
 				conn.WriteToUDP(append(packet, str...), nrl.UDPAddr)
 			}
 

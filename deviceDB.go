@@ -877,6 +877,24 @@ func delDevice(dev *deviceInfo) error {
 
 func updateDevice(e *deviceInfo) error {
 
+	d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]
+
+	//先切内存中的组，校验失败时不落库，避免库和内存不一致
+	if ok && d.GroupID != e.GroupID {
+
+		if d.DevModel == 255 {
+			return errors.New("255设备不能移出999组")
+		}
+
+		if d.DevModel == 200 && e.GroupID == 999 {
+			return errors.New("200设备不能加入255组")
+		}
+
+		if _, err := changeDevGroup(d, e.GroupID); err != nil {
+			return err
+		}
+	}
+
 	_, err := db.Exec(`update devices set name=?, gird=?, dmrid=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
 	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
 		e.Name, e.Gird, e.DMRID, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
@@ -885,7 +903,7 @@ func updateDevice(e *deviceInfo) error {
 		return err
 	}
 
-	if d, ok := devCallsignSSIDMap[getCallsignSSID(e.CallSign, e.SSID)]; ok {
+	if ok {
 		d.Name = e.Name
 		d.Gird = e.Gird
 		d.DMRID = e.DMRID
@@ -897,24 +915,19 @@ func updateDevice(e *deviceInfo) error {
 		d.Password = e.Password
 		d.RFType = e.RFType
 		d.ChanName = e.ChanName
+	}
 
-		if d.GroupID != e.GroupID {
+	return nil
 
-			if d.DevModel == 255 {
-				d.GroupID = 999
-				return errors.New("255设备不能移出999组")
-			}
+}
 
-			if d.DevModel == 200 && e.GroupID == 999 {
-				return errors.New("200设备不能加入255组")
-			}
+// 将设备当前所属群组持久化到数据库，供不经过 updateDevice 的切组路径使用
+func updateDeviceGroupID(dev *deviceInfo) error {
 
-			_, err := changeDevGroup(d, e.GroupID)
-			if err != nil {
-				return err
-			}
-		}
-
+	_, err := db.Exec(`update devices set group_id=?, update_time=CURRENT_TIMESTAMP where id=?`, dev.GroupID, dev.ID)
+	if err != nil {
+		log.Println("update device group failed, ", err)
+		return err
 	}
 
 	return nil
@@ -928,6 +941,10 @@ func changeDeviceGroup(e *deviceInfo) error {
 		if d.GroupID != e.GroupID {
 			_, err := changeDevGroup(d, e.GroupID)
 			if err != nil {
+				return err
+			}
+
+			if err := updateDeviceGroupID(d); err != nil {
 				return err
 			}
 
