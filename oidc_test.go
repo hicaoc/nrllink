@@ -93,7 +93,7 @@ func TestVerifyLongToken(t *testing.T) {
 }
 
 func TestGenerateAndValidateOIDCVirtualToken(t *testing.T) {
-	token, err := GenerateOIDCToken("BG1ABC", "Test User", []string{"ham"})
+	token, err := GenerateOIDCToken("BG1ABC", "Test User", []string{"ham"}, "460001", "AB12")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,9 +104,15 @@ func TestGenerateAndValidateOIDCVirtualToken(t *testing.T) {
 	if !claims.OIDCVirtual || !strings.EqualFold(claims.Username, "BG1ABC") || claims.Name != "Test User" {
 		t.Fatalf("unexpected claims: %+v", claims)
 	}
+	if claims.DMRID != "460001" || claims.MDCID != "AB12" {
+		t.Fatalf("claims lost radio ids: %+v", claims)
+	}
 
 	u := virtualOIDCUserFromClaims(claims)
 	if !u.OIDCVirtual || u.CallSign != "BG1ABC" || u.Name != "Test User" {
 		t.Fatalf("unexpected virtual user: %+v", u)
+	}
+	if u.DMRID != "460001" || u.MDCID != "AB12" {
+		t.Fatalf("virtual user lost radio ids: %+v", u)
 	}
 }

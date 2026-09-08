@@ -19,18 +19,23 @@ type Claims struct {
 	Roles       []string `json:"roles"`
 	Name        string   `json:"name,omitempty"`
 	OIDCVirtual bool     `json:"oidc_virtual,omitempty"`
+	DMRID       string   `json:"dmrid,omitempty"`
+	MDCID       string   `json:"mdcid,omitempty"`
 	jwt.RegisteredClaims
 }
 
 // GenerateOIDCToken 为无本地账号的 OIDC 临时会话签发 token。
 // OIDCVirtual 标记用于 checktoken 识别：本地查无账号时允许构造内存用户，不写 users 表。
-func GenerateOIDCToken(username, name string, roles []string) (string, error) {
+// dmrid/mdcid 随 token 携带，进程重启后还原临时用户时不丢失。
+func GenerateOIDCToken(username, name string, roles []string, dmrid, mdcid string) (string, error) {
 	expirationTime := time.Now().Add(24 * 30 * time.Hour)
 	claims := &Claims{
 		Username:    username,
 		Roles:       roles,
 		Name:        name,
 		OIDCVirtual: true,
+		DMRID:       dmrid,
+		MDCID:       mdcid,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "nrllink",
 			ExpiresAt: jwt.NewNumericDate(expirationTime),

@@ -28,6 +28,66 @@ type oidcUserInfo struct {
 	PreferredUsername string `json:"preferred_username"`
 	Callsign          string `json:"callsign"`
 	Email             string `json:"email"`
+	DMRID             string `json:"dmrid"`
+	MDCID             string `json:"mdcid"`
+}
+
+// oidcRadioIDs 规范化 OIDC userinfo 里的 DMRID/MDCID，无效值视为空（不参与同步）
+func oidcRadioIDs(info *oidcUserInfo) (dmrid, mdcid string) {
+	dmrid = strings.TrimSpace(info.DMRID)
+	if !isValidDMRID(dmrid) {
+		dmrid = ""
+	}
+	mdcid = strings.ToUpper(strings.TrimSpace(info.MDCID))
+	if !isValidMDCID(mdcid) {
+		mdcid = ""
+	}
+	return dmrid, mdcid
+}
+
+// syncOIDCRadioIDs 把 OIDC 平台下发的 DMRID/MDCID 同步到本地账号（users 表 + 内存 map）。
+// OIDC 侧值为空或无效时保留本地原值，不做清除。
+func syncOIDCRadioIDs(u *userinfo, info *oidcUserInfo) {
+	dmrid, mdcid := oidcRadioIDs(info)
+
+	newDMRID, newMDCID := u.DMRID, u.MDCID
+	if dmrid != "" {
+		newDMRID = dmrid
+	}
+	if mdcid != "" {
+		newMDCID = mdcid
+	}
+	if newDMRID == u.DMRID && newMDCID == u.MDCID {
+		return
+	}
+
+	if _, err := db.Exec(`update users set dmrid=?, mdcid=?, update_time=CURRENT_TIMESTAMP where id=?`, newDMRID, newMDCID, u.ID); err != nil {
+		log.Println("oidc sync dmrid/mdcid failed, ", err)
+		return
+	}
+
+	if u.MDCID != "" && u.MDCID != newMDCID {
+		mdcidmap.Delete(u.MDCID)
+	}
+	if u.DMRID != "" && u.DMRID != newDMRID {
+		dmridmap.Delete(u.DMRID)
+	}
+	u.DMRID, u.MDCID = newDMRID, newMDCID
+	if u.MDCID != "" {
+		mdcidmap.Store(u.MDCID, u.CallSign)
+	}
+	if u.DMRID != "" {
+		dmridmap.Store(u.DMRID, u.CallSign)
+	}
+
+	// userlist 里若缓存的是另一个实例，同步更新字段
+	if cached, ok := userlist.Load(u.CallSign); ok {
+		if c, ok := cached.(*userinfo); ok && c != u {
+			c.DMRID, c.MDCID = newDMRID, newMDCID
+		}
+	}
+
+	log.Println("oidc sync radio ids:", u.CallSign, "dmrid:", newDMRID, "mdcid:", newMDCID)
 }
 
 // oidcCallsign 优先使用 Provider 明确返回的呼号/用户名，HAM ID 的 sub 本身就是呼号。
@@ -64,6 +124,7 @@ func newVirtualOIDCUserFromInfo(info *oidcUserInfo) *userinfo {
 		OIDCVirtual: true,
 		OIDCSub:     info.Sub,
 	}
+	u.DMRID, u.MDCID = oidcRadioIDs(info)
 	u.userinit()
 
 	// 临时用户也放入内存列表，私有房间和语音 WS 才能正常工作。
@@ -73,14 +134,22 @@ func newVirtualOIDCUserFromInfo(info *oidcUserInfo) *userinfo {
 			return old
 		}
 	}
+	if u.DMRID != "" {
+		dmridmap.Store(u.DMRID, u.CallSign)
+	}
+	if u.MDCID != "" {
+		mdcidmap.Store(u.MDCID, u.CallSign)
+	}
 	return u
 }
 
 // virtualOIDCUserFromClaims 根据 OIDC virtual token 还原临时用户。
 func virtualOIDCUserFromClaims(claims *Claims) *userinfo {
 	info := &oidcUserInfo{
-		Sub:  claims.Username,
-		Name: claims.Name,
+		Sub:   claims.Username,
+		Name:  claims.Name,
+		DMRID: claims.DMRID,
+		MDCID: claims.MDCID,
 	}
 	u := newVirtualOIDCUserFromInfo(info)
 	if len(claims.Roles) > 0 {
@@ -229,6 +298,7 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 	//先按 oidc_sub 查
 	user, err := getuserByOIDCSub(info.Sub)
 	if err == nil {
+		syncOIDCRadioIDs(user, info)
 		return user, nil
 	}
 
@@ -243,6 +313,7 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 			return nil, uerr
 		}
 		log.Println("oidc login bind local user:", callsign)
+		syncOIDCRadioIDs(user, info)
 		return user, nil
 	}
 
@@ -262,6 +333,13 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 	}
 	// phone 有唯一索引；用 oidc: 前缀避免和真实手机号/呼号语义混淆。
 	phone := "oidc:" + info.Sub
+
+	// 同步 OIDC 平台分配的 DMRID/MDCID；无效或为空时保持默认（dmrid 列是 INTEGER，空用 0）
+	dmrid, mdcid := oidcRadioIDs(info)
+	dmridVal := any(0)
+	if dmrid != "" {
+		dmridVal = dmrid
+	}
 
 	query := `INSERT INTO users
 	 (pid,
@@ -293,7 +371,7 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 		CURRENT_TIMESTAMP,0,'','',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`
 
 	res, err := db.Exec(query, name, phone, callsign, info.Sub,
-		"", "", "", 0, 0, name, "", conf.WeiXin.AvatarURL, "",
+		"", "", mdcid, dmridVal, 0, name, "", conf.WeiXin.AvatarURL, "",
 		string(pass))
 	if err != nil {
 		log.Println("oidc auto provision add user failed, ", err, '\n', query)
@@ -311,6 +389,12 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 	user.ID = int(id)
 	user.userinit()
 	userlist.Store(user.CallSign, user)
+	if user.DMRID != "" && user.DMRID != "0" {
+		dmridmap.Store(user.DMRID, user.CallSign)
+	}
+	if user.MDCID != "" {
+		mdcidmap.Store(user.MDCID, user.CallSign)
+	}
 
 	log.Println("oidc auto provision new user:", callsign)
 
@@ -473,7 +557,7 @@ func (j *jsonapi) httpOIDCCallback(w http.ResponseWriter, req *http.Request) {
 	//虚拟会话 token 带 oidc_virtual 标记，后续请求查不到本地账号时可还原临时用户。
 	var s string
 	if user.OIDCVirtual {
-		s, err = GenerateOIDCToken(user.CallSign, user.Name, user.Roles)
+		s, err = GenerateOIDCToken(user.CallSign, user.Name, user.Roles, user.DMRID, user.MDCID)
 	} else {
 		s, err = GenerateToken(user.CallSign, user.Roles)
 	}
