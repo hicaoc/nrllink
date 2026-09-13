@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -252,7 +253,10 @@ func getuser(username string) (*userinfo, error) {
 		&r.LastLoginTime, &r.LoginErrTimes, &r.LastLoginIP,
 		&r.AlarmMsg, &roles, &r.CreateTime, &r.UpdateTime, &r.ExpireTime)
 	if err != nil {
-		log.Println("getuser by username err :", err, "\n", query)
+		// ErrNoRows 是正常情况（用户不存在或 OIDC 虚拟账号回退），不记录日志
+		if !errors.Is(err, sql.ErrNoRows) {
+			log.Println("getuser by username err :", err, "\n", query)
+		}
 		return nil, err
 	}
 

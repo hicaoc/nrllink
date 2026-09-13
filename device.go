@@ -435,7 +435,13 @@ func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	addOperatorLog(stb.CallSignSSID, "删除设备", u)
+	target := stb.CallSignSSID
+	if target == "" {
+		if d := getOnlineDeviceByID(stb.ID); d != nil {
+			target = d.CallSignSSID
+		}
+	}
+	addOperatorLog(target, "删除设备", u)
 
 	err = delDevice(stb)
 

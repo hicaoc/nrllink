@@ -849,6 +849,17 @@ func offlineDevice(dev string) {
 	}
 }
 
+// getOnlineDeviceByID 按设备ID在内存设备表中查找设备，
+// 用于请求参数缺少 callsign/ssid 时定位内存中的设备记录。
+func getOnlineDeviceByID(id int) *deviceInfo {
+	for _, d := range devCallsignSSIDMap {
+		if d.ID == id {
+			return d
+		}
+	}
+	return nil
+}
+
 func delDevice(dev *deviceInfo) error {
 
 	//	fmt.Println("user:", e)
@@ -861,12 +872,33 @@ func delDevice(dev *deviceInfo) error {
 		return err
 	}
 
-	if d, ok := devCallsignSSIDMap[dev.CallSignSSID]; ok {
-		delete(devCallsignSSIDMap, dev.CallSignSSID)
+	// 内存中的设备以实际记录为准，请求参数可能缺少 callsignssid
+	d := getOnlineDeviceByID(dev.ID)
+	if d == nil {
+		if dd, ok := devCallsignSSIDMap[dev.CallSignSSID]; ok {
+			d = dd
+		}
+	}
 
-		if publicGroupMap[dev.GroupID] != nil {
-			delete(publicGroupMap[dev.GroupID].devMap, dev.ID)
-			publicGroupMap[dev.GroupID].connPool.removeDevice(d.udpAddr.String())
+	if d != nil {
+		delete(devCallsignSSIDMap, d.CallSignSSID)
+
+		if isPublicGroupID(d.GroupID) {
+			if g, ok := publicGroupMap[d.GroupID]; ok {
+				delete(g.devMap, d.ID)
+				if d.udpAddr != nil {
+					g.connPool.removeDevice(d.udpAddr.String())
+				}
+			}
+		} else if isPrivateGroupID(d.GroupID) {
+			if user, ok := userlist.Load(d.CallSign); ok {
+				if oldGroup, exists := user.(*userinfo).Groups[d.GroupID]; exists {
+					delete(oldGroup.devMap, d.ID)
+					if d.udpAddr != nil {
+						oldGroup.connPool.removeDevice(d.udpAddr.String())
+					}
+				}
+			}
 		}
 
 	}
