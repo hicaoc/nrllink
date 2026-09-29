@@ -100,8 +100,9 @@ func snapshotQTHMapNew() map[string]qth {
 type currentConnPool struct {
 	mu                  sync.RWMutex
 	UDPAddr             *net.UDPAddr
-	lastVoiceTime       time.Time // 上次任意被接受的语音包时间（兼容旧逻辑使用）
-	lastOwnerPacketTime time.Time // 当前占用者本人最近一个被接受的包时间（用于抢话判定）
+	ctlUDPAddr          *net.UDPAddr // 控制通道占用者地址，与语音话权 UDPAddr 相互独立
+	lastVoiceTime       time.Time    // 上次任意被接受的语音包时间（兼容旧逻辑使用）
+	lastOwnerPacketTime time.Time    // 当前占用者本人最近一个被接受的包时间（用于抢话判定）
 	lastCtlTime         time.Time
 	lastPriority        int
 
@@ -184,13 +185,13 @@ func (p *currentConnPool) setVoiceState(addr *net.UDPAddr, ts time.Time, priorit
 func (p *currentConnPool) ctlState() (*net.UDPAddr, time.Time) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.UDPAddr, p.lastCtlTime
+	return p.ctlUDPAddr, p.lastCtlTime
 }
 
 func (p *currentConnPool) setCtlState(addr *net.UDPAddr, ts time.Time) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.UDPAddr = addr
+	p.ctlUDPAddr = addr
 	p.lastCtlTime = ts
 }
 
