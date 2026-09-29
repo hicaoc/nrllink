@@ -412,9 +412,10 @@ func (j *jsonapi) httpOIDCConfig(w http.ResponseWriter, req *http.Request) {
 	}
 
 	writeJSONResponse(w, &Response{20000, "ok", &struct {
-		Enabled    bool   `json:"enabled"`
-		ButtonName string `json:"button_name"`
-	}{oidcEnabled(), buttonName}})
+		Enabled         bool   `json:"enabled"`
+		ButtonName      string `json:"button_name"`
+		DisableRegister bool   `json:"disable_register"`
+	}{oidcEnabled(), buttonName, conf.System.DisableRegister}})
 }
 
 // httpOIDCLogin 发起 OIDC 登录：生成 state/nonce/PKCE，302 到 Provider 授权端点

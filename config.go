@@ -33,6 +33,8 @@ type config struct {
 		DBfile      string `yaml:"DBfile" json:"dbfile"`
 		IPfile      string `yaml:"IPfile" json:"ipfile"`
 		CallLogPath string `yaml:"CallLogPath" json:"calllog_path"`
+		// 关闭本地注册：Web 端隐藏注册表单，注册接口 /user/reg/create 拒绝新申请（小程序等客户端收到错误提示）
+		DisableRegister bool `yaml:"DisableRegister" json:"disable_register"`
 	} `yaml:"System" json:"system"`
 
 	Web struct {

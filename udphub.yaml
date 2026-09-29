@@ -3,6 +3,7 @@ System:
     LogPath: ""
     DBfile: /nrllink/udphub.sqlite3
     IPfile:: /nrllink/udphub.ipdb
+    # DisableRegister: true  # 关闭本地注册：Web 隐藏注册表单、注册接口拒绝申请（小程序等客户端收到错误提示），仅保留 OIDC 注册（缺省为 false）
 Web:
     Path: /nrllink/www
     Port: "9000"

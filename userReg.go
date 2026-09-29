@@ -134,6 +134,12 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 关闭本地注册：接口直接拒绝，小程序等客户端会收到该错误提示
+	if conf.System.DisableRegister {
+		writeJSONResponse(w, &Response{20001, "本平台已关闭本地注册，请使用统一认证平台账号或联系管理员", nil})
+		return
+	}
+
 	// 限制上传文件的大小（这里限制为 10 MB）
 	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
 
