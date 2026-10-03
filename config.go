@@ -35,6 +35,8 @@ type config struct {
 		CallLogPath string `yaml:"CallLogPath" json:"calllog_path"`
 		// 关闭本地注册：Web 端隐藏注册表单，注册接口 /user/reg/create 拒绝新申请（小程序等客户端收到错误提示）
 		DisableRegister bool `yaml:"DisableRegister" json:"disable_register"`
+		// 关闭设备端 7 号指令（查询群组列表、切换群组），收到后直接丢弃
+		DisableGroupCmd bool `yaml:"DisableGroupCmd" json:"disable_group_cmd"`
 	} `yaml:"System" json:"system"`
 
 	Web struct {

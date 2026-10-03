@@ -565,6 +565,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 	case 7: //设备端操作指令
 
+		// 关闭群组查询/切换功能时，直接丢弃 7 号指令
+		if conf.System.DisableGroupCmd {
+			log.Printf("dev:%v-%v group cmd(type 7-%v) disabled, drop it\n", dev.CallSign, dev.SSID, packet[48])
+			return
+		}
+
 		t := packet[48]
 
 		switch t {
