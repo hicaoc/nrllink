@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -280,6 +281,14 @@ func updateRegUserCertPath(opCertPath, licensePath, callsign string) error {
 }
 
 func updateRegUser(e *reguser) error {
+
+	// 前端列表返回的是脱敏后的手机号，带 * 的回传值不写入库，保持原值
+	if strings.Contains(e.Phone, "*") {
+		var phone string
+		if err := db.QueryRow("select phone from registers where id=?", e.ID).Scan(&phone); err == nil {
+			e.Phone = phone
+		}
+	}
 
 	_, err := db.Exec(`update registers set
 	name=?,phone=?,sex=?,callsign=?,

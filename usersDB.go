@@ -127,6 +127,45 @@ func (s *userinfo) String() string {
 
 }
 
+// maskPhone 手机号脱敏：保留前3位和后4位，中间以 * 代替
+func maskPhone(phone string) string {
+	n := len(phone)
+	switch {
+	case n >= 11:
+		return phone[:3] + strings.Repeat("*", n-7) + phone[n-4:]
+	case n >= 7:
+		return phone[:2] + strings.Repeat("*", n-4) + phone[n-2:]
+	default:
+		return phone
+	}
+}
+
+// maskPID 身份证号脱敏：保留前4位和后4位，中间以 * 代替
+func maskPID(pid string) string {
+	n := len(pid)
+	switch {
+	case n >= 10:
+		return pid[:4] + strings.Repeat("*", n-8) + pid[n-4:]
+	case n > 4:
+		return pid[:1] + strings.Repeat("*", n-1)
+	default:
+		return pid
+	}
+}
+
+// desensitize 对返回前端的敏感字段（手机号、身份证号）做脱敏处理
+func (s *userinfo) desensitize() {
+	s.Phone = maskPhone(s.Phone)
+	s.PID = maskPID(s.PID)
+}
+
+// isBuiltinAdmin 判断是否为内置 admin 账号（拥有 admin 角色且账号名为 admin），
+// 只有该账号可以修改其他管理员的密码
+func isBuiltinAdmin(u *userinfo) bool {
+	return checkrole(u, []string{"admin"}) &&
+		(strings.EqualFold(u.CallSign, "admin") || strings.EqualFold(u.Name, "admin"))
+}
+
 func getRoleByKey(key string) *role {
 
 	r := &role{}
@@ -567,6 +606,18 @@ func deleteUser(e *userinfo) {
 }
 
 func updateUser(e *userinfo) error {
+
+	// 前端列表返回的是脱敏后的手机号/身份证号，带 * 的回传值不写入库，保持原值
+	if strings.Contains(e.Phone, "*") || strings.Contains(e.PID, "*") {
+		if old, err := getuserByID(e.ID); err == nil {
+			if strings.Contains(e.Phone, "*") {
+				e.Phone = old.Phone
+			}
+			if strings.Contains(e.PID, "*") {
+				e.PID = old.PID
+			}
+		}
+	}
 
 	roles := strings.Join(e.Roles, ",")
 

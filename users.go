@@ -71,6 +71,10 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 
 	emplist, total = selectuser(queryToWhere("", *stb))
 
+	for i := range emplist {
+		emplist[i].desensitize()
+	}
+
 	rescode, _ := jsonextra.Marshal(emplist)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
@@ -112,6 +116,10 @@ func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 	emplist, total := selectuser(queryToWhere("", *stb))
 
 	//emplist = selectuser()
+
+	for i := range emplist {
+		emplist[i].desensitize()
+	}
 
 	rescode, _ := jsonextra.Marshal(emplist)
 
@@ -160,6 +168,11 @@ func (j *jsonapi) httpUserListbyRole(w http.ResponseWriter, req *http.Request) {
 	emplist, total := getEmpListByRole(role)
 
 	//emplist = selectuser()
+
+	for i := range emplist {
+		emplist[i].desensitize()
+		emplist[i].Password = ""
+	}
 
 	rescode, _ := jsonextra.Marshal(emplist)
 
@@ -288,6 +301,15 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	if !isValidDMRID(stb.DMRID) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"DMR ID 必须是 0 到 4294967295 之间的整数"}}`))
 		return
+	}
+
+	// 普通管理员之间不允许互改密码，只有内置 admin 账号（admin 角色）可以修改其他管理员的密码
+	if stb.Password != "" && stb.ID != u.ID {
+		if target, err := getuserByID(stb.ID); err == nil &&
+			checkrole(target, []string{"admin"}) && !isBuiltinAdmin(u) {
+			w.Write([]byte(`{"code":20000,"data":{"message":"只有 admin 账号可以修改其他管理员的密码"}}`))
+			return
+		}
 	}
 
 	// if checkrole(stb, []string{"admin"}) {
@@ -498,12 +520,6 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
-		return
-
-	}
-
 	result, _ := io.ReadAll(req.Body)
 
 	req.Body.Close()
@@ -514,6 +530,19 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Println("user delete err :", err)
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"员工删除失败"}}`))
+		return
+	}
+
+	// 管理员可删除任意账号，普通用户仅允许注销本人账号
+	selfDelete := u.ID == stb.ID
+	if !selfDelete && !checkrole(u, []string{"admin"}) {
+		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
+		return
+
+	}
+
+	if selfDelete && u.OIDCVirtual {
+		writeVirtualAccountErr(w)
 		return
 	}
 
@@ -688,7 +717,19 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// IP 登录保护：封锁期内只返回通用登录错误，不泄露封锁详情
+	ip := clientIP(req)
+	if loginGuard.blocked(ip) {
+		log.Println("登录保护：封锁期内的IP尝试登录 " + ip + " username:" + stb.Username)
+		res := &tokenrescode{Code: 60204, Message: "登录错误"}
+		rescode, _ := jsonextra.Marshal(res)
+		w.Write(rescode)
+		return
+	}
+
 	if v, ok := loginCheck(stb.Password, stb.Username, req.RemoteAddr); ok {
+		loginGuard.recordSuccess(ip)
+
 		s, err := GenerateToken(stb.Username, v)
 		if err != nil {
 			log.Println("token generate err:", err)
@@ -708,6 +749,8 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 		return
 
 	}
+
+	loginGuard.recordFailure(ip, stb.Username)
 
 	res := &tokenrescode{Code: 60204, Message: "用户名或者密码错误"}
 	rescode, _ := jsonextra.Marshal(res)
