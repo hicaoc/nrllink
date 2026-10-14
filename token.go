@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var TokenKey = RandString(32)
+// TokenKey JWT 签名密钥，由 initTokenKey 在配置加载后初始化
+var TokenKey []byte
 
 // 定义你的签名密钥
 //var jwtKey = []byte("BKWEUaKinE1te2ujmPGA")
@@ -92,12 +93,17 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-func RandString(len int) []byte {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	bytes := make([]byte, len)
-	for i := range len {
-		b := r.Intn(26) + 65
-		bytes[i] = byte(b)
+// initTokenKey 初始化 JWT 签名密钥：优先使用配置文件 Web.Token_Key（重启后会话不失效），
+// 未配置时用 crypto/rand 生成随机密钥（重启后所有会话失效）。
+// 旧实现用 math/rand + 时间种子生成，可被离线爆破伪造 token，已废弃。
+func initTokenKey() {
+	if conf.Web.TokenKey != "" {
+		if len(conf.Web.TokenKey) < 32 {
+			log.Println("警告：配置文件 Web.Token_Key 长度小于 32 字节，建议更换为高熵随机密钥")
+		}
+		TokenKey = []byte(conf.Web.TokenKey)
+		return
 	}
-	return bytes
+	TokenKey = []byte(oidcRandString(32))
+	log.Println("未配置 Web.Token_Key，已生成随机 JWT 密钥，重启后所有登录会话将失效")
 }

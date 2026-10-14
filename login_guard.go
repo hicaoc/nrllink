@@ -22,8 +22,8 @@ type loginFailure struct {
 }
 
 type ipLoginState struct {
-	failures     []loginFailure  // 窗口期内的失败记录（成功即清零）
-	accountFails map[string]int  // 每个账号的连续失败次数
+	failures     []loginFailure // 窗口期内的失败记录（成功即清零）
+	accountFails map[string]int // 每个账号的连续失败次数
 	blockedUntil time.Time
 }
 
@@ -36,17 +36,21 @@ type ipLoginGuard struct {
 
 var loginGuard = &ipLoginGuard{states: make(map[string]*ipLoginState)}
 
-// clientIP 优先取反向代理透传的 X-Forwarded-For 首个地址，否则取 RemoteAddr
+// clientIP 优先取反向代理透传的 X-Forwarded-For 首个地址，否则取 RemoteAddr。
+// 安全：只有当直连对端是本机回环（同机部署的反向代理）时才信任 XFF，
+// 否则攻击者可伪造该头绕过 IP 级登录保护或命中 127.0.0.1 白名单。
 func clientIP(req *http.Request) string {
-	if xff := req.Header.Get("X-Forwarded-For"); xff != "" {
-		if i := strings.Index(xff, ","); i >= 0 {
-			return strings.TrimSpace(xff[:i])
-		}
-		return strings.TrimSpace(xff)
-	}
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
-		return req.RemoteAddr
+		host = req.RemoteAddr
+	}
+	if host == "127.0.0.1" || host == "::1" {
+		if xff := req.Header.Get("X-Forwarded-For"); xff != "" {
+			if i := strings.Index(xff, ","); i >= 0 {
+				return strings.TrimSpace(xff[:i])
+			}
+			return strings.TrimSpace(xff)
+		}
 	}
 	return host
 }
@@ -138,4 +142,103 @@ func (g *ipLoginGuard) recordFailure(ip, account string) bool {
 	}
 
 	return false
+}
+
+const (
+	accountLockMaxFails = 10               // 同一账号连续失败达到此次数即锁定
+	accountLockTime     = 15 * time.Minute // 账号锁定时长
+)
+
+type accountLockState struct {
+	fails       int
+	lockedUntil time.Time
+}
+
+// accountLoginGuard 按账号（呼号/手机号）统计连续登录失败，达到上限后临时锁定账号，
+// 期满自动解锁，不落库。替代旧的 login_err_times 永久锁定，防止攻击者批量锁死账号。
+type accountLoginGuard struct {
+	mu     sync.Mutex
+	states map[string]*accountLockState
+}
+
+var accountGuard = &accountLoginGuard{states: make(map[string]*accountLockState)}
+
+// locked 判断账号当前是否处于锁定期；期满时顺便清除状态
+func (g *accountLoginGuard) locked(account string) bool {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	st, ok := g.states[account]
+	if !ok || st.lockedUntil.IsZero() {
+		return false
+	}
+	if time.Now().Before(st.lockedUntil) {
+		return true
+	}
+	delete(g.states, account)
+	return false
+}
+
+// recordSuccess 登录成功后清零该账号的失败记录
+func (g *accountLoginGuard) recordSuccess(account string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	delete(g.states, account)
+}
+
+// recordFailure 记录一次该账号的登录失败，达到上限即锁定
+func (g *accountLoginGuard) recordFailure(account string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	st := g.states[account]
+	if st == nil {
+		st = &accountLockState{}
+		g.states[account] = st
+	}
+	st.fails++
+	if st.fails >= accountLockMaxFails {
+		st.lockedUntil = time.Now().Add(accountLockTime)
+		log.Printf("登录保护：账号 %v 连续 %v 次登录错误，锁定 %v", account, accountLockMaxFails, accountLockTime)
+	}
+}
+
+// unlock 管理员手动解锁账号
+func (g *accountLoginGuard) unlock(account string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	delete(g.states, account)
+}
+
+// rateLimiter 简单的单 key 滑动窗口限频器，用于未认证接口的防刷
+type rateLimiter struct {
+	mu      sync.Mutex
+	max     int
+	window  time.Duration
+	records map[string][]time.Time
+}
+
+func newRateLimiter(max int, window time.Duration) *rateLimiter {
+	return &rateLimiter{max: max, window: window, records: make(map[string][]time.Time)}
+}
+
+// allow 记录一次请求并返回是否放行；超限时请求不计入窗口
+func (l *rateLimiter) allow(key string) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-l.window)
+	kept := l.records[key][:0]
+	for _, t := range l.records[key] {
+		if t.After(cutoff) {
+			kept = append(kept, t)
+		}
+	}
+	if len(kept) >= l.max {
+		l.records[key] = kept
+		return false
+	}
+	l.records[key] = append(kept, now)
+	return true
 }

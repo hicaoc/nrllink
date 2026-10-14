@@ -203,6 +203,14 @@ func (j *jsonapi) httpUpdateGroup(w http.ResponseWriter, req *http.Request) {
 	// }
 
 	//stb.Area = u.Area
+	// Password 字段已改为 json:"-" 不参与 JSON 序列化，单独从请求体解析（空表示不修改密码）
+	var pw struct {
+		Password string `json:"password"`
+	}
+	if err := jsonextra.Unmarshal(result, &pw); err == nil {
+		stb.Password = pw.Password
+	}
+
 	updatePublicGroup(stb)
 
 	addOperatorLog(stb.String(), "修改公共群组信息成功", u)
@@ -236,6 +244,14 @@ func (j *jsonapi) httpAddGroup(w http.ResponseWriter, req *http.Request) {
 		log.Println("user add err :", err)
 		w.Write(ResParmErr)
 		return
+	}
+
+	// Password 字段已改为 json:"-" 不参与 JSON 序列化，单独从请求体解析
+	var pw struct {
+		Password string `json:"password"`
+	}
+	if err := jsonextra.Unmarshal(result, &pw); err == nil {
+		stb.Password = pw.Password
 	}
 
 	stb.OwerID = u.ID

@@ -54,7 +54,12 @@ func NewAPRSTV() *APRSTV {
 
 func (a *APRSTV) decodeMsg(str string) (host, port string, err error) {
 
-	s1 := strings.Split(strings.TrimSpace(str)[1:], ",")
+	s := strings.TrimSpace(str)
+	if len(s) < 2 {
+		return "", "", errors.New("invalid msg format")
+	}
+
+	s1 := strings.Split(s[1:], ",")
 
 	parsedURL, err := url.Parse(s1[0])
 	if err != nil {
@@ -79,6 +84,9 @@ func (a *APRSTV) decodeState(str string) (online int, total int, name string, er
 
 	s2 := strings.Split(s1[0], ":")
 	s3 := strings.Split(s1[1], ":")
+	if len(s2) != 2 || len(s3) != 2 {
+		return 0, 0, "", errors.New("Error parsing state")
+	}
 	online, _ = strconv.Atoi(s2[1])
 	total, _ = strconv.Atoi(s3[1])
 	name = s1[2]

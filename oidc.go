@@ -307,6 +307,12 @@ func matchOrCreateOIDCUser(info *oidcUserInfo) (*userinfo, error) {
 	//再按呼号查，查到则绑定 oidc_sub
 	user, err = getuserByCallsign(callsign)
 	if err == nil {
+		// 管理账号不自动绑定 OIDC：防止 IdP 侧呼号核验缺口被利用接管本地管理员，
+		// 此类账号需管理员核实身份后手工绑定
+		if checkrole(user, []string{"admin", "master"}) {
+			log.Println("oidc auto-bind rejected for privileged account:", callsign)
+			return nil, fmt.Errorf("该呼号对应管理账号，请联系管理员手工绑定")
+		}
 		_, uerr := db.Exec(`update users set oidc_sub=? where id=?`, info.Sub, user.ID)
 		if uerr != nil {
 			log.Println("oidc bind oidc_sub failed, ", uerr)

@@ -22,6 +22,9 @@ var (
 	registerMailPattern     = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 )
 
+// registerLimit 未认证注册接口的单 IP 限频：每小时最多 10 次，防止上传接口被刷写满磁盘
+var registerLimit = newRateLimiter(10, time.Hour)
+
 func (j *jsonapi) httpRegisterList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
@@ -168,6 +171,12 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 	// 关闭本地注册：接口直接拒绝，小程序等客户端会收到该错误提示
 	if conf.System.DisableRegister {
 		writeJSONResponse(w, &Response{20001, "本平台已关闭本地注册，请使用统一认证平台账号或联系管理员", nil})
+		return
+	}
+
+	// 未认证公开接口：限制单 IP 注册频率，防止被刷上传写满磁盘
+	if !registerLimit.allow(clientIP(r)) {
+		writeJSONResponse(w, &Response{20001, "操作过于频繁，请稍后再试", nil})
 		return
 	}
 

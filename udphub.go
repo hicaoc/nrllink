@@ -389,6 +389,14 @@ func groupForDevice(dev *deviceInfo) *group {
 
 func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDPConn, gp *group) {
 
+	// 报文内容完全来自 UDP 对端，畸形包不应导致进程崩溃：捕获解析 panic 并丢弃该包
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("recover from packet parse panic, from %v %v-%v type %v: %v",
+				nrl.UDPAddrStr, nrl.CallSign, nrl.SSID, nrl.Type, r)
+		}
+	}()
+
 	switch nrl.Type {
 
 	case 0:
@@ -565,6 +573,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 
 	case 7: //设备端操作指令
 
+		// 报文不含子指令字节（DATA 为空）时直接丢弃，防止 packet[48] 越界
+		if len(packet) <= 48 {
+			log.Printf("dev:%v-%v group cmd(type 7) missing sub-command, drop it\n", dev.CallSign, dev.SSID)
+			return
+		}
+
 		// 关闭群组查询/切换功能时，直接丢弃 7 号指令
 		if conf.System.DisableGroupCmd {
 			log.Printf("dev:%v-%v group cmd(type 7-%v) disabled, drop it\n", dev.CallSign, dev.SSID, packet[48])
@@ -576,6 +590,12 @@ func NRL21parser(nrl *NRL21packet, packet []byte, dev *deviceInfo, conn *net.UDP
 		switch t {
 
 		case 1: //切换组指令
+
+			// 切组指令需要 DATA 至少 5 字节（子指令 + 4 字节组号）
+			if len(packet) < 53 {
+				log.Printf("dev:%v-%v change group packet too short, drop it\n", dev.CallSign, dev.SSID)
+				return
+			}
 
 			groupid := int(binary.BigEndian.Uint32(packet[49:53]))
 

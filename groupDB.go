@@ -56,7 +56,7 @@ type group struct {
 	AllowCALLSSID     string   `db:"allow_callsign_ssid"`
 	DevList           []int    `json:"devlist" db:"devlist"`
 	//KeepTime     int           `json:"keep_time" db:"keep_time"`
-	Password string `json:"password" db:"password"`
+	Password string `json:"-" db:"password"` //群组密码，不参与 JSON 序列化，防止接口泄露
 	//Status       int    `json:"status" db:"status"`
 	OwerID       int    `json:"ower_id" db:"ower_id"`
 	OwerCallsign string `json:"callsign" db:"callsign"`
@@ -665,6 +665,14 @@ func addPublicGroup(pg *group) error {
 func updatePublicGroup(pg *group) error {
 
 	pg.AllowCALLSSID = strings.Join(pg.AllowCALLSSIDList, ",")
+
+	// Password 不再随接口返回，前端提交空密码表示不修改，从数据库取回旧值
+	if pg.Password == "" {
+		if err := db.QueryRow(`select password from public_groups where id=?`, pg.ID).Scan(&pg.Password); err != nil {
+			log.Println("get old group password failed:", err)
+			return err
+		}
+	}
 
 	_, err := db.Exec(`update public_groups set name=?, type=?, allow_callsign_ssid=?, password=?, 
 	 note=?,  update_time=CURRENT_TIMESTAMP  where id=?`,

@@ -244,10 +244,10 @@ func (j *jsonapi) httpDevice(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpDeviceQTH(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	// _, err := checktoken(w, req)
-	// if err != nil {
-	// 	return
-	// }
+	// 与同族 qth 接口一致要求登录，防止未授权枚举台站地理位置
+	if _, err := checktoken(w, req); err != nil {
+		return
+	}
 
 	result, _ := io.ReadAll(req.Body)
 
@@ -391,6 +391,22 @@ func (j *jsonapi) httpUpdateDevice(w http.ResponseWriter, req *http.Request) {
 		stb.Priority = dev.Priority
 	}
 
+	// Password 字段已改为 json:"-" 不参与 JSON 序列化，单独从请求体解析（空表示不修改密码）
+	var pw struct {
+		Password string `json:"password"`
+	}
+	if err := jsonextra.Unmarshal(result, &pw); err == nil {
+		stb.Password = pw.Password
+	}
+
+	// 请求体 ID 必须与呼号+SSID 对应的设备一致，防止篡改 id 越权修改他人设备（IDOR）
+	if stb.ID == 0 {
+		stb.ID = dev.ID
+	} else if stb.ID != dev.ID {
+		w.Write([]byte(`{"code":20001,"data":{"message":"设备信息更新错误，设备ID与呼号不匹配"}}`))
+		return
+	}
+
 	err = updateDevice(stb)
 
 	if err != nil {
@@ -434,6 +450,17 @@ func (j *jsonapi) httpDeleteDevice(w http.ResponseWriter, req *http.Request) {
 	// 	w.Write([]byte(`{"code":20000,"data":{"message":"更新设备信息错误，必须本人操作"}}`))
 	// 	return
 	// }
+
+	// 归属校验以数据库记录为准：请求体 ID 对应的设备必须属于当前用户（管理员除外），
+	// 防止篡改请求体 id/callsign 越权删除他人设备（IDOR）
+	if !checkrole(u, []string{"admin"}) {
+		dev, err := getDeviceByID(stb.ID)
+		if err != nil || dev.CallSign != u.CallSign {
+			w.Write([]byte(`{"code":20000,"data":{"message":"设备删除错误，不是本人，或者权限不够！"}}`))
+			return
+		}
+		stb.CallSign, stb.SSID, stb.CallSignSSID = dev.CallSign, dev.SSID, dev.CallSignSSID
+	}
 
 	target := stb.CallSignSSID
 	if target == "" {

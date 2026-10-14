@@ -28,7 +28,7 @@ type control struct {
 	AllowRealyControl byte   `json:"allow_relay_control"` //0x0B  是否允许继电器控制
 	VoiceBitrate      byte   `json:"voice_bitrate"`       //0x0C  H=原码率  M=码率/2
 	DMRID             string `json:"dmrid"`               //0x10-0x19  本机设备序列号，不可修改
-	Password          string `json:"password"`            //0x1A-0x1E  本机设备密码，不可修改
+	Password          string `json:"-"`                   //0x1A-0x1E  本机设备密码，不可修改，不参与 JSON 序列化
 	// LocalPassword     string `json:"local_password"`
 	// PeerCPUID         string `json:"peer_cpuid"`      //0x17-0x1D 远程目标设备序列号,初始同本机序列号,可修改
 	// PeerPassword      string `json:"peer_password"`   //远程目标接入密码，0-9 A-F 可修改
@@ -137,6 +137,11 @@ func decodeATPacket(callsign string, ssid byte, data []byte) *ATcommand {
 func decodeControlPacket(data []byte) *control {
 
 	c := &control{}
+
+	// 48 字节报文的 DATA 为空切片，直接返回空配置，防止 data[0] 越界 panic
+	if len(data) == 0 {
+		return c
+	}
 
 	//子类型为2是响应
 	if data[0] == 2 && len(data) > 512 {

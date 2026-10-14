@@ -395,7 +395,7 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := `SELECT id,name,callsign,gird,phone,password,birthday,mdcid,dmrid,
+	query := `SELECT id,name,callsign,gird,phone,birthday,mdcid,dmrid,
 	sex,avatar,address,roles,introduction,alarm_msg,status,update_time,last_login_time,
 	login_err_times,create_time,openid,nickname,pid,last_login_ip,expire_time FROM users
 	 where  roles like ?  ORDER BY id ASC`
@@ -413,7 +413,7 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 
 		r := userinfo{}
 		var roles string
-		err := rows.Scan(&r.ID, &r.Name, &r.CallSign, &r.Gird, &r.Phone, &r.Password, &r.Birthday, &r.MDCID, &r.DMRID,
+		err := rows.Scan(&r.ID, &r.Name, &r.CallSign, &r.Gird, &r.Phone, &r.Birthday, &r.MDCID, &r.DMRID,
 			&r.Sex, &r.Avatar, &r.Address,
 			&roles, &r.Introduction, &r.AlarmMsg, &r.Status, &r.UpdateTime, &r.LastLoginTime, &r.LoginErrTimes,
 			&r.CreateTime, &r.OpenID, &r.NickName, &r.PID, &r.LastLoginIP, &r.ExpireTime)
@@ -480,7 +480,8 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 	row := db.QueryRow("SELECT password ,login_err_times,status,roles FROM users where phone=? or callsign=?", username, username)
 	err := row.Scan(&r.Password, &r.LoginErrTimes, &r.Status, &roles)
 	if err != nil {
-		log.Println("login err:", err, r, password, username)
+		// 不记录用户输入的密码，避免明文凭据落盘到日志
+		log.Println("login err:", err, username)
 		return nil, false
 	}
 
@@ -493,8 +494,13 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 		passwordOK = true
 	}
 
-	if r.LoginErrTimes < 10 && passwordOK {
-		_, err = db.Exec(`update users set last_login_time=CURRENT_TIMESTAMP,last_login_ip=?,login_err_times=1 where phone=? or callsign=?`, ip, username, username)
+	// 账号级时间窗锁定：连续失败达到上限后临时锁定，期满自动解锁或由管理员解锁，
+	// 不再使用 login_err_times 做永久锁定（防止攻击者批量锁死账号）
+	locked := accountGuard.locked(username)
+
+	if passwordOK && !locked {
+		accountGuard.recordSuccess(username)
+		_, err = db.Exec(`update users set last_login_time=CURRENT_TIMESTAMP,last_login_ip=?,login_err_times=0 where phone=? or callsign=?`, ip, username, username)
 		if err != nil {
 			log.Println("update users last_login_time and last_login_ip  failed, ", err)
 			return nil, false
@@ -503,6 +509,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 	}
 
 	if !passwordOK {
+		accountGuard.recordFailure(username)
 		_, err = db.Exec(`update users set login_err_times = login_err_times + 1 where phone=? or callsign=?`, username, username)
 		if err != nil {
 			log.Println("update user login_err_times failed ,and password err ", err)
@@ -513,7 +520,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 
 	//fmt.Println(r.PasswordOK, r.Status, r.LoginErrTimes)
 
-	return r.Roles, passwordOK && r.Status == 1 && r.LoginErrTimes < 10
+	return r.Roles, passwordOK && r.Status == 1 && !locked
 
 }
 
@@ -764,4 +771,13 @@ func updateUserProfile(id int, dmrid string, mdcid string, avatar string, passwo
 	}
 
 	return nil
+}
+
+// verifyUserPassword 校验指定用户的当前密码，修改密码前调用
+func verifyUserPassword(id int, password string) error {
+	var hash string
+	if err := db.QueryRow(`select password from users where id=?`, id).Scan(&hash); err != nil {
+		return err
+	}
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }

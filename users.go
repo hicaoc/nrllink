@@ -201,6 +201,11 @@ func (j *jsonapi) httpUserDetail(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpGetMDCID(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
+	// 呼号反查需登录，防止未授权枚举；响应用 JSON 编码防止特殊字符破坏报文
+	if _, err := checktoken(w, req); err != nil {
+		return
+	}
+
 	req.ParseForm()
 	mdcid := strings.TrimSpace(req.Form.Get("mdcid"))
 
@@ -211,8 +216,8 @@ func (j *jsonapi) httpGetMDCID(w http.ResponseWriter, req *http.Request) {
 
 	value, exists := mdcidmap.Load(mdcid)
 	if exists {
-		callsign := value.(string)
-		fmt.Fprintf(w, `{"code":20000,"data":{"callsign":"%s"}}`, callsign)
+		rescode, _ := jsonextra.Marshal(map[string]any{"code": 20000, "data": map[string]string{"callsign": value.(string)}})
+		w.Write(rescode)
 	} else {
 		w.Write([]byte(`{"code":20000,"data":{"message":"未找到对应的呼号"}}`))
 	}
@@ -220,6 +225,11 @@ func (j *jsonapi) httpGetMDCID(w http.ResponseWriter, req *http.Request) {
 
 func (j *jsonapi) httpGetDMRID(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
+
+	// 呼号反查需登录，防止未授权枚举；响应用 JSON 编码防止特殊字符破坏报文
+	if _, err := checktoken(w, req); err != nil {
+		return
+	}
 
 	req.ParseForm()
 	dmrid := strings.TrimSpace(req.Form.Get("dmrid"))
@@ -231,8 +241,8 @@ func (j *jsonapi) httpGetDMRID(w http.ResponseWriter, req *http.Request) {
 
 	value, exists := dmridmap.Load(dmrid)
 	if exists {
-		callsign := value.(string)
-		fmt.Fprintf(w, `{"code":20000,"data":{"callsign":"%s"}}`, callsign)
+		rescode, _ := jsonextra.Marshal(map[string]any{"code": 20000, "data": map[string]string{"callsign": value.(string)}})
+		w.Write(rescode)
 	} else {
 		w.Write([]byte(`{"code":20000,"data":{"message":"未找到对应的呼号"}}`))
 	}
@@ -289,6 +299,23 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 	if !checkrole(u, []string{"master", "admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
 		return
+	}
+
+	// master 只能修改普通账号的基础信息：不能变更角色/状态/呼号，也不能操作管理账号，
+	// 防止 master 通过修改 roles 字段提权为 admin
+	if !checkrole(u, []string{"admin"}) {
+		target, err := getuserByID(stb.ID)
+		if err != nil {
+			w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+			return
+		}
+		if checkrole(target, []string{"admin", "master"}) ||
+			strings.Join(stb.Roles, ",") != strings.Join(target.Roles, ",") ||
+			stb.Status != target.Status ||
+			!strings.EqualFold(stb.CallSign, target.CallSign) {
+			w.Write([]byte(`{"code":20000,"data":{"message":"无权修改管理账号或变更角色/状态/呼号"}}`))
+			return
+		}
 	}
 
 	stb.MDCID = strings.ToUpper(strings.TrimSpace(stb.MDCID))
@@ -367,6 +394,21 @@ func (j *jsonapi) httpUpdateUserProfile(w http.ResponseWriter, req *http.Request
 	}
 
 	stb.Avatar = strings.TrimSpace(stb.Avatar)
+	// 资料修改包含密码变更时，必须验证旧密码
+	if stb.Password != "" {
+		var opw struct {
+			OldPassword string `json:"old_password"`
+		}
+		if err := jsonextra.Unmarshal(result, &opw); err != nil {
+			w.Write(ResParmErr)
+			return
+		}
+		if err := verifyUserPassword(u.ID, opw.OldPassword); err != nil {
+			w.Write([]byte(`{"code":20000,"data":{"message":"旧密码错误"}}`))
+			return
+		}
+	}
+
 	if err := updateUserProfile(u.ID, stb.DMRID, stb.MDCID, stb.Avatar, stb.Password); err != nil {
 		w.Write([]byte(`{"code":20000,"data":{"message":"个人信息更新失败"}}`))
 		return
@@ -399,6 +441,12 @@ func (j *jsonapi) httpUpdateUserAvatar(w http.ResponseWriter, req *http.Request)
 	}
 
 	stb.CallSign = u.CallSign
+
+	// 只能修改本人头像，防止篡改请求体 id 越权修改他人（含管理员）头像
+	if u.ID != stb.ID {
+		w.Write([]byte(`{"code":20000,"data":{"message":"无权修改他人头像"}}`))
+		return
+	}
 
 	if u.OIDCVirtual {
 		writeVirtualAccountErr(w)
@@ -458,6 +506,20 @@ func (j *jsonapi) httpUpdateUserPassword(w http.ResponseWriter, req *http.Reques
 	// }
 
 	//stb.Area = u.Area
+	// 修改密码必须验证旧密码，防止 token 泄露后被直接改密接管
+	var opw struct {
+		OldPassword string `json:"old_password"`
+	}
+	if err := jsonextra.Unmarshal(result, &opw); err != nil {
+		w.Write(ResParmErr)
+		return
+	}
+	if err := verifyUserPassword(stb.ID, opw.OldPassword); err != nil {
+		log.Println("old password verify failed:", stb.ID, err)
+		w.Write([]byte(`{"code":20000,"data":{"message":"旧密码错误"}}`))
+		return
+	}
+
 	err = updateUserPassword(stb.ID, stb.Password)
 
 	if err != nil {
@@ -546,7 +608,8 @@ func (j *jsonapi) httpDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if checkrole(stb, []string{"admin"}) {
+	// 内置账号保护以数据库记录为准，防止通过篡改请求体 roles 字段绕过
+	if target, err := getuserByID(stb.ID); err == nil && checkrole(target, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"内置账号无法删除"}}`))
 		return
 
@@ -758,6 +821,37 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 	addOperatorLog("用户名或者密码错误 "+stb.Username+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "登录失败", &userinfo{})
 
 	log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " User login err :username:" + stb.Username)
+
+}
+
+// httpUnlockUser 管理员解锁被登录保护锁定的账号，同时清零数据库中的失败计数
+func (j *jsonapi) httpUnlockUser(w http.ResponseWriter, req *http.Request) {
+	sethttphead(w)
+
+	u, err := checktoken(w, req)
+	if err != nil {
+		return
+	}
+
+	if !checkrole(u, []string{"admin"}) {
+		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
+		return
+	}
+
+	req.ParseForm()
+	account := strings.ToUpper(strings.TrimSpace(req.Form.Get("account")))
+	if account == "" {
+		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"账号不能为空"}}`))
+		return
+	}
+
+	accountGuard.unlock(account)
+	if _, err := db.Exec(`update users set login_err_times=0 where phone=? or callsign=?`, account, account); err != nil {
+		log.Println("unlock user reset login_err_times failed:", err)
+	}
+
+	addOperatorLog(account, "管理员解锁账号", u)
+	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"账号已解锁"}}`))
 
 }
 

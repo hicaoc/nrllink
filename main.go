@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
-	_ "net/http/pprof"
 	"time"
+
+	// 安全：不引入 net/http/pprof，避免 /debug/pprof 未授权暴露在业务端口
+	//（内存 profile 可直接读出 JWT 密钥等敏感数据）
 
 	"github.com/ipipdotnet/ipdb-go"
 	"github.com/json-iterator/go/extra"
@@ -22,6 +24,8 @@ func main() {
 	extra.RegisterFuzzyDecoders()
 
 	conf.init()
+
+	initTokenKey()
 
 	var err error
 

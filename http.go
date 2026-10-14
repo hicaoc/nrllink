@@ -7,9 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	// _ "net/http/pprof"
-	// "github.com/jmoiron/sqlx"
-
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 
@@ -214,6 +211,7 @@ func (j *jsonapi) msghttp() {
 
 	http.HandleFunc("/user/password", j.httpUpdateUserPassword)
 	http.HandleFunc("/user/delete", j.httpDeleteUser)
+	http.HandleFunc("/user/unlock", j.httpUnlockUser)
 
 	http.HandleFunc("/billing/info", j.httpBillingInfo)
 	http.HandleFunc("/billing/packages/list", j.httpBillingPackages)
@@ -239,10 +237,7 @@ func (j *jsonapi) msghttp() {
 	//http.HandleFunc("/login", j.httplogin)
 	//http.HandleFunc("/reg", j.httpreg)
 
-	http.Handle("/ws", websocket.Server{
-		Handler:   websocket.Handler(upper),
-		Handshake: allowWebsocketHandshake,
-	})
+	// /ws echo 调试接口已移除：无鉴权、断连后自旋耗尽 CPU，且连接 map 无锁并发写会崩进程
 	http.Handle("/ws/calls", websocket.Server{
 		Handler:   websocket.Handler(j.wsCallStream),
 		Handshake: allowWebsocketHandshake,

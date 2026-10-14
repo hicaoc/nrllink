@@ -42,10 +42,11 @@ type config struct {
 	Web struct {
 		Path string `yaml:"Path" json:"path"`
 		Port string `yaml:"Port" json:"port"`
-		//TokenKey string `yaml:"Token_Key" json:"token_key"`
-		ICP    string `yaml:"ICP" json:"icp"`
-		SSLCrt string `yaml:"SSLCrt" json:"ssl_crt"`
-		SSLKey string `yaml:"SSLKey" json:"ssl_key"`
+		// JWT 签名密钥：配置后重启不会话失效；留空则启动时用 crypto/rand 随机生成
+		TokenKey string `yaml:"Token_Key" json:"token_key"`
+		ICP      string `yaml:"ICP" json:"icp"`
+		SSLCrt   string `yaml:"SSLCrt" json:"ssl_crt"`
+		SSLKey   string `yaml:"SSLKey" json:"ssl_key"`
 	} `yaml:"Web" json:"web" `
 
 	PlatformList []Platformitem `yaml:"PlatformList" json:"platforms"`

@@ -36,14 +36,9 @@ func getRoutes() *routes {
 
 func setRoutes(route string) {
 
-	r := &routes{}
-
-	query := fmt.Sprintf("update  routes  set routes=%v", route)
-
-	row := db.QueryRow(query)
-	err := row.Scan(r)
+	_, err := db.Exec("update routes set routes=?", route)
 	if err != nil {
-		log.Println("save routes err:", err, r)
+		log.Println("save routes err:", err)
 	}
 
 }

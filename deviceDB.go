@@ -21,18 +21,18 @@ type deviceInfo struct {
 	ID              int    `json:"id" db:"id"` //设备唯一编号
 	Name            string `json:"name" db:"name"`
 	DMRID           uint32 `json:"dmrid" db:"dmrid"`         //设备DMRID
-	Password        string `json:"password" db:"password"`   //设备接入密码
+	Password        string `json:"-" db:"password"`          //设备接入密码，不参与 JSON 序列化，防止接口泄露
 	Gird            string `json:"gird" db:"gird"`           //设备位置
 	DevType         byte   `json:"dev_type" db:"dev_type"`   //设备型号
 	DevModel        byte   `json:"dev_model" db:"dev_model"` //设备型号
 	VoiceServerIP   string `json:"voice_server_ip"`
 	VoiceServerPort string `json:"voice_server_port"`
-	CallSign        string `json:"callsign" db:"callsign"`             //所有者呼号
-	SSID            byte   `json:"ssid" db:"ssid"`                     //所有者SSID
-	Priority        int    `json:"priority" db:"priority"`             //优先级 默认100， 数字大优先
-	CallSignSSID    string `json:"callsignssid"`                       //callsign+ssid
-	GroupID         int    `json:"group_id" db:"group_id"`             //内置群租编号
-	GroupPassword   string `json:"group_password" db:"group_password"` //加入组的密码
+	CallSign        string `json:"callsign" db:"callsign"` //所有者呼号
+	SSID            byte   `json:"ssid" db:"ssid"`         //所有者SSID
+	Priority        int    `json:"priority" db:"priority"` //优先级 默认100， 数字大优先
+	CallSignSSID    string `json:"callsignssid"`           //callsign+ssid
+	GroupID         int    `json:"group_id" db:"group_id"` //内置群租编号
+	GroupPassword   string `json:"-" db:"group_password"`  //加入组的密码，不参与 JSON 序列化
 	QTH             string `json:"qth"`
 	Status          int    `json:"status" db:"status"`       //状态  0 正常   1 禁用接收  2 禁用发射  3 禁止发射和接收 4 透明转发
 	RFType          int    `json:"rf_type" db:"rf_type"`     //连接的射频设备类型：  0:无连接， 1,内置1W模块，2，内置2W模块，3，外接moto3188，4,moto3688, 5，外接yaesu，6，外接，icom，7，外接其它
@@ -927,6 +927,17 @@ func updateDevice(e *deviceInfo) error {
 		}
 	}
 
+	// Password 不再随接口返回，前端提交空密码表示不修改，从内存或数据库取回旧值
+	if e.Password == "" {
+		if ok {
+			e.Password = d.Password
+		} else if old, err := getDevice(e.CallSign, e.SSID); err == nil {
+			e.Password = old.Password
+		} else {
+			return errors.New("设备不存在，无法保留原密码")
+		}
+	}
+
 	_, err := db.Exec(`update devices set name=?, gird=?, dmrid=?, dev_type=?, dev_model=?, 	group_id=?,status=?,priority=?,
 	chan_name=?,rf_type=?,note=?,password=?,update_time=CURRENT_TIMESTAMP  where id=?`,
 		e.Name, e.Gird, e.DMRID, e.DevType, e.DevModel, e.GroupID, e.Status, e.Priority, e.ChanName, e.RFType, e.Note, e.Password, e.ID)
@@ -986,4 +997,29 @@ func changeDeviceGroup(e *deviceInfo) error {
 
 	return nil
 
+}
+
+// getDeviceByID 按数据库主键查询设备，用于写操作前的归属校验（防止 IDOR）
+func getDeviceByID(id int) (dev *deviceInfo, err error) {
+	dev = &deviceInfo{}
+
+	row := db.QueryRow(`select id,name,callsign,
+	CAST(ssid AS INTEGER) AS ssid,		priority,
+	dmrid,password,gird,dev_type,dev_model,
+	group_id,status,is_certed,chan_name,
+	create_time,update_time,online_time,note,rf_type
+ from  devices   where id=?`, id)
+
+	err = row.Scan(&dev.ID, &dev.Name, &dev.CallSign, &dev.SSID, &dev.Priority, &dev.DMRID, &dev.Password, &dev.Gird, &dev.DevType, &dev.DevModel,
+		&dev.GroupID, &dev.Status, &dev.ISCerted, &dev.ChanName,
+		&dev.CreateTime, &dev.UpdateTime, &dev.OnlineTime, &dev.Note, &dev.RFType)
+
+	if err != nil {
+		log.Println("query device by id err:", err)
+		return nil, err
+	}
+
+	dev.CallSignSSID = getCallsignSSID(dev.CallSign, dev.SSID)
+
+	return dev, nil
 }
