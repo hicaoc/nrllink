@@ -324,7 +324,7 @@ func (d *deviceInfo) String() string {
 
 }
 
-func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
+func getDevicelist(w string, args []any, p string, sort string) ([]*deviceInfo, int) {
 
 	devlist := []*deviceInfo{}
 
@@ -352,7 +352,7 @@ func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 
 	//fmt.Println(query)
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 
 	if err != nil {
 		log.Println("查询设备列表错误: ", err, "\n", query)
@@ -391,7 +391,7 @@ func getDevicelist(w string, p string, sort string) ([]*deviceInfo, int) {
 	var t int
 	q := fmt.Sprintf(`SELECT count(*) as total FROM devices  %v  `, w)
 	//fmt.Println(q)
-	row := db.QueryRow(q)
+	row := db.QueryRow(q, args...)
 	err = row.Scan(&t)
 	if err != nil {
 		log.Println(" 查询用户列表total错误 err:", err, t)

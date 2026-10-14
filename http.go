@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	// _ "net/http/pprof"
@@ -289,7 +290,6 @@ type query struct {
 	AreaID        string   `json:"areaid"`
 	QueryType     string   `json:"querytype"`
 	PhoneDistinct bool     `json:"phone_distinct"`
-	QueryString   string   `json:"querys_tring"`
 	OperatorID    string   `json:"operator_id"`
 	Schname       string   `json:"schname"`
 	Name          string   `json:"name"`
@@ -317,245 +317,143 @@ type query struct {
 	Path          string   `json:"path"`
 }
 
-func queryToWhere(subquery string, q query) (string, string, string) {
+// queryToWhere 把查询条件转换为参数化 WHERE 子句。
+// 客户端输入一律通过 ? 占位符绑定，数字字段校验失败时忽略该条件，防止 SQL 注入。
+// 返回 WHERE 子句、绑定参数、分页子句、排序子句。
+func queryToWhere(subquery string, q query) (string, []any, string, string) {
 
-	var s string
-	var p string
-	var sort string
+	var conditions []string
+	var args []any
 
-	if q.ID != "" {
-		s = " id = " + q.ID
+	addCond := func(cond string, a ...any) {
+		conditions = append(conditions, cond)
+		args = append(args, a...)
 	}
 
-	//自定义查询条件
-	if q.QueryString != "" {
-		if s != "" {
-			s = s + " and " + q.QueryString + ""
-		} else {
-			s = " " + q.QueryString + " "
+	// addNum 仅接受整数，非数字输入直接忽略该条件
+	addNum := func(column, value string) {
+		n, err := strconv.Atoi(strings.TrimSpace(value))
+		if err != nil {
+			return
 		}
+		addCond(column+"=?", n)
+	}
+
+	if q.ID != "" {
+		addNum("id", q.ID)
 	}
 
 	if q.OperatorID != "" {
-		if s != "" {
-			s = s + " and  operator_id=" + q.OperatorID
-		} else {
-			s = " operator_id=" + q.OperatorID
-		}
+		addNum("operator_id", q.OperatorID)
 	}
 
 	if q.CurrentArea != "" {
-		if s != "" {
-			s = s + " and " + subquery + "current_area=" + q.CurrentArea
-		} else {
-			s = " " + subquery + "current_area=" + q.CurrentArea
-		}
+		addNum(subquery+"current_area", q.CurrentArea)
 	}
 
 	if q.AreaID != "" {
-		if s != "" {
-			s = s + " and  areaid=" + q.AreaID
-		} else {
-			s = " areaid=" + q.AreaID
-		}
+		addNum("areaid", q.AreaID)
 	}
 
 	if q.Area != "" {
-		if s != "" {
-			s = s + " and " + subquery + "area @> '{" + q.Area + "}'"
-		} else {
-			s = " " + subquery + "area @> '{" + q.Area + "}'"
-		}
+		addCond(subquery+"area @> ('{'||?||'}')", q.Area)
 	}
 
 	if q.IsDeleted != "" {
-		if s != "" {
-			s = s + " and isdeleted=" + q.IsDeleted + ""
-		} else {
-			s = " isdeleted=" + q.IsDeleted + ""
-		}
+		addNum("isdeleted", q.IsDeleted)
 	}
 
 	if q.Phone != "" {
-		if s != "" {
-			s = s + " and phone='" + q.Phone + "'"
-		} else {
-			s = " phone='" + q.Phone + "'"
-		}
+		addCond("phone=?", q.Phone)
 	}
 
 	if q.Callsign != "" {
-
-		q.Callsign = strings.ToUpper(q.Callsign)
-
-		if s != "" {
-			s = s + " and callsign='" + q.Callsign + "'"
-		} else {
-			s = " callsign='" + q.Callsign + "'"
-		}
+		addCond("callsign=?", strings.ToUpper(q.Callsign))
 	}
 
 	if q.GroupID != "" {
-		if s != "" {
-			s = s + " and group_id =" + q.GroupID + " "
-		} else {
-			s = " group_id = " + q.GroupID + " "
-		}
-
+		addNum("group_id", q.GroupID)
 	}
 
 	if q.Role != "" {
-		if s != "" {
-			s = s + " and " + subquery + "roles like '%" + q.Role + "%'"
-		} else {
-			s = " " + subquery + "roles like '%" + q.Role + "%'"
-		}
+		addCond(subquery+"roles like ?", "%"+q.Role+"%")
 	}
 
 	if q.Date != "" {
-		if s != "" {
-			s = s + " and date='" + q.Date + "'"
-		} else {
-			s = " date='" + q.Date + "'"
-		}
+		addCond("date=?", q.Date)
 	}
 
 	if q.Type != "" {
-		if s != "" {
-			s = s + "  and type=" + q.Type
-		} else {
-			s = " type=" + q.Type
-		}
+		addNum("type", q.Type)
 	}
 
-	// if len(q.Status) > 0 {
-
-	// 	if s != "" {
-	// 		s = s + "  and status IN " + array2strings(q.Status)
-	// 	} else {
-	// 		s = " status IN " + array2strings(q.Status)
-	// 	}
-
-	// }
 	if q.Status != "" {
-		if s != "" {
-			s = s + "  and status=" + q.Status
-		} else {
-			s = " status=" + q.Status
-		}
+		addNum("status", q.Status)
 	}
 
 	if q.NotStatus != "" {
-		if s != "" {
-			s = s + "  and status !=" + q.NotStatus
-		} else {
-			s = " status !=" + q.NotStatus
+		if n, err := strconv.Atoi(strings.TrimSpace(q.NotStatus)); err == nil {
+			addCond("status!=?", n)
 		}
 	}
 
-	if q.Daterange != nil {
-
-		if s != "" {
-			s = s + "  and timestamp between '" + q.Daterange[0] + "' and '" + q.Daterange[1] + " 23:59:59'"
-
-		} else {
-			s = "  timestamp between '" + q.Daterange[0] + "' and '" + q.Daterange[1] + " 23:59:59'"
-		}
+	if len(q.Daterange) >= 2 {
+		addCond("timestamp between ? and ?", q.Daterange[0], q.Daterange[1]+" 23:59:59")
 	}
 
 	if q.Month != "" {
-
-		if s != "" {
-			s = s + "  and  timestamp =  '" + q.Month + "' "
-
-		} else {
-			s = "  timestamp =  '" + q.Month + "' "
-		}
+		addCond("timestamp=?", q.Month)
 	}
 
-	if q.UpdateTime != nil {
-
-		if s != "" {
-			s = s + "  and update_time between '" + q.UpdateTime[0] + "' and '" + q.UpdateTime[1] + " 23:59:59'"
-
-		} else {
-			s = "  update_time between '" + q.UpdateTime[0] + "' and '" + q.UpdateTime[1] + " 23:59:59'"
-		}
+	if len(q.UpdateTime) >= 2 {
+		addCond("update_time between ? and ?", q.UpdateTime[0], q.UpdateTime[1]+" 23:59:59")
 	}
 
 	if q.Name != "" {
-		if s != "" {
-			s = s + " and (name like '%" + q.Name + "%' )"
-		} else {
-			s = " (name like '%" + q.Name + "%')"
-		}
+		addCond("(name like ?)", "%"+q.Name+"%")
 	}
 
 	if q.CountryName != "" {
-		if s != "" {
-			s = s + " and (country_name like '%" + q.CountryName + "%' )"
-		} else {
-			s = " (country_name like '%" + q.CountryName + "%')"
-		}
+		addCond("(country_name like ?)", "%"+q.CountryName+"%")
 	}
 
 	if q.RegionName != "" {
-		if s != "" {
-			s = s + " and (region_name like '%" + q.RegionName + "%' )"
-		} else {
-			s = " (region_name like '%" + q.RegionName + "%')"
-		}
+		addCond("(region_name like ?)", "%"+q.RegionName+"%")
 	}
 
 	if q.ISPDomain != "" {
-		if s != "" {
-			s = s + " and (isp_domain like '%" + q.ISPDomain + "%' )"
-		} else {
-			s = " (isp_domain like '%" + q.ISPDomain + "%')"
-		}
+		addCond("(isp_domain like ?)", "%"+q.ISPDomain+"%")
 	}
 
 	if q.IP != "" {
-		if s != "" {
-			s = s + " and (cidrip like '%" + q.IP + "%' )"
-		} else {
-			s = " (cidrip like '%" + q.IP + "%')"
-		}
+		addCond("(cidrip like ?)", "%"+q.IP+"%")
 	}
 
 	if q.NamePhone != "" {
-		if s != "" {
-			s = s + " and (" + subquery + "name like '%" + q.NamePhone + "%' or " + subquery + "phone like '%" + q.NamePhone + "%')"
-		} else {
-			s = " (" + subquery + "name like '%" + q.NamePhone + "%' or " + subquery + "phone like '%" + q.NamePhone + "%')"
-		}
+		addCond("("+subquery+"name like ? or "+subquery+"phone like ?)",
+			"%"+q.NamePhone+"%", "%"+q.NamePhone+"%")
 	}
 
 	if q.EventType != "" {
-		if s != "" {
-			s = s + " and (" + subquery + "event_type like '%" + q.EventType + "%' )"
-		} else {
-			s = " (" + subquery + "event_type like '%" + q.EventType + "%' )"
-		}
+		addCond("("+subquery+"event_type like ?)", "%"+q.EventType+"%")
 	}
 
 	if q.Schname != "" {
-		if s != "" {
-			s = s + " and schname='" + q.Schname + "'"
-		} else {
-			s = " schname='" + q.Schname + "'"
-		}
+		addCond("schname=?", q.Schname)
 	}
 
-	if s != "" {
-		s = " where " + s + " "
+	var s string
+	if len(conditions) > 0 {
+		s = " where " + strings.Join(conditions, " and ") + " "
 	}
 
+	var p string
 	if q.Limit > 0 && q.Page > 0 {
 
 		p = fmt.Sprintf(" Limit %v offset %v", q.Limit, (q.Page-1)*q.Limit)
 	}
 
+	var sort string
 	switch q.Sort {
 	case "+id":
 		sort = "order by id asc"
@@ -580,8 +478,7 @@ func queryToWhere(subquery string, q query) (string, string, string) {
 
 	}
 
-	//	fmt.Println(s, p)
-	return s, p, sort
+	return s, args, p, sort
 
 }
 

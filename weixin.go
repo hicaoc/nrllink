@@ -860,13 +860,13 @@ func pushCustomMsg(accessToken, toUser, msg string) error {
 	return nil
 }
 
-func getwxmsglist(where, page string) (items []TextRequestBody, total int) {
+func getwxmsglist(where string, args []any, page string) (items []TextRequestBody, total int) {
 
 	items = []TextRequestBody{}
 
 	query := fmt.Sprintf(`SELECT * 	FROM wxmsg %v  ORDER BY timestamp DESC %v`, where, page)
 
-	_, err := db.Exec(query)
+	_, err := db.Exec(query, args...)
 
 	if err != nil {
 		log.Println("查询微信消息列表错误: ", err)
@@ -875,7 +875,7 @@ func getwxmsglist(where, page string) (items []TextRequestBody, total int) {
 	}
 
 	q := fmt.Sprintf("SELECT count(*) as total from wxmsg %v ", where)
-	_, err = db.Exec(q)
+	_, err = db.Exec(q, args...)
 	if err != nil {
 		log.Println(" 查询微信消息total错误 err:", err)
 		return nil, 0
@@ -1143,8 +1143,8 @@ func (j *jsonapi) httpgetWeiXinMsg(w http.ResponseWriter, req *http.Request) {
 
 	req.Body.Close()
 
-	ww, pp, _ := queryToWhere("", *stb)
-	list, total := getwxmsglist(ww, pp)
+	ww, args, pp, _ := queryToWhere("", *stb)
+	list, total := getwxmsglist(ww, args, pp)
 
 	writeJSONResponseItems(w, list, total)
 

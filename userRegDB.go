@@ -79,7 +79,7 @@ func createRegUser(e *reguser) error {
 
 }
 
-func selectReguser(w string, p string, sort string) ([]reguser, int) {
+func selectReguser(w string, args []any, p string, sort string) ([]reguser, int) {
 
 	emp := []reguser{}
 
@@ -92,7 +92,7 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 
 	//fmt.Println(query)
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 
 	if err != nil {
 		log.Println("查询注册用户列表错误: ", err, "\n", query)
@@ -128,7 +128,7 @@ func selectReguser(w string, p string, sort string) ([]reguser, int) {
 	var t int
 	q := fmt.Sprintf(`SELECT count(*) as total FROM registers  %v  `, w)
 	//fmt.Println(q)
-	row := db.QueryRow(q)
+	row := db.QueryRow(q, args...)
 	err = row.Scan(&t)
 	if err != nil {
 		log.Println(" 查询注册用户列表total错误 err:", err, t)

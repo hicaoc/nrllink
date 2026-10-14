@@ -88,15 +88,42 @@ func (j *jsonapi) httpRegisterImage(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// 验证图片路径合法性
-	absPath, err := filepath.Abs(stb.Path) // 转换为绝对路径
+	// 只允许读取执照文件目录下的文件，防止客户端传入任意路径造成任意文件读取
+	if conf.System.LicensePath == "" {
+		http.Error(w, "License path not configured", http.StatusInternalServerError)
+		return
+	}
+
+	baseDir, err := filepath.Abs(conf.System.LicensePath)
+	if err != nil {
+		http.Error(w, "Invalid license path", http.StatusInternalServerError)
+		return
+	}
+	if resolved, err := filepath.EvalSymlinks(baseDir); err == nil {
+		baseDir = resolved
+	}
+
+	absPath, err := filepath.Abs(stb.Path)
 	if err != nil {
 		http.Error(w, "Invalid image path", http.StatusBadRequest)
 		return
 	}
 
+	// EvalSymlinks 解析符号链接得到真实路径，文件不存在时按未找到处理
+	realPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	if !strings.HasPrefix(realPath, baseDir+string(os.PathSeparator)) {
+		log.Println("register image path outside license dir rejected:", stb.Path)
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	// 检查文件是否存在并读取内容
-	file, err := os.Open(absPath)
+	file, err := os.Open(realPath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return

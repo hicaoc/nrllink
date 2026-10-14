@@ -44,7 +44,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !checkrole(u, []string{"admin", "ham"}) {
+	if !checkrole(u, []string{"admin"}) {
 		w.Write([]byte(`{"code":20000,"data":{"message":"当前用户没有权限设置此参数"}}`))
 		return
 

@@ -16,7 +16,7 @@ type OperatorLog struct {
 	Note       string `db:"note" json:"note"`
 }
 
-func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
+func getOperatorLog(s string, args []any, p string) ([]*OperatorLog, int) {
 
 	// if checkrole(emp, []string{"admin"}) == true {
 	// 	schname = "public"
@@ -27,7 +27,7 @@ func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
 	query := fmt.Sprintf(`SELECT id,datetime(timestamp, 'localtime'),content,event_type,operator,operator_id 
 	FROM operator_log %v ORDER BY id DESC %v`, s, p)
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 
 	if err != nil {
 		log.Println("查询操作日记记录错误: ", err)
@@ -55,7 +55,7 @@ func getOperatorLog(s string, p string) ([]*OperatorLog, int) {
 
 	var t int
 	q := fmt.Sprintf("SELECT count(*) as total from operator_log %v ", s)
-	row := db.QueryRow(q)
+	row := db.QueryRow(q, args...)
 	err = row.Scan(&t)
 	if err != nil {
 		log.Println(" 查询操作日记记录total错误 err:", err, t)

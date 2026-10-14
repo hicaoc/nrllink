@@ -4,7 +4,7 @@
 
 #bh4tdv.nrlptt.com
 
-hostlist='182.92.158.141 www.bi3spp.cn m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd4vki.xyz bd4vki.nrlptt.com  www.bg1vif.com ah.nrlptt.com  bh1osw.nrlptt.com  ham.73ham.com js.nrlptt.com nrl.bd4two.site yz.hamuv.com  usa.nrlptt.com '
+hostlist='www.bi3spp.cn m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd4vki.xyz bd4vki.nrlptt.com  www.bg1vif.com ah.nrlptt.com  bh1osw.nrlptt.com  ham.73ham.com js.nrlptt.com nrl.bd4two.site yz.hamuv.com  182.92.158.141  usa.nrlptt.com '
 
 #hostlist='bh1osw.nrlptt.com'
 
@@ -28,7 +28,7 @@ hostlist='182.92.158.141 www.bi3spp.cn m.nrlptt.com  ba1gm.nrlptt.com  nrlptt.bd
 
 #hostlist='ba1gm.nrlptt.com'
 
-hostlist='js.nrlptt.com nrlptt.com'
+#hostlist='js.nrlptt.com m.nrlptt.com'
 
 #hostlist='ah.nrlptt.com'
 

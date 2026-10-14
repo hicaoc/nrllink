@@ -50,9 +50,9 @@ func (j *jsonapi) httpOperatorLogList(w http.ResponseWriter, req *http.Request) 
 		stb.OperatorID = fmt.Sprintf("%d", u.ID)
 	}
 
-	ww, p, _ := queryToWhere("", *stb)
+	ww, args, p, _ := queryToWhere("", *stb)
 
-	list, total := getOperatorLog(ww, p)
+	list, total := getOperatorLog(ww, args, p)
 
 	// list := getOperatorLog()
 

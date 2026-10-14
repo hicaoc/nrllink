@@ -213,7 +213,7 @@ func delRole(k string) {
 
 }
 
-func selectuser(w string, p string, sort string) ([]userinfo, int) {
+func selectuser(w string, args []any, p string, sort string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
@@ -225,7 +225,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 
 	//fmt.Println(query)
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		log.Println("查询用户列表错误: ", err, "\n", query)
 		return nil, 0
@@ -259,7 +259,7 @@ func selectuser(w string, p string, sort string) ([]userinfo, int) {
 	var t int
 	q := fmt.Sprintf(`SELECT count(*) as total FROM users  %v  `, w)
 	//fmt.Println(q)
-	row := db.QueryRow(q)
+	row := db.QueryRow(q, args...)
 	err = row.Scan(&t)
 	if err != nil {
 		log.Println(" 查询用户列表total错误 err:", err, t)
@@ -395,12 +395,12 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 
 	emp := []userinfo{}
 
-	query := fmt.Sprintf(`SELECT id,name,callsign,gird,phone,password,birthday,mdcid,dmrid,
+	query := `SELECT id,name,callsign,gird,phone,password,birthday,mdcid,dmrid,
 	sex,avatar,address,roles,introduction,alarm_msg,status,update_time,last_login_time,
 	login_err_times,create_time,openid,nickname,pid,last_login_ip,expire_time FROM users
-	 where  roles like '%%%v%%'  ORDER BY id ASC`, role)
+	 where  roles like ?  ORDER BY id ASC`
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, "%"+role+"%")
 
 	if err != nil {
 		log.Println("按角色查询用户列表错误: ", err, '\n', query)
@@ -430,9 +430,9 @@ func getEmpListByRole(role string) ([]userinfo, int) {
 	}
 
 	var t int
-	q := fmt.Sprintf(`SELECT count(*) as total FROM users where  roles like '%%%v%%' ' `, role)
+	q := `SELECT count(*) as total FROM users where  roles like ? `
 	//fmt.Println(q)
-	row := db.QueryRow(q)
+	row := db.QueryRow(q, "%"+role+"%")
 	err = row.Scan(&t)
 
 	if err != nil {

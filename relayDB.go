@@ -25,7 +25,7 @@ func (p *relay) String() string {
 
 }
 
-func selectrelay(w string, p string, sort string) ([]*relay, int) {
+func selectrelay(w string, args []any, p string, sort string) ([]*relay, int) {
 
 	emp := []*relay{}
 
@@ -35,7 +35,7 @@ func selectrelay(w string, p string, sort string) ([]*relay, int) {
 
 	//fmt.Println(query)
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		log.Println("查询频点列表错误: ", err, "\n", query)
 		return nil, 0
@@ -60,7 +60,7 @@ func selectrelay(w string, p string, sort string) ([]*relay, int) {
 	var t int
 	q := fmt.Sprintf(`SELECT count(*) as total FROM relay  %v  `, w)
 	//fmt.Println(q)
-	row := db.QueryRow(q)
+	row := db.QueryRow(q, args...)
 	err = row.Scan(&t)
 	if err != nil {
 		log.Println(" 查询频点列表total错误 err:", err, t)
