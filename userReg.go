@@ -330,7 +330,7 @@ func (j *jsonapi) httpRegister(w http.ResponseWriter, r *http.Request) {
 		Status:      1,
 	}
 
-	fmt.Println("注册信息：", reguser)
+	log.Printf("收到注册申请，呼号：%s", reguser.CallSign)
 
 	err = createRegUser(reguser)
 

@@ -494,12 +494,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 		passwordOK = true
 	}
 
-	// 账号级时间窗锁定：连续失败达到上限后临时锁定，期满自动解锁或由管理员解锁，
-	// 不再使用 login_err_times 做永久锁定（防止攻击者批量锁死账号）
-	locked := accountGuard.locked(username)
-
-	if passwordOK && !locked {
-		accountGuard.recordSuccess(username)
+	if passwordOK {
 		_, err = db.Exec(`update users set last_login_time=CURRENT_TIMESTAMP,last_login_ip=?,login_err_times=0 where phone=? or callsign=?`, ip, username, username)
 		if err != nil {
 			log.Println("update users last_login_time and last_login_ip  failed, ", err)
@@ -509,7 +504,6 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 	}
 
 	if !passwordOK {
-		accountGuard.recordFailure(username)
 		_, err = db.Exec(`update users set login_err_times = login_err_times + 1 where phone=? or callsign=?`, username, username)
 		if err != nil {
 			log.Println("update user login_err_times failed ,and password err ", err)
@@ -520,7 +514,7 @@ func loginCheck(password string, username string, ip string) ([]string, bool) {
 
 	//fmt.Println(r.PasswordOK, r.Status, r.LoginErrTimes)
 
-	return r.Roles, passwordOK && r.Status == 1 && !locked
+	return r.Roles, passwordOK && r.Status == 1
 
 }
 

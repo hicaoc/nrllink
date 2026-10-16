@@ -301,21 +301,40 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// master 只能修改普通账号的基础信息：不能变更角色/状态/呼号，也不能操作管理账号，
-	// 防止 master 通过修改 roles 字段提权为 admin
+	callerIsMaster := checkrole(u, []string{"master"})
+	target, err := getuserByID(stb.ID)
+	if err != nil {
+		w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		return
+	}
+
+	// master 可重置管理账号密码，但不能通过同一请求修改管理账号的其他资料。
 	if !checkrole(u, []string{"admin"}) {
-		target, err := getuserByID(stb.ID)
-		if err != nil {
-			w.Write([]byte(`{"code":20000,"data":{"message":"账号操作失败"}}`))
+		if checkrole(target, []string{"admin", "master"}) {
+			if stb.Password == "" {
+				w.Write([]byte(`{"code":20000,"data":{"message":"master 仅可修改管理账号密码"}}`))
+				return
+			}
+			if err := updateUserPassword(stb.ID, stb.Password); err != nil {
+				log.Println("master update user password err:", err)
+				w.Write([]byte(`{"code":20000,"data":{"message":"密码修改失败"}}`))
+				return
+			}
+			addOperatorLog(target.String(), "修改用户密码成功", u)
+			w.Write([]byte(`{"code":20000,"data":{"message":"密码更新成功"}}`))
 			return
 		}
-		if checkrole(target, []string{"admin", "master"}) ||
-			strings.Join(stb.Roles, ",") != strings.Join(target.Roles, ",") ||
+		if strings.Join(stb.Roles, ",") != strings.Join(target.Roles, ",") ||
 			stb.Status != target.Status ||
 			!strings.EqualFold(stb.CallSign, target.CallSign) {
-			w.Write([]byte(`{"code":20000,"data":{"message":"无权修改管理账号或变更角色/状态/呼号"}}`))
+			w.Write([]byte(`{"code":20000,"data":{"message":"无权变更角色/状态/呼号"}}`))
 			return
 		}
+	}
+
+	if checkrole(target, []string{"master"}) != checkrole(stb, []string{"master"}) {
+		w.Write([]byte(`{"code":20000,"data":{"message":"master 角色只能通过数据库初始化修改"}}`))
+		return
 	}
 
 	stb.MDCID = strings.ToUpper(strings.TrimSpace(stb.MDCID))
@@ -330,11 +349,10 @@ func (j *jsonapi) httpUpdateUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// 普通管理员之间不允许互改密码，只有内置 admin 账号（admin 角色）可以修改其他管理员的密码
-	if stb.Password != "" && stb.ID != u.ID {
-		if target, err := getuserByID(stb.ID); err == nil &&
-			checkrole(target, []string{"admin"}) && !isBuiltinAdmin(u) {
-			w.Write([]byte(`{"code":20000,"data":{"message":"只有 admin 账号可以修改其他管理员的密码"}}`))
+	// 普通管理员之间不允许互改密码，内置 admin 和 master 可以修改其他管理员的密码。
+	if stb.Password != "" && stb.ID != u.ID && !callerIsMaster {
+		if checkrole(target, []string{"admin"}) && !isBuiltinAdmin(u) {
+			w.Write([]byte(`{"code":20000,"data":{"message":"只有内置 admin 或 master 账号可以修改其他管理员的密码"}}`))
 			return
 		}
 	}
@@ -561,6 +579,11 @@ func (j *jsonapi) httpAddUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if checkrole(stb, []string{"master"}) {
+		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"master 角色只能通过数据库初始化修改"}}`))
+		return
+	}
+
 	if addUser(stb) != nil {
 
 		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"新增用户失败，可能手机号码已经存在"}}`))
@@ -688,6 +711,10 @@ func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"角色添加操作失败"}}`))
 			return
 		}
+		if strings.EqualFold(strings.TrimSpace(stb.NameKey), "master") {
+			w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"master 角色只能通过数据库初始化修改"}}`))
+			return
+		}
 		//	stb.Key = stb.Name
 		addRole(stb)
 
@@ -710,11 +737,26 @@ func (j *jsonapi) httpRole(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"角色修改操作失败"}}`))
 			return
 		}
+		var currentKey string
+		if err := db.QueryRow(`select name_key from roles where id=?`, stb.ID).Scan(&currentKey); err != nil {
+			log.Println("query role before update err:", err)
+			w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"角色修改操作失败"}}`))
+			return
+		}
+		if strings.EqualFold(strings.TrimSpace(currentKey), "master") ||
+			strings.EqualFold(strings.TrimSpace(stb.NameKey), "master") {
+			w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"master 角色只能通过数据库初始化修改"}}`))
+			return
+		}
 		updateRole(stb)
 		addOperatorLog(stb.String(), "修改角色", u)
 		w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"角色修改操作成功"}}`))
 
 	case "DELETE":
+		if strings.EqualFold(key, "master") {
+			w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"master 角色只能通过数据库初始化修改"}}`))
+			return
+		}
 		//fmt.Println("del role")
 		delRole(key)
 		addOperatorLog(key, "删除角色", u)
@@ -821,37 +863,6 @@ func (j *jsonapi) httpUserLogin(w http.ResponseWriter, req *http.Request) {
 	addOperatorLog("用户名或者密码错误 "+stb.Username+" "+req.Header.Get("X-Forwarded-For")+","+req.RemoteAddr, "登录失败", &userinfo{})
 
 	log.Println(req.Header.Get("X-Forwarded-For") + "," + req.RemoteAddr + " User login err :username:" + stb.Username)
-
-}
-
-// httpUnlockUser 管理员解锁被登录保护锁定的账号，同时清零数据库中的失败计数
-func (j *jsonapi) httpUnlockUser(w http.ResponseWriter, req *http.Request) {
-	sethttphead(w)
-
-	u, err := checktoken(w, req)
-	if err != nil {
-		return
-	}
-
-	if !checkrole(u, []string{"admin"}) {
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"当前用户没有权限设置此参数"}}`))
-		return
-	}
-
-	req.ParseForm()
-	account := strings.ToUpper(strings.TrimSpace(req.Form.Get("account")))
-	if account == "" {
-		w.Write([]byte(`{"code":20000,"data":{"isok":1,"message":"账号不能为空"}}`))
-		return
-	}
-
-	accountGuard.unlock(account)
-	if _, err := db.Exec(`update users set login_err_times=0 where phone=? or callsign=?`, account, account); err != nil {
-		log.Println("unlock user reset login_err_times failed:", err)
-	}
-
-	addOperatorLog(account, "管理员解锁账号", u)
-	w.Write([]byte(`{"code":20000,"data":{"isok":0,"message":"账号已解锁"}}`))
 
 }
 

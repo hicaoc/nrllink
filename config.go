@@ -271,6 +271,8 @@ func updatedb() {
 
 		"ALTER TABLE users ADD COLUMN mdcid string DEFAULT '';",
 
+		"UPDATE roles SET name='超级管理员', description='非常厉害的管理员' WHERE name_key='master';",
+
 		"ALTER TABLE devices ADD COLUMN dmrid INTEGER DEFAULT 0;",
 		"ALTER TABLE users ADD COLUMN dmrid INTEGER DEFAULT 0;",
 		"ALTER TABLE users ADD COLUMN expire_time TEXT DEFAULT '';",

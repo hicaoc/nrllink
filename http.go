@@ -211,7 +211,6 @@ func (j *jsonapi) msghttp() {
 
 	http.HandleFunc("/user/password", j.httpUpdateUserPassword)
 	http.HandleFunc("/user/delete", j.httpDeleteUser)
-	http.HandleFunc("/user/unlock", j.httpUnlockUser)
 
 	http.HandleFunc("/billing/info", j.httpBillingInfo)
 	http.HandleFunc("/billing/packages/list", j.httpBillingPackages)
