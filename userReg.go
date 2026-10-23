@@ -53,8 +53,10 @@ func (j *jsonapi) httpRegisterList(w http.ResponseWriter, req *http.Request) {
 
 	emplist, total := selectReguser(queryToWhere("", *stb))
 
-	for i := range emplist {
-		emplist[i].Phone = maskPhone(emplist[i].Phone)
+	if !checkrole(u, []string{"master"}) {
+		for i := range emplist {
+			emplist[i].Phone = maskPhone(emplist[i].Phone)
+		}
 	}
 
 	rescode, _ := jsonextra.Marshal(emplist)

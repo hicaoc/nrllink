@@ -32,7 +32,7 @@ hostlist='js.nrlptt.com m.nrlptt.com'
 
 #hostlist='ah.nrlptt.com'
 
-#hostlist='www.bg1vif.com'
+hostlist='www.bg1vif.com'
 
 #hostlist='bh4tdv.nrlptt.com'
 

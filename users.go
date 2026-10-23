@@ -70,10 +70,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 	var total int
 
 	emplist, total = selectuser(queryToWhere("", *stb))
-
-	for i := range emplist {
-		emplist[i].desensitize()
-	}
+	desensitizeUserList(emplist, u)
 
 	rescode, _ := jsonextra.Marshal(emplist)
 
@@ -87,7 +84,7 @@ func (j *jsonapi) httpUserAllList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
+	u, err := checktoken(w, req)
 	if err != nil {
 		return
 	}
@@ -116,10 +113,7 @@ func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 	emplist, total := selectuser(queryToWhere("", *stb))
 
 	//emplist = selectuser()
-
-	for i := range emplist {
-		emplist[i].desensitize()
-	}
+	desensitizeUserList(emplist, u)
 
 	rescode, _ := jsonextra.Marshal(emplist)
 
@@ -133,7 +127,7 @@ func (j *jsonapi) httpUserList(w http.ResponseWriter, req *http.Request) {
 func (j *jsonapi) httpUserListbyRole(w http.ResponseWriter, req *http.Request) {
 	sethttphead(w)
 
-	_, err := checktoken(w, req)
+	u, err := checktoken(w, req)
 	if err != nil {
 		return
 	}
@@ -168,9 +162,8 @@ func (j *jsonapi) httpUserListbyRole(w http.ResponseWriter, req *http.Request) {
 	emplist, total := getEmpListByRole(role)
 
 	//emplist = selectuser()
-
+	desensitizeUserList(emplist, u)
 	for i := range emplist {
-		emplist[i].desensitize()
 		emplist[i].Password = ""
 	}
 

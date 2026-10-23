@@ -153,10 +153,27 @@ func maskPID(pid string) string {
 	}
 }
 
+// desensitizePID 对身份证号做脱敏处理
+func (s *userinfo) desensitizePID() {
+	s.PID = maskPID(s.PID)
+}
+
 // desensitize 对返回前端的敏感字段（手机号、身份证号）做脱敏处理
 func (s *userinfo) desensitize() {
 	s.Phone = maskPhone(s.Phone)
 	s.PID = maskPID(s.PID)
+}
+
+// desensitizeUserList 按查看者角色处理用户列表：master 可查看完整手机号，身份证号仍脱敏。
+func desensitizeUserList(users []userinfo, viewer *userinfo) {
+	viewFullPhone := checkrole(viewer, []string{"master"})
+	for i := range users {
+		if viewFullPhone {
+			users[i].desensitizePID()
+		} else {
+			users[i].desensitize()
+		}
+	}
 }
 
 // isBuiltinAdmin 判断是否为内置 admin 账号（拥有 admin 角色且账号名为 admin），
