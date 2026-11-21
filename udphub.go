@@ -99,9 +99,8 @@ func snapshotQTHMapNew() map[string]qth {
 
 type currentConnPool struct {
 	mu                  sync.RWMutex
-	UDPAddr             *net.UDPAddr
-	ctlUDPAddr          *net.UDPAddr // 控制通道占用者地址，与语音话权 UDPAddr 相互独立
-	lastVoiceTime       time.Time    // 上次任意被接受的语音包时间（兼容旧逻辑使用）
+	voiceOwnerID        string
+	ctlUDPAddr          *net.UDPAddr // 控制通道占用者地址，与语音话权相互独立
 	lastOwnerPacketTime time.Time    // 当前占用者本人最近一个被接受的包时间（用于抢话判定）
 	lastCtlTime         time.Time
 	lastPriority        int
@@ -158,28 +157,40 @@ func (p *currentConnPool) getDevice(addr string) (*deviceInfo, bool) {
 	return dev, ok
 }
 
-func (p *currentConnPool) voiceState() (*net.UDPAddr, time.Time, int) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.UDPAddr, p.lastVoiceTime, p.lastPriority
+func voiceOwnerID(nrl *NRL21packet, dev *deviceInfo) string {
+	serverVoice := nrl.Type == 9 || nrl.DevModel == 200 || nrl.DevModel == 255 || nrl.SSID == 200 || nrl.SSID == 255
+	if serverVoice {
+		if nrl.OriginalCallsign != "" {
+			return getCallsignSSID(nrl.OriginalCallsign, nrl.OriginalSSID)
+		}
+		return "relay:" + nrl.UDPAddrStr
+	}
+	return getCallsignSSID(dev.CallSign, dev.SSID)
 }
 
-// voiceOwnerState 返回当前占用者的地址、占用者本人最近一个被接受的包时间、占用者优先级。
-// 与 voiceState 的区别：lastOwnerPacketTime 只在"占用者本人"的包被接受时更新，
-// 用于判断占用者是否真正静默（避免他人插入的包刷新计时器导致交替抢话）。
-func (p *currentConnPool) voiceOwnerState() (*net.UDPAddr, time.Time, int) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.UDPAddr, p.lastOwnerPacketTime, p.lastPriority
-}
-
-func (p *currentConnPool) setVoiceState(addr *net.UDPAddr, ts time.Time, priority int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.UDPAddr = addr
-	p.lastVoiceTime = ts
+func (p *currentConnPool) setVoiceStateLocked(ownerID string, ts time.Time, priority int) {
+	p.voiceOwnerID = ownerID
 	p.lastOwnerPacketTime = ts
 	p.lastPriority = priority
+}
+
+func (p *currentConnPool) setVoiceState(ownerID string, ts time.Time, priority int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.setVoiceStateLocked(ownerID, ts, priority)
+}
+
+func (p *currentConnPool) acquireVoice(ownerID string, ts time.Time, priority int) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.voiceOwnerID != "" && p.voiceOwnerID != ownerID &&
+		priority <= p.lastPriority && ts.Sub(p.lastOwnerPacketTime) < 400*time.Millisecond {
+		return false
+	}
+
+	p.setVoiceStateLocked(ownerID, ts, priority)
+	return true
 }
 
 func (p *currentConnPool) ctlState() (*net.UDPAddr, time.Time) {
@@ -744,7 +755,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 		if err == nil {
 			queueDeviceVoiceEcho(gp, dev, nrl, outPacket)
 		}
-		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
+		gp.connPool.setVoiceState(voiceOwnerID(nrl, dev), nrl.timeStamp, dev.Priority)
 		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 		return
 	}
@@ -763,7 +774,7 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 		//log.Println("err connpoll is null")
 		return
 	case 1: //只有一个设备时不转发；录音回放仅由鹦鹉房间提供
-		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
+		gp.connPool.setVoiceState(voiceOwnerID(nrl, dev), nrl.timeStamp, dev.Priority)
 		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
 	case 2: //如果有2个设备，缺省为全双工通信，报文转发给对方
@@ -806,30 +817,10 @@ func forwardVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, gp *group) {
 			return
 		}
 
-		// 抢话判定（方案 A：占用者宽限期）
-		// - 自己就是当前占用者：继续发言
-		// - 优先级高于占用者：立即抢占（保留高优先级抢话能力）
-		// - 否则：必须等占用者本人静默 >= 200ms 才能抢占
-		// 关键：判定使用的是"占用者本人最后一个包的时间"（lastOwnerPacketTime），
-		// 他人被丢弃的包不会刷新这个时间，避免双方相互打断造成的交替抢话。
-		lastUDPAddr, lastOwnerTime, lastPriority := gp.connPool.voiceOwnerState()
-		lastAddrStr := ""
-		if lastUDPAddr != nil {
-			lastAddrStr = lastUDPAddr.String()
-		}
-
-		isOwner := nrl.UDPAddrStr == lastAddrStr
-		higherPriority := dev.Priority > lastPriority
-		ownerSilent := nrl.timeStamp.Sub(lastOwnerTime) >= 200*time.Millisecond
-
-		if !isOwner && !higherPriority && !ownerSilent {
-			// 占用者还在持续说话且自己优先级不够，丢弃本包
+		if !gp.connPool.acquireVoice(voiceOwnerID(nrl, dev), nrl.timeStamp, dev.Priority) {
 			dev.LastVoiceEndTime = nrl.timeStamp
 			return
 		}
-
-		// 自己抢到/继续发言权，刷新占用状态
-		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
 		callWSHub.publishPCMFrame(gp, dev.CallSign, dev.SSID, nrl.webPCM, nrl.timeStamp)
 
 		for _, vv := range gp.connPool.snapshotList() {
@@ -886,24 +877,11 @@ func forwardServerVoice(nrl *NRL21packet, dev *deviceInfo, packet []byte, conn *
 
 	}
 
-	lastUDPAddr, lastVoiceTime, _ := gp.connPool.voiceState()
-	lastAddrStr := ""
-	if lastUDPAddr != nil {
-		lastAddrStr = lastUDPAddr.String()
-	}
-
-	if (nrl.UDPAddrStr != lastAddrStr) && nrl.timeStamp.Sub(lastVoiceTime) < 200*time.Millisecond {
-
+	if !gp.connPool.acquireVoice(voiceOwnerID(nrl, dev), nrl.timeStamp, dev.Priority) {
 		if k, ok := gp.connPool.getDevice(nrl.UDPAddrStr); ok {
 			k.LastVoiceEndTime = nrl.timeStamp
 		}
-
 		return
-		//否则重新让新设备抢占语音权，并更新上次报文时间
-	} else {
-
-		gp.connPool.setVoiceState(nrl.UDPAddr, nrl.timeStamp, dev.Priority)
-
 	}
 
 	var newpacket []byte
