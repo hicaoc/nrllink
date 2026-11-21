@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
@@ -41,7 +43,64 @@ type platforminfo struct {
 // 与 Docker 镜像 tag 保持一致（发布时同步更新）
 const version = "v2.13.15"
 
-var totalstats = totalStats{}
+var (
+	totalstats           = totalStats{}
+	totalStatsMu         sync.RWMutex
+	statsPacketNumber    atomic.Int64
+	statsTraffic         atomic.Int64
+	statsVoiceTime       atomic.Int64
+	statsOnlineDevNumber atomic.Int64
+)
+
+func addPacketNumberStat(delta int64) {
+	statsPacketNumber.Add(delta)
+}
+
+func addTrafficStat(delta int64) {
+	statsTraffic.Add(delta)
+}
+
+func addVoiceTimeStat(delta int64) {
+	statsVoiceTime.Add(delta)
+}
+
+func setOnlineDevNumberStat(n int) {
+	statsOnlineDevNumber.Store(int64(n))
+}
+
+func getOnlineDevNumberStat() int {
+	return int(statsOnlineDevNumber.Load())
+}
+
+func setPlatformDevStats(online, total int) {
+	totalStatsMu.Lock()
+	totalstats.PlatformDevOnline = online
+	totalstats.PlatformDevTotal = total
+	totalStatsMu.Unlock()
+}
+
+func setPlatformTypeTotals(serverTotal, boxTotal, appTotal, mpTotal int) {
+	totalStatsMu.Lock()
+	totalstats.PlatformServerTotal = serverTotal
+	totalstats.PlatformBoxTotal = boxTotal
+	totalstats.PlatformAppTotal = appTotal
+	totalstats.PlatformMPTotal = mpTotal
+	totalStatsMu.Unlock()
+}
+
+func snapshotTotalStats() totalStats {
+	totalStatsMu.RLock()
+	snap := totalstats
+	totalStatsMu.RUnlock()
+
+	snap.DevNumber = countDevCallsignSSID()
+	snap.OnlineDevNumber = currentOnlineDeviceCount()
+	snap.UserNumber = 1000
+	snap.PacketNumber = int(statsPacketNumber.Load())
+	snap.Traffic = int(statsTraffic.Load())
+	snap.VoiceTime = int(statsVoiceTime.Load())
+	return snap
+}
 
 type totalStats struct {
 	DevNumber           int `json:"dev_number"`
@@ -62,13 +121,9 @@ type totalStats struct {
 }
 
 func (j *jsonapi) httpTotalStats(w http.ResponseWriter, req *http.Request) {
+	snap := snapshotTotalStats()
 
-	totalstats.DevNumber = len(devCallsignSSIDMap)
-	totalstats.OnlineDevNumber = currentOnlineDeviceCount()
-	totalstats.UserNumber = 1000
-	//totalstats.UserNumber = len(userlist)
-
-	rescode, _ := jsonextra.Marshal(totalstats)
+	rescode, _ := jsonextra.Marshal(snap)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)
 
@@ -96,7 +151,7 @@ func (j *jsonapi) httpplatforminfo(w http.ResponseWriter, req *http.Request) {
 
 func (j *jsonapi) httpplatformList(w http.ResponseWriter, req *http.Request) {
 
-	rescode, _ := jsonextra.Marshal(conf.PlatformList)
+	rescode, _ := jsonextra.Marshal(getPlatformList())
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"items":%s}}`, rescode)
 

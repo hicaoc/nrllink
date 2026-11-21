@@ -9,12 +9,45 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 
 	yaml "gopkg.in/yaml.v3"
 	_ "modernc.org/sqlite"
 )
 
-var PlatformList []Platformitem
+var (
+	PlatformList       []Platformitem
+	platformListAtomic atomic.Pointer[[]Platformitem]
+)
+
+func getPlatformList() []Platformitem {
+	if ptr := platformListAtomic.Load(); ptr != nil {
+		return *ptr
+	}
+	confLock.RLock()
+	list := conf.PlatformList
+	confLock.RUnlock()
+	return list
+}
+
+func setPlatformList(list []Platformitem) {
+	cp := append([]Platformitem(nil), list...)
+	platformListAtomic.Store(&cp)
+	confLock.Lock()
+	PlatformList = cp
+	conf.PlatformList = cp
+	confLock.Unlock()
+}
+
+func restoreFallbackPlatformList() {
+	confLock.RLock()
+	cp := append([]Platformitem(nil), PlatformList...)
+	confLock.RUnlock()
+	platformListAtomic.Store(&cp)
+	confLock.Lock()
+	conf.PlatformList = cp
+	confLock.Unlock()
+}
 
 type Platformitem struct {
 	Name    string `yaml:"Name" json:"name"` // 对应 YAML 和 JSON 的 name 字段
@@ -208,7 +241,7 @@ func (c *config) init() {
 		os.Exit(0)
 	}
 
-	PlatformList = conf.PlatformList
+	setPlatformList(conf.PlatformList)
 
 }
 

@@ -51,7 +51,7 @@ func main() {
 	go jsonhttp.init()
 	go callWSHub.run()
 
-	logbuffer = make(chan *deviceInfo, 1000)
+	logbuffer = make(chan callLogEntry, 1000)
 	go saveLog()
 
 	go cronGetWxToken()

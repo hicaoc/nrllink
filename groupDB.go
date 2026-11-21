@@ -7,10 +7,53 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
-var publicGroupMap = make(map[int]*group, 1000) //key 房间号
+var (
+	publicGroupMap = make(map[int]*group, 1000) //key 房间号
+	publicGroupMu  sync.RWMutex
+)
+
+func getPublicGroup(id int) (*group, bool) {
+	publicGroupMu.RLock()
+	g, ok := publicGroupMap[id]
+	publicGroupMu.RUnlock()
+	return g, ok
+}
+
+func setPublicGroup(id int, g *group) {
+	publicGroupMu.Lock()
+	publicGroupMap[id] = g
+	publicGroupMu.Unlock()
+}
+
+func deletePublicGroupEntry(id int) {
+	publicGroupMu.Lock()
+	delete(publicGroupMap, id)
+	publicGroupMu.Unlock()
+}
+
+func snapshotPublicGroups() []*group {
+	publicGroupMu.RLock()
+	res := make([]*group, 0, len(publicGroupMap))
+	for _, g := range publicGroupMap {
+		res = append(res, g)
+	}
+	publicGroupMu.RUnlock()
+	return res
+}
+
+func snapshotPublicGroupMap() map[int]*group {
+	publicGroupMu.RLock()
+	res := make(map[int]*group, len(publicGroupMap))
+	for k, v := range publicGroupMap {
+		res[k] = v
+	}
+	publicGroupMu.RUnlock()
+	return res
+}
 
 const (
 	privateGroupMinID  = 1
@@ -67,6 +110,7 @@ type group struct {
 	UpdateTime string `json:"update_time" db:"update_time"`
 	Note       string `json:"note" db:"note"`
 	connPool   *currentConnPool
+	devMu      sync.RWMutex
 	devMap     map[int]*deviceInfo //key: 设备ID
 	//OutDevMap       map[string]*deviceInfo `json:"out_dev_map"` //callsign+ssid
 	OnlineDevNumber int `json:"online_dev_number"`
@@ -75,6 +119,38 @@ type group struct {
 	Timer           *time.Timer
 	ticker          *time.Ticker
 	mixStop         chan struct{}
+}
+
+func (p *group) setDevice(id int, dev *deviceInfo) {
+	p.devMu.Lock()
+	if p.devMap == nil {
+		p.devMap = make(map[int]*deviceInfo, 10)
+	}
+	p.devMap[id] = dev
+	p.devMu.Unlock()
+}
+
+func (p *group) deleteDevice(id int) {
+	p.devMu.Lock()
+	delete(p.devMap, id)
+	p.devMu.Unlock()
+}
+
+func (p *group) deviceCount() int {
+	p.devMu.RLock()
+	n := len(p.devMap)
+	p.devMu.RUnlock()
+	return n
+}
+
+func (p *group) snapshotDevices() []*deviceInfo {
+	p.devMu.RLock()
+	res := make([]*deviceInfo, 0, len(p.devMap))
+	for _, dev := range p.devMap {
+		res = append(res, dev)
+	}
+	p.devMu.RUnlock()
+	return res
 }
 
 func (p *group) String() string {
@@ -177,10 +253,11 @@ func (p *group) mixPCM() {
 			})
 
 			for _, vv := range devConnList {
-				if vv.udpAddr == nil || vv.speaking {
+				addr, _ := vv.getUDPAddr()
+				if addr == nil || vv.speaking {
 					continue
 				}
-				globelconn.WriteToUDP(globalPacket, vv.udpAddr)
+				globelconn.WriteToUDP(globalPacket, addr)
 			}
 		} else {
 			// --- 多人混音处理 ---
@@ -218,22 +295,24 @@ func (p *group) mixPCM() {
 				copy(speakerB_Packet[48:], pcmToG711(speakers[0].rawPCM)) // B 听 A
 
 				for _, vv := range devConnList {
-					if vv.udpAddr == nil {
+					addr, _ := vv.getUDPAddr()
+					if addr == nil {
 						continue
 					}
 					switch vv.CallSignSSID {
 					case speakers[0].dev.CallSignSSID:
-						globelconn.WriteToUDP(speakerPacket, vv.udpAddr)
+						globelconn.WriteToUDP(speakerPacket, addr)
 					case speakers[1].dev.CallSignSSID:
-						globelconn.WriteToUDP(speakerB_Packet, vv.udpAddr)
+						globelconn.WriteToUDP(speakerB_Packet, addr)
 					default:
-						globelconn.WriteToUDP(globalPacket, vv.udpAddr)
+						globelconn.WriteToUDP(globalPacket, addr)
 					}
 				}
 			} else {
 				// --- 3人及以上标准混音 ---
 				for _, vv := range devConnList {
-					if vv.udpAddr == nil {
+					addr, _ := vv.getUDPAddr()
+					if addr == nil {
 						continue
 					}
 					if vv.speaking {
@@ -247,9 +326,9 @@ func (p *group) mixPCM() {
 							newG711[i] = Linear2Alaw(int16(v))
 						}
 						copy(speakerPacket[48:], newG711)
-						globelconn.WriteToUDP(speakerPacket, vv.udpAddr)
+						globelconn.WriteToUDP(speakerPacket, addr)
 					} else {
-						globelconn.WriteToUDP(globalPacket, vv.udpAddr)
+						globelconn.WriteToUDP(globalPacket, addr)
 					}
 				}
 			}
@@ -294,7 +373,7 @@ func initPublicGroup() {
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	publicGroupMap[0] = pg0
+	setPublicGroup(0, pg0)
 
 	pg998 := &group{
 		ID:           voiceEchoRoomID,
@@ -306,7 +385,7 @@ func initPublicGroup() {
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	publicGroupMap[voiceEchoRoomID] = pg998
+	setPublicGroup(voiceEchoRoomID, pg998)
 
 	pg999 := &group{
 		ID:           999,
@@ -318,7 +397,7 @@ func initPublicGroup() {
 		UpdateTime:   time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	publicGroupMap[999] = pg999
+	setPublicGroup(999, pg999)
 
 	rows, err := db.Query(
 		`SELECT 
@@ -381,7 +460,7 @@ func initPublicGroup() {
 
 		//pg.connPool.allowCALLSSID = pg.AllowCALLSSIDList
 
-		publicGroupMap[pg.ID] = pg
+		setPublicGroup(pg.ID, pg)
 
 		if pg.Type == 7 {
 			pg.startMixPCM()
@@ -455,7 +534,7 @@ func getMiniGroupList(u *userinfo) []minigroup {
 
 	grouplist := getUserGroupList(u)
 
-	for _, v := range publicGroupMap {
+	for _, v := range snapshotPublicGroups() {
 
 		g := minigroup{
 			ID:              v.ID,
@@ -525,7 +604,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 	// 在移出原房间前验证目标，避免目标属于保留号段或不存在时改变设备状态。
 	if isPublicGroupID(groupid) {
-		g, ok := publicGroupMap[groupid]
+		g, ok := getPublicGroup(groupid)
 		if !ok {
 			return "", fmt.Errorf("group not found")
 		}
@@ -544,30 +623,33 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 		return "", fmt.Errorf("reserved or invalid group")
 	}
 
+	devAddr, devAddrStr := dev.getUDPAddr()
+	oldGroupID := dev.getGroupID()
+
 	//从之前的组删除
 
-	if isPublicGroupID(dev.GroupID) {
+	if isPublicGroupID(oldGroupID) {
 
-		if g, ok := publicGroupMap[dev.GroupID]; ok {
-			if dev.udpAddr != nil {
-				g.connPool.removeDevice(dev.udpAddr.String())
+		if g, ok := getPublicGroup(oldGroupID); ok {
+			if devAddr != nil {
+				g.connPool.removeDevice(devAddrStr)
 			}
 
-			delete(g.devMap, dev.ID)
+			g.deleteDevice(dev.ID)
 
 		} else {
 
 			return "", fmt.Errorf("dev not in group ")
 		}
-	} else if isPrivateGroupID(dev.GroupID) {
+	} else if isPrivateGroupID(oldGroupID) {
 
 		//私人房间
 
 		if user, okok := userlist.Load(dev.CallSign); okok {
-			if oldGroup, exists := user.(*userinfo).Groups[dev.GroupID]; exists {
-				delete(oldGroup.devMap, dev.ID)
-				if dev.udpAddr != nil {
-					oldGroup.connPool.removeDevice(dev.udpAddr.String())
+			if oldGroup, exists := user.(*userinfo).Groups[oldGroupID]; exists {
+				oldGroup.deleteDevice(dev.ID)
+				if devAddr != nil {
+					oldGroup.connPool.removeDevice(devAddrStr)
 				}
 			}
 
@@ -579,11 +661,11 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 	if isPublicGroupID(groupid) {
 
-		if g, ok := publicGroupMap[groupid]; ok {
-			dev.GroupID = groupid
-			g.devMap[dev.ID] = dev
-			if dev.udpAddr != nil {
-				g.connPool.ensureDevice(dev.udpAddr.String(), dev)
+		if g, ok := getPublicGroup(groupid); ok {
+			dev.setGroupID(groupid)
+			g.setDevice(dev.ID, dev)
+			if devAddr != nil {
+				g.connPool.ensureDevice(devAddrStr, dev)
 			}
 			group = strconv.Itoa(g.ID) + g.Name
 
@@ -599,9 +681,9 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 			if !exists {
 				return "", fmt.Errorf("private group not found")
 			}
-			privateGroup.devMap[dev.ID] = dev
-			if dev.udpAddr != nil {
-				privateGroup.connPool.ensureDevice(dev.udpAddr.String(), dev)
+			privateGroup.setDevice(dev.ID, dev)
+			if devAddr != nil {
+				privateGroup.connPool.ensureDevice(devAddrStr, dev)
 			}
 			group = strconv.Itoa(privateGroup.ID) + privateGroup.Name
 
@@ -611,7 +693,7 @@ func changeDevGroup(dev *deviceInfo, groupid int) (group string, err error) {
 
 		//私有房间
 
-		dev.GroupID = groupid
+		dev.setGroupID(groupid)
 
 	} else {
 		return "", fmt.Errorf("reserved or invalid group")
@@ -647,13 +729,13 @@ func addPublicGroup(pg *group) error {
 		return fmt.Errorf("群组添加失败")
 
 	}
-	if _, ok := publicGroupMap[newpg.ID]; !ok {
+	if _, ok := getPublicGroup(newpg.ID); !ok {
 		newpg.connPool = &currentConnPool{devConnMap: make(map[string]*deviceInfo)}
 		newpg.devMap = make(map[int]*deviceInfo, 10)
 		if newpg.Type == 7 {
 			newpg.startMixPCM()
 		}
-		publicGroupMap[newpg.ID] = newpg
+		setPublicGroup(newpg.ID, newpg)
 	}
 
 	//initPublicGroup()
@@ -683,7 +765,7 @@ func updatePublicGroup(pg *group) error {
 		return err
 	}
 
-	if p, ok := publicGroupMap[pg.ID]; ok {
+	if p, ok := getPublicGroup(pg.ID); ok {
 
 		p.Name = pg.Name
 
@@ -721,11 +803,11 @@ func deletePublicGroup(pg *group) error {
 		return err
 	}
 
-	if p, ok := publicGroupMap[pg.ID]; ok {
+	if p, ok := getPublicGroup(pg.ID); ok {
 		p.stopMixPCM()
 	}
 
-	delete(publicGroupMap, pg.ID)
+	deletePublicGroupEntry(pg.ID)
 
 	return nil
 
@@ -735,7 +817,7 @@ func getGroupListForDevice(packet []byte) []byte {
 
 	grouplist := make([]minigroup, 0)
 
-	for _, v := range publicGroupMap {
+	for _, v := range snapshotPublicGroups() {
 
 		g := minigroup{
 			ID:              v.ID,
@@ -760,8 +842,10 @@ func getGroupListForDevice(packet []byte) []byte {
 
 	output := strings.Join(csv, "\n")
 
-	packet = append(packet, output...)
+	resp := make([]byte, len(packet)+len(output))
+	copy(resp, packet)
+	copy(resp[len(packet):], output)
 
-	return packet
+	return resp
 
 }

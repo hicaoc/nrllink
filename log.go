@@ -1,17 +1,59 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"time"
 )
 
-var logbuffer chan *deviceInfo
+type callLogEntry struct {
+	EndTime    time.Time
+	CallSign   string
+	SSID       byte
+	DeviceID   int
+	GroupID    int
+	DurationMS int
+}
+
+func (e callLogEntry) String() string {
+	return fmt.Sprintf("%v,%v-%v,%v,%v,%v", e.EndTime.Format("2006-01-02 15:04:05"), e.CallSign, e.SSID, e.DeviceID, e.GroupID, e.DurationMS/1000+1)
+}
+
+var (
+	logbuffer     chan callLogEntry
+	logDropCount  atomic.Uint64
+)
+
+// enqueueCallLog captures a value snapshot of the device's voice metadata and
+// enqueues it without blocking the UDP receive loop.
+func enqueueCallLog(dev *deviceInfo) {
+	if dev == nil || logbuffer == nil {
+		return
+	}
+	dev.stateMu.RLock()
+	entry := callLogEntry{
+		EndTime:    dev.LastVoiceEndTime,
+		CallSign:   dev.CallSign,
+		SSID:       dev.SSID,
+		DeviceID:   dev.ID,
+		GroupID:    dev.GroupID,
+		DurationMS: dev.LastVoiceDuration,
+	}
+	dev.stateMu.RUnlock()
+	select {
+	case logbuffer <- entry:
+	default:
+		if dropped := logDropCount.Add(1); dropped == 1 || dropped%1000 == 0 {
+			log.Printf("call log buffer full, dropped=%d", dropped)
+		}
+	}
+}
 
 func saveLog() {
 
-	var err error
 	timer := time.NewTimer(timeUntilNext10Minutes())
 	file := createFile()
 
@@ -19,7 +61,11 @@ func saveLog() {
 		select {
 		case logEntry, ok := <-logbuffer:
 			if !ok {
-				log.Println("日志缓存被关闭:", err)
+				log.Println("日志缓存被关闭，停止写日志")
+				if file != nil {
+					_ = file.Close()
+				}
+				return
 			}
 			if conf.System.CallLogPath != "" && file != nil {
 				if _, err := file.WriteString(logEntry.String() + "\n"); err != nil {
@@ -35,7 +81,7 @@ func saveLog() {
 			}
 			file = createFile()
 			if file == nil {
-				log.Println("创建或打开日志文件失败:", err)
+				log.Println("创建或打开日志文件失败")
 			}
 
 			// 重新设置定时器

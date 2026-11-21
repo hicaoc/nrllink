@@ -115,7 +115,7 @@ func (a *APRSTV) GetNRL() {
 	uri, err := url.Parse(apiURL)
 	if err != nil {
 		fmt.Println("Error parsing URL:", err)
-		conf.PlatformList = PlatformList
+		restoreFallbackPlatformList()
 		return
 	}
 	uri.RawQuery = params.Encode() // 自动编码
@@ -124,7 +124,7 @@ func (a *APRSTV) GetNRL() {
 	resp, err := http.Post(uri.String(), "", nil)
 	if err != nil {
 		fmt.Println("Request failed:", err)
-		conf.PlatformList = PlatformList
+		restoreFallbackPlatformList()
 		return
 	}
 	defer resp.Body.Close()
@@ -133,7 +133,7 @@ func (a *APRSTV) GetNRL() {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
-		conf.PlatformList = PlatformList
+		restoreFallbackPlatformList()
 		return
 	}
 
@@ -144,22 +144,22 @@ func (a *APRSTV) GetNRL() {
 	err = json.Unmarshal(body, &apiResponse)
 	if err != nil {
 		fmt.Println("Error unmarshaling JSON response:", err)
-		conf.PlatformList = PlatformList
+		restoreFallbackPlatformList()
 		return
 	}
 
-	conf.PlatformList = []Platformitem{}
-
-	totalstats.PlatformDevOnline = 0
-	totalstats.PlatformDevTotal = 0
+	platformOnline := 0
+	platformTotal := 0
 
 	if len(apiResponse.Data) == 0 {
-		conf.PlatformList = PlatformList
+		setPlatformDevStats(0, 0)
+		restoreFallbackPlatformList()
 		return
 	}
 
 	// 用于按 host:port 去重，防止同一服务器多条beacon导致重复转发
 	seen := make(map[string]bool)
+	newList := make([]Platformitem, 0, len(apiResponse.Data))
 
 	// 打印解析后的数据
 	for _, item := range apiResponse.Data {
@@ -200,13 +200,15 @@ func (a *APRSTV) GetNRL() {
 			udpAddr: targetAddr,
 		}
 
-		totalstats.PlatformDevOnline = totalstats.PlatformDevOnline + online
-		totalstats.PlatformDevTotal = totalstats.PlatformDevTotal + total
+		platformOnline += online
+		platformTotal += total
 
-		conf.PlatformList = append(conf.PlatformList, p)
+		newList = append(newList, p)
 
 		//fmt.Printf("name:%s, Ower:%s, host:%s, port:%s, online:%d, total:%d,\n", name, item.Scall, host, port, online, total)
 	}
+	setPlatformList(newList)
+	setPlatformDevStats(platformOnline, platformTotal)
 
 }
 
@@ -252,20 +254,27 @@ func (a *APRSTV) GetNRLStat() {
 	}
 
 	// 打印解析后的数据
+	totalStatsMu.RLock()
+	serverTotal := totalstats.PlatformServerTotal
+	boxTotal := totalstats.PlatformBoxTotal
+	appTotal := totalstats.PlatformAppTotal
+	mpTotal := totalstats.PlatformMPTotal
+	totalStatsMu.RUnlock()
 	for _, item := range apiResponse.Data {
 
 		switch item.Type {
 		case "NRLSRV":
-			totalstats.PlatformServerTotal = item.Total
+			serverTotal = item.Total
 		case "NRLBOX":
-			totalstats.PlatformBoxTotal = item.Total
+			boxTotal = item.Total
 		case "NRLAPP":
-			totalstats.PlatformAppTotal = item.Total
+			appTotal = item.Total
 		case "NRLMP":
-			totalstats.PlatformMPTotal = item.Total
+			mpTotal = item.Total
 		}
 		//fmt.Printf("%s,%d\n", item.Type, item.Total)
 	}
+	setPlatformTypeTotals(serverTotal, boxTotal, appTotal, mpTotal)
 }
 
 func findNRL() {

@@ -146,10 +146,10 @@ func (h *wsCallHub) totalSubscriptions() int {
 }
 
 func currentOnlineDeviceCount() int {
-	if totalstats.OnlineDevNumber > 0 {
-		return totalstats.OnlineDevNumber
+	if n := getOnlineDevNumberStat(); n > 0 {
+		return n
 	}
-	return len(onlinedevMap)
+	return len(getOnlineDevMap())
 }
 
 func (h *wsCallHub) broadcastStats() {
@@ -267,7 +267,7 @@ func (h *wsCallHub) run() {
 
 func roomsOnlineChecksum() int {
 	sum := 0
-	for _, gp := range publicGroupMap {
+	for _, gp := range snapshotPublicGroups() {
 		sum += gp.ID + gp.OnlineDevNumber*31 + gp.TotalDevNumber*7
 	}
 	return sum
@@ -476,9 +476,10 @@ func canUserAccessGroup(u *userinfo, gp *group) bool {
 }
 
 func accessibleRooms(u *userinfo) map[string]*group {
-	rooms := make(map[string]*group, len(publicGroupMap)+3)
+	publicGroups := snapshotPublicGroups()
+	rooms := make(map[string]*group, len(publicGroups)+3)
 
-	for _, gp := range publicGroupMap {
+	for _, gp := range publicGroups {
 		if !canUserAccessGroup(u, gp) {
 			continue
 		}
@@ -677,6 +678,10 @@ func (h *wsCallHub) publishPCMFrame(gp *group, callsign string, ssid byte, pcm [
 	h.touchRoomActivity(gp, callsign, ssid, ts, speakers)
 
 	h.mu.RLock()
+	if len(h.clients) == 0 {
+		h.mu.RUnlock()
+		return
+	}
 	clients := make([]*wsCallClient, 0, len(h.clients))
 	for client := range h.clients {
 		clients = append(clients, client)
@@ -685,6 +690,47 @@ func (h *wsCallHub) publishPCMFrame(gp *group, callsign string, ssid byte, pcm [
 
 	roomKey := roomKeyFromGroup(gp)
 	for _, client := range clients {
+		client.enqueueAudio(roomKey, pcm)
+	}
+}
+
+// publishVoicePacket updates room activity immediately and lazily invokes
+// getPCM only when at least one WebSocket client is actively subscribed to
+// the room's audio stream.
+func (h *wsCallHub) publishVoicePacket(gp *group, callsign string, ssid byte, ts time.Time, getPCM func() ([]int16, error), speakers ...wsSpeaker) {
+	if gp == nil || getPCM == nil {
+		return
+	}
+
+	h.touchRoomActivity(gp, callsign, ssid, ts, speakers)
+
+	h.mu.RLock()
+	if len(h.clients) == 0 {
+		h.mu.RUnlock()
+		return
+	}
+	clients := make([]*wsCallClient, 0, len(h.clients))
+	for client := range h.clients {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
+
+	roomKey := roomKeyFromGroup(gp)
+	var subscribers []*wsCallClient
+	for _, client := range clients {
+		if client.isSubscribed(roomKey) {
+			subscribers = append(subscribers, client)
+		}
+	}
+	if len(subscribers) == 0 {
+		return
+	}
+
+	pcm, err := getPCM()
+	if err != nil || len(pcm) == 0 {
+		return
+	}
+	for _, client := range subscribers {
 		client.enqueueAudio(roomKey, pcm)
 	}
 }
@@ -795,6 +841,12 @@ func (c *wsCallClient) sendBinary(data []byte) error {
 	c.sendMu.Lock()
 	defer c.sendMu.Unlock()
 	return websocket.Message.Send(c.ws, data)
+}
+
+func (c *wsCallClient) isSubscribed(roomKey string) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return !c.closed && c.subscriptions[roomKey]
 }
 
 func (c *wsCallClient) enqueueAudio(roomKey string, pcm []int16) {

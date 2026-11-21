@@ -106,6 +106,9 @@ func checkHttpRequest(w http.ResponseWriter, req *http.Request, rolelist []strin
 }
 
 func getQTH(ip string) (qth string) {
+	if dbip == nil {
+		return ""
+	}
 	q, _ := dbip.Find(ip, "CN")
 	s := strings.Join(q, "")
 

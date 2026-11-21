@@ -7,9 +7,16 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 )
+
+var ssidStrTable [256]string
+
+func init() {
+	for i := range ssidStrTable {
+		ssidStrTable[i] = strconv.Itoa(i)
+	}
+}
 
 type NRL21packet struct {
 	timeStamp  time.Time
@@ -34,8 +41,10 @@ type NRL21packet struct {
 
 	// webPCM is 8 kHz mono PCM for browser monitoring and mixing.
 	// The original DATA remains untouched for NRL forwarding.
-	webPCM     []int16
-	legacyG711 []byte
+	webPCM        []int16
+	webPCMDecoded bool
+	webPCMErr     error
+	legacyG711    []byte
 }
 
 func newNRL21packet(remoteaddr *net.UDPAddr, d []byte) (packet *NRL21packet, err error) {
@@ -124,35 +133,35 @@ Application: OPUS_APPLICATION_VOIP
 Complexity: 10
 */
 
+const nrlCallsignTrimCutset = "\x00\r\n "
+
 func (n *NRL21packet) decodeNRL21(d []byte) (err error) {
 
 	if len(d) < 48 {
 		return errors.New("packet too short ")
 	}
-	n.Version = string(d[0:4])
-
-	if n.Version != "NRL2" {
+	if d[0] != 'N' || d[1] != 'R' || d[2] != 'L' || d[3] != '2' {
 		return errors.New("not NRL packet ")
 	}
+	n.Version = "NRL2"
 
 	n.Length = binary.BigEndian.Uint16(d[4:6])
 
 	n.DMRID = bytesToUint24(d[6:9])
-	n.Password = string(d[9:20])
 	n.Type = d[20]
 	n.Status = d[21]
 	n.Count = binary.BigEndian.Uint16(d[22:24])
-	n.CallSign = string(bytes.TrimRight(d[24:30], string([]byte{13, 0})))
+	n.CallSign = string(bytes.TrimRight(d[24:30], nrlCallsignTrimCutset))
 
-	if !IsCallSign(n.CallSign) {
+	if n.CallSign == "" || !IsCallSign(n.CallSign) {
 		return errors.New("callsign error")
 	}
 
 	n.SSID = d[30]
 	n.DevModel = d[31]
 
-	if n.Type == 9 || n.DevModel == 200 || n.DevModel == 255 {
-		n.OriginalCallsign = string(bytes.TrimRight(d[32:38], string([]byte{13, 0})))
+	if n.Type == 9 || n.DevModel == 200 || n.DevModel == 255 || n.SSID == 200 || n.SSID == 255 {
+		n.OriginalCallsign = string(bytes.TrimRight(d[32:38], nrlCallsignTrimCutset))
 		n.OriginalSSID = d[38]
 		n.OriginalIP = d[39:43]
 	}
@@ -227,12 +236,9 @@ func NRL21replace200and255dev(callsign string, ssid, packetType, DevModel uint8,
 	// 写入 Type  2
 	packet[20] = packetType
 
-	// 写入 CallSign
+	// 写入 CallSign（先清零全部 6 字节，避免 3~5 位呼号残留旧尾字节）
+	clear(packet[24:30])
 	copy(packet[24:30], callsign)
-
-	if len(callsign) == 5 {
-		packet[29] = 0
-	}
 
 	// 写入 SSID
 	packet[30] = ssid
@@ -240,11 +246,9 @@ func NRL21replace200and255dev(callsign string, ssid, packetType, DevModel uint8,
 	// 写入 DevMode
 	packet[31] = DevModel
 
-	// 协议原始呼号
+	// 协议原始呼号（先清零全部 6 字节）
+	clear(packet[32:38])
 	copy(packet[32:38], originalCallsign)
-	if len(originalCallsign) == 5 {
-		packet[37] = 0
-	}
 
 	// 写入原始SSID
 	packet[38] = originaSSID
@@ -309,14 +313,7 @@ func encodeNRL21(callsign string, ssid, packetType, DevModel uint8, dmrid uint32
 }
 
 func getCallsignSSID(callsign string, ssid byte) string {
-
-	var builder strings.Builder
-
-	// 拼接字符串
-	builder.WriteString(callsign)
-	builder.WriteString("-")
-	builder.WriteString(strconv.Itoa(int(ssid)))
-	return builder.String()
+	return callsign + "-" + ssidStrTable[ssid]
 }
 
 // type COMData struct {

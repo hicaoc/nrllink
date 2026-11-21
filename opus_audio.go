@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -104,7 +105,7 @@ func nrlVoiceToPCM(dev *deviceInfo, nrl *NRL21packet) ([]int16, error) {
 		return nil, errors.New("missing device or NRL packet")
 	}
 	switch nrl.Type {
-	case 1:
+	case 1, 9:
 		return g711ToPCM(nrl.DATA), nil
 	case 8:
 		decoder, err := dev.opusDecoderFor(opusStreamKey(nrl))
@@ -115,6 +116,29 @@ func nrlVoiceToPCM(dev *deviceInfo, nrl *NRL21packet) ([]int16, error) {
 	default:
 		return nil, fmt.Errorf("unsupported voice type %d", nrl.Type)
 	}
+}
+
+// ensureVoicePCM lazily decodes and caches 8 kHz mono PCM on the packet so
+// rooms without conference mixing, web listeners, or legacy G.711 devices
+// avoid decoding overhead on the hot path.
+func ensureVoicePCM(dev *deviceInfo, nrl *NRL21packet) ([]int16, error) {
+	if nrl == nil {
+		return nil, errors.New("missing NRL packet")
+	}
+	if len(nrl.webPCM) > 0 {
+		return nrl.webPCM, nil
+	}
+	if nrl.webPCMDecoded {
+		return nrl.webPCM, nrl.webPCMErr
+	}
+	nrl.webPCMDecoded = true
+	pcm, err := nrlVoiceToPCM(dev, nrl)
+	nrl.webPCM = pcm
+	nrl.webPCMErr = err
+	if err != nil && nrl.Type == 8 {
+		log.Printf("decode opus voice failed: %s-%d count=%d: %v", nrl.CallSign, nrl.SSID, nrl.Count, err)
+	}
+	return pcm, err
 }
 
 func g711ToPCM(g711 []byte) []int16 {
@@ -150,7 +174,7 @@ func voicePacketForRecipient(nrl *NRL21packet, packet []byte, recipient *deviceI
 	if nrl == nil || recipient == nil {
 		return nil, errors.New("missing voice packet or recipient")
 	}
-	if nrl.Type != 8 || !requiresG711Voice(recipient.DevModel) {
+	if nrl.Type != 8 || !requiresG711Voice(recipient.getDevModel()) {
 		return packet, nil
 	}
 	if len(nrl.legacyG711) == 0 {
@@ -165,16 +189,29 @@ func voicePacketForRecipient(nrl *NRL21packet, packet []byte, recipient *deviceI
 // voicePacketSelector caches the converted packet for one forwarding pass, so
 // a room with several legacy listeners pays for only one packet allocation.
 func voicePacketSelector(nrl *NRL21packet, packet []byte) func(*deviceInfo) ([]byte, error) {
+	return voicePacketSelectorForSender(nil, nrl, packet)
+}
+
+// voicePacketSelectorForSender lazily decodes Opus PCM only when a legacy
+// G.711 recipient is encountered, then caches the transcoded packet for the
+// rest of the forwarding pass.
+func voicePacketSelectorForSender(sender *deviceInfo, nrl *NRL21packet, packet []byte) func(*deviceInfo) ([]byte, error) {
 	var legacyPacket []byte
 	var legacyErr error
 	return func(recipient *deviceInfo) ([]byte, error) {
 		if nrl == nil || recipient == nil {
 			return nil, errors.New("missing voice packet or recipient")
 		}
-		if nrl.Type != 8 || !requiresG711Voice(recipient.DevModel) {
+		if nrl.Type != 8 || !requiresG711Voice(recipient.getDevModel()) {
 			return packet, nil
 		}
 		if legacyPacket == nil && legacyErr == nil {
+			if sender != nil && len(nrl.webPCM) == 0 {
+				if _, err := ensureVoicePCM(sender, nrl); err != nil {
+					legacyErr = err
+					return nil, err
+				}
+			}
 			legacyPacket, legacyErr = voicePacketForRecipient(nrl, packet, recipient)
 		}
 		return legacyPacket, legacyErr

@@ -53,7 +53,7 @@ func (p *Server) Start() error {
 
 	log.Printf("UDP connection established for server %d to %s", p.ID, addr)
 
-	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
+	if dev, ok := getDevByCallsignSSID(p.OwerCallsign + "-200"); ok {
 
 		if dev.ISOnline {
 			log.Println("device Already started:", p.OwerCallsign, 200)
@@ -61,7 +61,7 @@ func (p *Server) Start() error {
 		}
 
 		dev.udpSocket = globelconn
-		dev.udpAddr = addr
+		dev.setUDPAddr(addr)
 
 		//dev.ISOnline = true
 		dev.DevModel = 200
@@ -90,13 +90,13 @@ func (p *Server) Start() error {
 			Name:      p.IPAddr + ":" + p.UDPPort,
 			CallSign:  p.OwerCallsign,
 			udpSocket: globelconn,
-			udpAddr:   addr,
 			SSID:      200,
 			Priority:  100,
 			DevModel:  200,
 			pcmBuffer: make([]int, 1500),
 			DMRID:     0,
 			Note:      "server"}
+		dev.setUDPAddr(addr)
 
 		err = addDevice(dev)
 		if err != nil {
@@ -113,15 +113,15 @@ func (p *Server) Start() error {
 		}
 
 		dev.udpSocket = globelconn
-		dev.udpAddr = addr
+		dev.setUDPAddr(addr)
 		dev.DevModel = 200
 		//dev.ISOnline = true
 
-		devCallsignSSIDMap[p.OwerCallsign+"-200"] = dev
+		setDevByCallsignSSID(p.OwerCallsign+"-200", dev)
 
-		if p, ok := publicGroupMap[0]; ok {
+		if pg0, ok := getPublicGroup(0); ok {
 
-			p.devMap[dev.ID] = dev
+			pg0.setDevice(dev.ID, dev)
 
 		}
 
@@ -137,7 +137,7 @@ func (p *Server) Start() error {
 
 func (p *Server) Stop() {
 
-	if dev, ok := devCallsignSSIDMap[p.OwerCallsign+"-200"]; ok {
+	if dev, ok := getDevByCallsignSSID(p.OwerCallsign + "-200"); ok {
 
 		dev.udpSocket = nil
 

@@ -80,7 +80,7 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	devicelist := make(map[int]*deviceInfo, 10)
+	devicelist := make(map[int]deviceInfoJSON, 10)
 
 	isadmin := checkrole(u, []string{"admin"})
 
@@ -88,30 +88,25 @@ func (j *jsonapi) httpDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	onlineDeviceTotal := 0
 
-	for _, vv := range devCallsignSSIDMap {
+	snapshot := snapshotDevCallsignSSID()
+	for _, vv := range snapshot {
 
-		if vv.ISOnline {
+		if vv.isOnline() {
 			onlineDeviceTotal++
 		}
 
-		dev := vv
-
-		if !isadmin && dev.CallSign != u.CallSign {
-
-			dev.DeviceParm = nil
-		}
-
-		devicelist[id] = dev
+		hideParm := !isadmin && vv.CallSign != u.CallSign
+		devicelist[id] = vv.snapshotJSON(hideParm)
 		id++
 
 	}
 
-	totalstats.OnlineDevNumber = onlineDeviceTotal
+	setOnlineDevNumberStat(onlineDeviceTotal)
 
 	rescode, _ := jsonextra.Marshal(devicelist)
 
 	respone := fmt.Sprintf(`{"code":20000,"data":{"total":%v,"items":%s}}`,
-		len(devCallsignSSIDMap), rescode)
+		len(snapshot), rescode)
 
 	w.Write([]byte(respone))
 
@@ -156,8 +151,8 @@ func (j *jsonapi) httpGroupDeviceList(w http.ResponseWriter, req *http.Request) 
 				w.Write([]byte(`{"code":20000,"data":{"message":"私人房间不存在"}}`))
 				return
 			}
-			for _, v := range privateGroup.devMap {
-				if v.ISOnline {
+			for _, v := range privateGroup.snapshotDevices() {
+				if v.isOnline() {
 					onlinedevlist = append(onlinedevlist, v)
 				} else {
 					offlinedevlist = append(offlinedevlist, v)
@@ -169,10 +164,10 @@ func (j *jsonapi) httpGroupDeviceList(w http.ResponseWriter, req *http.Request) 
 
 	} else {
 
-		if g, ok := publicGroupMap[grolupid]; ok {
+		if g, ok := getPublicGroup(grolupid); ok {
 
-			for _, v := range g.devMap {
-				if v.ISOnline {
+			for _, v := range g.snapshotDevices() {
+				if v.isOnline() {
 					onlinedevlist = append(onlinedevlist, v)
 				} else {
 					offlinedevlist = append(offlinedevlist, v)
@@ -204,9 +199,9 @@ func (j *jsonapi) httpMyDeviceList(w http.ResponseWriter, req *http.Request) {
 
 	mydevicelist := make(map[string]*deviceInfo, 10)
 
-	for kk, vv := range devCallsignSSIDMap {
+	for kk, vv := range snapshotDevCallsignSSID() {
 		if vv.CallSign == u.CallSign {
-			mydevicelist[kk] = devCallsignSSIDMap[kk]
+			mydevicelist[kk] = vv
 		}
 
 	}
@@ -232,7 +227,7 @@ func (j *jsonapi) httpDevice(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if dev, ok := devCallsignSSIDMap[getCallsignSSID(stb.Callsign, stb.SSID)]; ok {
+	if dev, ok := getDevByCallsignSSID(getCallsignSSID(stb.Callsign, stb.SSID)); ok {
 
 		writeJSONResponseItem(w, dev)
 	} else {

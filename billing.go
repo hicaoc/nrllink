@@ -108,27 +108,43 @@ func isUserExpired(u *userinfo, now time.Time) bool {
 func refreshDeviceAccountExpired(dev *deviceInfo, now time.Time) bool {
 	if dev == nil || !billingEnabled() {
 		if dev != nil {
+			dev.expireMu.Lock()
 			dev.AccountExpired = false
+			dev.expireMu.Unlock()
 		}
 		return false
 	}
 
-	if !dev.LastExpireCheck.IsZero() && now.Sub(dev.LastExpireCheck) < billingExpireRecheckDuration() {
-		return dev.AccountExpired
+	dev.expireMu.Lock()
+	expired := dev.AccountExpired
+	needRefresh := dev.LastExpireCheck.IsZero() || now.Sub(dev.LastExpireCheck) >= billingExpireRecheckDuration()
+	dev.expireMu.Unlock()
+
+	if needRefresh && dev.expireChecking.CompareAndSwap(false, true) {
+		callsign := dev.CallSign
+		checkTime := now
+		go func() {
+			defer dev.expireChecking.Store(false)
+			u, err := getuser(callsign)
+			if err != nil {
+				log.Printf("billing: query account expire failed for %s: %v", callsign, err)
+				dev.expireMu.Lock()
+				dev.LastExpireCheck = checkTime
+				dev.expireMu.Unlock()
+				return
+			}
+
+			isExpired := isUserExpired(u, checkTime)
+			dev.expireMu.Lock()
+			dev.AccountExpired = isExpired
+			dev.LastExpireCheck = checkTime
+			dev.expireMu.Unlock()
+			if old, ok := userlist.Load(u.CallSign); ok {
+				old.(*userinfo).ExpireTime = u.ExpireTime
+			}
+		}()
 	}
 
-	dev.LastExpireCheck = now
-	u, err := getuser(dev.CallSign)
-	if err != nil {
-		log.Printf("billing: query account expire failed for %s: %v", dev.CallSign, err)
-		return dev.AccountExpired
-	}
-
-	expired := isUserExpired(u, now)
-	dev.AccountExpired = expired
-	if old, ok := userlist.Load(u.CallSign); ok {
-		old.(*userinfo).ExpireTime = u.ExpireTime
-	}
 	return expired
 }
 
@@ -136,11 +152,11 @@ func removeExpiredDeviceFromPool(dev *deviceInfo, gp *group) {
 	if dev == nil {
 		return
 	}
-	if dev.udpAddr != nil && gp != nil && gp.connPool != nil {
-		gp.connPool.removeDevice(dev.udpAddr.String())
+	if addr, addrStr := dev.getUDPAddr(); addr != nil && gp != nil && gp.connPool != nil {
+		gp.connPool.removeDevice(addrStr)
 	}
-	dev.ISOnline = false
-	dev.udpAddr = nil
+	dev.setOnline(false)
+	dev.clearUDPAddr()
 }
 
 func queryBillingPackages(includeDisabled bool) ([]*billingPackage, error) {

@@ -132,7 +132,7 @@ func (a *Aprs) sendAprsPosition() error {
 	}
 
 	aprsPacket2 := a.formatAprsPackettwo(conf.SystemInfo.PlatformName, conf.APRS.CallSign, conf.APRS.SSID,
-		totalstats.OnlineDevNumber, len(devCallsignSSIDMap))
+		getOnlineDevNumberStat(), countDevCallsignSSID())
 
 	err = a.tcpClient.Send(aprsPacket2)
 	//fmt.Printf("APRS:发送附加信息: %s", aprsPacket2)

@@ -81,7 +81,7 @@ func startPlatformServerSync() {
 func waitForInitialOnlineStats(timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		if totalstats.OnlineDevNumber > 0 {
+		if getOnlineDevNumberStat() > 0 {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -94,7 +94,7 @@ func reportCurrentServerStatus() error {
 		Host:   strings.TrimSpace(conf.APRS.SelfAddress),
 		Port:   strings.TrimSpace(conf.APRS.SelfPort),
 		Online: currentOnlineDeviceCount(),
-		Total:  len(devCallsignSSIDMap),
+		Total:  countDevCallsignSSID(),
 	}
 
 	if payload.Name == "" {
@@ -171,8 +171,7 @@ func syncPlatformServerList() error {
 		list[i].udpAddr = targetAddr
 	}
 
-	PlatformList = list
-	conf.PlatformList = list
+	setPlatformList(list)
 	return nil
 }
 

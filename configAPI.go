@@ -64,9 +64,7 @@ func (j *jsonapi) httpUpdateConfig(w http.ResponseWriter, req *http.Request) {
 
 	// Platformitem 含非导出字段 udpAddr 及运行时统计 Online/Total，
 	// 全量替换会丢失，按 Host+Port 匹配旧条目并拷回运行时状态
-	confLock.RLock()
-	oldList := conf.PlatformList
-	confLock.RUnlock()
+	oldList := getPlatformList()
 	for i := range newConf.PlatformList {
 		for _, old := range oldList {
 			if old.Host == newConf.PlatformList[i].Host && old.Port == newConf.PlatformList[i].Port {
@@ -78,10 +76,13 @@ func (j *jsonapi) httpUpdateConfig(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	cp := append([]Platformitem(nil), newConf.PlatformList...)
 	confLock.Lock()
 	*conf = *newConf
-	PlatformList = conf.PlatformList // 同步全局镜像（aprsget.go/serverList.go 会反向写 conf.PlatformList）
+	conf.PlatformList = cp
+	PlatformList = cp // 同步全局镜像（aprsget.go/serverList.go 会反向写 conf.PlatformList）
 	confLock.Unlock()
+	platformListAtomic.Store(&cp)
 
 	if err := conf.save(); err != nil {
 		writeJSONResponse(w, &Response{20001, "配置保存失败: " + err.Error(), nil})
